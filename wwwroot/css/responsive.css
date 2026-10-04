@@ -1,0 +1,19 @@
+@media(max-width:1050px){
+  .sidebar{width:76px}
+  .brand-main{font-size:0}.brand-main:after{content:"AMS";font-size:18px;color:#fff}
+  .brand-sub,.sidebar-foot span:not(.status-dot){display:none}
+  nav button{font-size:0;height:42px;text-align:center}
+  nav button:after{content:"•";font-size:20px}
+  .main{margin-left:76px}
+  .layout-main{grid-template-columns:1fr}
+  .metrics-4{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:720px){
+  .content{padding:14px}
+  .session-strip span{display:none}
+  .metrics-4,.telemetry-grid,.workspace-grid{grid-template-columns:1fr}
+  .telemetry-grid .card:first-child,.workspace-grid .card:last-child{grid-column:auto}
+  .gauges{grid-template-columns:repeat(2,1fr)}
+  h1{font-size:23px}
+  .track-stage{height:310px}
+}
