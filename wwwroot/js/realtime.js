@@ -62,6 +62,61 @@ window.AMSRealtime = {
     if(row?.simulator) this.set("simName",row.simulator);
   },
 
+  renderCloudTiming(rows){
+    const body=document.getElementById("timingBody");
+    if(!body || !Array.isArray(rows) || !rows.length) return;
+
+    const get=(p,...keys)=>{
+      for(const k of keys){
+        const v=p?.[k];
+        if(v!==undefined && v!==null && v!=="") return v;
+      }
+      return null;
+    };
+
+    const lapText=v=>{
+      const n=Number(v);
+      if(!Number.isFinite(n)) return v ?? "—";
+      if(n>10000){
+        const m=Math.floor(n/60000);
+        return m+":"+((n-m*60000)/1000).toFixed(3).padStart(6,"0");
+      }
+      if(n>60){
+        const m=Math.floor(n/60);
+        return m+":"+(n-m*60).toFixed(3).padStart(6,"0");
+      }
+      return n.toFixed(3);
+    };
+
+    const mapped=rows.map((row,i)=>{
+      const p=row.sample||{};
+      return {
+        row,p,
+        pos:Number(get(p,"position","overallPosition","overall_position")) || i+1,
+        cls:Number(get(p,"classPosition","class_position")) || null,
+        name:get(p,"driverName","driver_name","name") || (row.pilot_id===AMSAuth.user?.id?"Tu":"AMS Pilot"),
+        number:get(p,"carNumber","car_number","number") || "",
+        lap:get(p,"lap","lapNumber","lap_number") ?? "—",
+        last:get(p,"lastLap","last_lap","lastLapTime","last_lap_time"),
+        best:get(p,"bestLap","best_lap","bestLapTime","best_lap_time"),
+        delta:get(p,"delta","lapDelta","lap_delta"),
+        gap:get(p,"gap","gapToLeader","gap_to_leader"),
+        fuel:get(p,"fuel","fuelLitres","fuel_l"),
+        stint:get(p,"stint","stintLap","stint_lap")
+      };
+    }).sort((a,b)=>a.pos-b.pos);
+
+    body.innerHTML="";
+    for(const d of mapped){
+      const tr=document.createElement("tr");
+      if(d.row.pilot_id===AMSAuth.user?.id) tr.classList.add("focus-row");
+      const deltaNum=Number(d.delta);
+      const deltaText=d.delta===null||d.delta===undefined?"—":(Number.isFinite(deltaNum)?((deltaNum>=0?"+":"")+deltaNum.toFixed(3)):String(d.delta));
+      tr.innerHTML=`<td><strong>${d.pos}</strong></td><td>${d.cls?"P"+d.cls:"—"}</td><td><strong>${d.name}</strong><br><small>${d.number?("#"+String(d.number).replace("#","")):""}</small></td><td>${d.row.car||"—"}</td><td>${d.lap}</td><td>${d.last!=null?lapText(d.last):"—"}</td><td>${d.best!=null?lapText(d.best):"—"}</td><td class="${Number.isFinite(deltaNum)?(deltaNum<=0?"green":"red"):""}">${deltaText}</td><td>${d.gap??"—"}</td><td>${d.fuel!=null?Number(d.fuel).toFixed(1)+" L":"—"}</td><td>${d.stint??"—"}</td>`;
+      body.appendChild(tr);
+    }
+  },
+
   async pollCloud(){
     if(this.polling || !AMSAuth.user?.id) return;
     this.polling=true;
@@ -78,6 +133,7 @@ window.AMSRealtime = {
         const own=fresh.find(r=>r.pilot_id===AMSAuth.user.id)||fresh[0];
         this.applySample(own);
         AMSTrack.renderCars(fresh,AMSAuth.user.id);
+        this.renderCloudTiming(fresh);
 
         const c=document.getElementById("connectionText");
         if(c) c.textContent="SUPABASE LIVE";
