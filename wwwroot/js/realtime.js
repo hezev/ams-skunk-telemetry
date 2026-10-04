@@ -1,43 +1,157 @@
 window.AMSRealtime = {
   phase:0,
   elapsed:1114,
+  mode:"mock",
+  liveRows:[],
+  polling:false,
+  nextCloudPoll:0,
+
+  set(id,value){
+    const e=document.getElementById(id);
+    if(e) e.textContent=value;
+  },
+
+  applySample(row){
+    const p=row?.sample||{};
+    const num=(...keys)=>{
+      for(const k of keys){
+        const v=Number(p[k]);
+        if(Number.isFinite(v)) return v;
+      }
+      return null;
+    };
+
+    const speed=num("speed","speedKph","speed_kph");
+    const rpm=num("rpm");
+    const gear=num("gear");
+    const delta=num("delta","lapDelta","lap_delta");
+    const fuel=num("fuel","fuelLitres","fuel_l");
+    const throttle=num("throttle");
+    const brake=num("brake");
+    const steer=num("steer","steering","steeringAngle","steering_angle");
+    const latG=num("latG","lat_g","lateralG","lateral_g");
+    const longG=num("longG","long_g","longitudinalG","longitudinal_g");
+    const trackPos=AMSSupabase.samplePosition(p);
+
+    if(speed!==null) this.set("speed",Math.round(speed));
+    if(rpm!==null) this.set("rpm",Math.round(rpm));
+    if(gear!==null) this.set("gear",Math.round(gear));
+    if(delta!==null) this.set("delta",(delta>=0?"+":"")+delta.toFixed(3));
+    if(fuel!==null){ this.set("fuel",fuel.toFixed(1)+" L"); this.set("fuelLaps",(fuel/2.37).toFixed(1)); }
+    if(throttle!==null){ this.set("throttlePct",Math.round(throttle)+"%"); const e=document.getElementById("throttleBar"); if(e)e.style.width=Math.max(0,Math.min(100,throttle))+"%"; }
+    if(brake!==null){ this.set("brakePct",Math.round(brake)+"%"); const e=document.getElementById("brakeBar"); if(e)e.style.width=Math.max(0,Math.min(100,brake))+"%"; }
+    if(steer!==null){ this.set("steerDeg",(steer>=0?"+":"")+steer.toFixed(0)+"°"); const e=document.getElementById("steerBar"); if(e)e.style.width=Math.max(0,Math.min(100,50+steer*2))+"%"; }
+    if(latG!==null) this.set("latG",(latG>=0?"+":"")+latG.toFixed(2));
+    if(longG!==null) this.set("longG",(longG>=0?"+":"")+longG.toFixed(2));
+
+    const d=document.getElementById("delta");
+    if(d && delta!==null){
+      d.classList.toggle("green",delta<=0);
+      d.classList.toggle("red",delta>0);
+    }
+
+    if(trackPos!==null){
+      AMSTrack.progress=trackPos;
+      AMSTrack.setPosition(trackPos);
+    }
+
+    if(row?.circuit && document.getElementById("trackName")?.textContent!==row.circuit){
+      this.set("trackName",row.circuit);
+    }
+    if(row?.car) this.set("carName",row.car);
+    if(row?.simulator) this.set("simName",row.simulator);
+  },
+
+  async pollCloud(){
+    if(this.polling || !AMSAuth.user?.id) return;
+    this.polling=true;
+    try{
+      const token=await AMSAuth.token();
+      if(!token) return;
+
+      const rows=await AMSSupabase.getLiveSessions(token);
+      const fresh=(rows||[]).filter(r=>AMSSupabase.fresh(r));
+
+      if(fresh.length){
+        this.mode="cloud";
+        this.liveRows=fresh;
+        const own=fresh.find(r=>r.pilot_id===AMSAuth.user.id)||fresh[0];
+        this.applySample(own);
+        AMSTrack.renderCars(fresh,AMSAuth.user.id);
+
+        const c=document.getElementById("connectionText");
+        if(c) c.textContent="SUPABASE LIVE";
+
+        const top=document.querySelector(".live-badge");
+        if(top) top.title="Dados cloud AMS Telemetry";
+      }else{
+        this.mode="mock";
+        const c=document.getElementById("connectionText");
+        if(c) c.textContent="MOCK · SEM LIVE CLOUD";
+      }
+    }catch(err){
+      this.mode="mock";
+      const c=document.getElementById("connectionText");
+      if(c) c.textContent="CLOUD INDISPONÍVEL";
+      console.warn("AMS Supabase live:",err);
+    }finally{
+      this.polling=false;
+    }
+  },
+
+  mockTick(){
+    this.phase+=.16;
+    this.elapsed+=.25;
+
+    const speed=Math.round(232+Math.sin(this.phase)*38);
+    const rpm=Math.round(7050+Math.sin(this.phase*1.27)*1150);
+    const gear=Math.max(2,Math.min(6,Math.round(speed/48)));
+    const delta=-.18+Math.sin(this.phase*.34)*.15;
+    const fuel=Math.max(0,31.8-this.phase*.012);
+    const throttle=Math.max(0,Math.min(100,Math.round(62+Math.sin(this.phase*.9)*38)));
+    const brake=Math.max(0,Math.round((Math.max(0,Math.sin(this.phase*.63-1.4))**5)*100));
+    const steer=Math.round(Math.sin(this.phase*.72)*18);
+    const latG=Math.sin(this.phase*.68)*1.65;
+    const longG=(throttle/100)*.8-(brake/100)*1.8;
+
+    this.set("speed",speed); this.set("rpm",rpm); this.set("gear",gear);
+    this.set("delta",(delta>=0?"+":"")+delta.toFixed(3));
+    this.set("fuel",fuel.toFixed(1)+" L"); this.set("fuelLaps",(fuel/2.37).toFixed(1));
+    this.set("throttlePct",throttle+"%"); this.set("brakePct",brake+"%");
+    this.set("steerDeg",(steer>=0?"+":"")+steer+"°");
+    this.set("latG",(latG>=0?"+":"")+latG.toFixed(2));
+    this.set("longG",(longG>=0?"+":"")+longG.toFixed(2));
+    this.set("tireFL",Math.round(86+Math.sin(this.phase*.18)*3)+"°");
+    this.set("tireFR",Math.round(88+Math.sin(this.phase*.21)*3)+"°");
+    this.set("tireRL",Math.round(82+Math.sin(this.phase*.17)*2)+"°");
+    this.set("tireRR",Math.round(84+Math.sin(this.phase*.19)*2)+"°");
+
+    const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
+    this.set("sessionTime",fmt(this.elapsed)); this.set("liveRaceTime",fmt(this.elapsed).slice(3));
+
+    const d=document.getElementById("delta");
+    if(d){d.classList.toggle("green",delta<=0);d.classList.toggle("red",delta>0)}
+    const throttleBar=document.getElementById("throttleBar"); if(throttleBar) throttleBar.style.width=throttle+"%";
+    const brakeBar=document.getElementById("brakeBar"); if(brakeBar) brakeBar.style.width=brake+"%";
+    const steerBar=document.getElementById("steerBar"); if(steerBar) steerBar.style.width=(50+steer*2)+"%";
+    AMSTrack.tick();
+  },
+
   start(){
     setInterval(()=>{
-      this.phase+=.16;
-      this.elapsed+=.25;
+      const now=Date.now();
+      if(now>=this.nextCloudPoll){
+        this.nextCloudPoll=now+AMS_CONFIG.livePollMs;
+        this.pollCloud();
+      }
 
-      const speed=Math.round(232+Math.sin(this.phase)*38);
-      const rpm=Math.round(7050+Math.sin(this.phase*1.27)*1150);
-      const gear=Math.max(2,Math.min(6,Math.round(speed/48)));
-      const delta=(-.18+Math.sin(this.phase*.34)*.15).toFixed(3);
-      const fuel=Math.max(0,31.8-this.phase*.012);
-      const throttle=Math.max(0,Math.min(100,Math.round(62+Math.sin(this.phase*.9)*38)));
-      const brake=Math.max(0,Math.round((Math.max(0,Math.sin(this.phase*.63-1.4))**5)*100));
-      const steer=Math.round(Math.sin(this.phase*.72)*18);
-      const latG=(Math.sin(this.phase*.68)*1.65).toFixed(2);
-      const longG=((throttle/100)*.8-(brake/100)*1.8).toFixed(2);
+      if(this.mode!=="cloud") this.mockTick();
+      else{
+        this.elapsed+=.25;
+        const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
+        this.set("sessionTime",fmt(this.elapsed)); this.set("liveRaceTime",fmt(this.elapsed).slice(3));
+      }
 
-      const set=(id,value)=>{const e=document.getElementById(id);if(e)e.textContent=value};
-      set("speed",speed); set("rpm",rpm); set("gear",gear); set("delta",delta); set("fuel",fuel.toFixed(1)+" L");
-      set("fuelLaps",(fuel/2.37).toFixed(1));
-      set("throttlePct",throttle+"%"); set("brakePct",brake+"%"); set("steerDeg",(steer>=0?"+":"")+steer+"°");
-      set("latG",(Number(latG)>=0?"+":"")+latG); set("longG",(Number(longG)>=0?"+":"")+longG);
-      set("tireFL",Math.round(86+Math.sin(this.phase*.18)*3)+"°");
-      set("tireFR",Math.round(88+Math.sin(this.phase*.21)*3)+"°");
-      set("tireRL",Math.round(82+Math.sin(this.phase*.17)*2)+"°");
-      set("tireRR",Math.round(84+Math.sin(this.phase*.19)*2)+"°");
-
-      const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
-      set("sessionTime",fmt(this.elapsed)); set("liveRaceTime",fmt(this.elapsed).slice(3));
-
-      const d=document.getElementById("delta");
-      if(d){d.classList.toggle("green",Number(delta)<=0);d.classList.toggle("red",Number(delta)>0)}
-
-      const throttleBar=document.getElementById("throttleBar"); if(throttleBar) throttleBar.style.width=throttle+"%";
-      const brakeBar=document.getElementById("brakeBar"); if(brakeBar) brakeBar.style.width=brake+"%";
-      const steerBar=document.getElementById("steerBar"); if(steerBar) steerBar.style.width=(50+steer*2)+"%";
-
-      AMSTrack.tick();
       if(Math.round(this.phase*10)%4===0) AMSCharts.drawAll(this.phase);
     },250);
   }
