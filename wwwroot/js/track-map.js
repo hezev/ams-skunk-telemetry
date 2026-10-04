@@ -235,13 +235,13 @@ window.AMSTrack = {
     }catch{}
   },
 
-  setPosition(progress){
-    const dot = document.getElementById("carDot");
+  positionElement(el, progress){
     const svg = document.getElementById("trackMotionSvg");
-    if(!dot || !svg || !this.activePath) return;
+    if(!el || !svg || !this.activePath || !Number.isFinite(Number(progress))) return;
 
     const length = this.activePath.getTotalLength();
-    const point = this.activePath.getPointAtLength((progress % 1) * length);
+    const p = ((Number(progress)%1)+1)%1;
+    const point = this.activePath.getPointAtLength(p * length);
     const matrix = svg.getScreenCTM();
     if(!matrix) return;
 
@@ -249,8 +249,40 @@ window.AMSTrack = {
     const stage = document.querySelector(".track-stage")?.getBoundingClientRect();
     if(!stage) return;
 
-    dot.style.left = (screen.x - stage.left) + "px";
-    dot.style.top = (screen.y - stage.top) + "px";
+    el.style.left = (screen.x - stage.left) + "px";
+    el.style.top = (screen.y - stage.top) + "px";
+  },
+
+  setPosition(progress){
+    this.positionElement(document.getElementById("carDot"), progress);
+  },
+
+  renderCars(rows=[], ownPilotId=null){
+    const stage=document.querySelector(".track-stage");
+    if(!stage || !this.activePath) return;
+
+    stage.querySelectorAll(".map-car-dot").forEach(el=>el.remove());
+
+    for(const row of rows){
+      const pos=AMSSupabase.samplePosition(row?.sample);
+      if(pos===null) continue;
+
+      const isOwn=ownPilotId && row.pilot_id===ownPilotId;
+      if(isOwn){
+        this.progress=pos;
+        this.setPosition(pos);
+        continue;
+      }
+
+      const el=document.createElement("div");
+      el.className="map-car-dot";
+      const number=row?.sample?.carNumber ?? row?.sample?.car_number ?? row?.sample?.number ?? "";
+      const driver=row?.sample?.driverName ?? row?.sample?.driver_name ?? row?.sample?.name ?? "";
+      el.title=[number?("#"+String(number).replace("#","")):"",driver].filter(Boolean).join(" ");
+      if(number) el.dataset.label=String(number).replace("#","");
+      stage.appendChild(el);
+      this.positionElement(el,pos);
+    }
   },
 
   tick(trackPosition=null){
