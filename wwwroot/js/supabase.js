@@ -1,15 +1,10 @@
 window.AMSSupabase = {
-  enabled:false,
-  url:"",
-  anonKey:"",
-  configure({url,anonKey}){
-    this.url=url||"";
-    this.anonKey=anonKey||"";
-    this.enabled=Boolean(this.url&&this.anonKey);
-  },
+  get url(){ return AMS_CONFIG.supabaseUrl; },
+  get anonKey(){ return AMS_CONFIG.publishableKey; },
+  enabled: true,
+
   async connect(){
-    if(!this.enabled) return {mode:"mock",connected:false};
-    // Fase 2: inicializar @supabase/supabase-js aqui.
+    if(!this.url || !this.anonKey) return {mode:"mock",connected:false};
     return {mode:"supabase",connected:true};
   }
 };
