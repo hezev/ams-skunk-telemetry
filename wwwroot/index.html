@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#07090c">
+  <title>AMS Skunk Telemetry</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-main">AMS <span>SKUNK</span></div>
+    <div class="brand-sub">Telemetry Platform</div>
+  </div>
+
+  <nav id="mainNav">
+    <button class="active" data-view="dashboard">Dashboard</button>
+    <button data-view="live">Live Pitwall</button>
+    <button data-view="telemetry">Telemetry</button>
+    <button data-view="sessions">Sessions</button>
+    <button data-view="laps">Laps</button>
+    <button data-view="compare">Compare</button>
+    <button data-view="records">Records</button>
+    <button data-view="driver">Driver</button>
+    <button data-view="team">Team</button>
+    <button data-view="workspace">Workspace</button>
+  </nav>
+
+  <div class="sidebar-foot">
+    <span class="status-dot"></span>
+    <span id="connectionText">MOCK LIVE</span>
+  </div>
+</aside>
+
+<main class="main">
+  <header class="topbar">
+    <div class="session-strip">
+      <strong id="simName">iRacing</strong>
+      <span id="trackName">Algarve International Circuit</span>
+      <span id="carName">Ferrari 296 GT3</span>
+    </div>
+    <div class="live-badge"><i></i> LIVE</div>
+  </header>
+
+  <div class="content">
+
+    <section id="dashboard" class="view active">
+      <div class="titlebar">
+        <div>
+          <h1>Race Control</h1>
+          <p>AMS Skunk Telemetry · Live Session</p>
+        </div>
+      </div>
+
+      <div class="metrics metrics-4">
+        <article class="metric"><span>Best Lap</span><strong class="red">1:41.862</strong></article>
+        <article class="metric"><span>Last Lap</span><strong>1:42.104</strong></article>
+        <article class="metric"><span>Position</span><strong class="green">P3</strong></article>
+        <article class="metric"><span>Fuel</span><strong class="yellow" id="fuel">31.8 L</strong></article>
+      </div>
+
+      <div class="layout-main">
+        <article class="card">
+          <div class="card-title">Track Position</div>
+          <div class="track-stage">
+            <svg id="trackMap" viewBox="0 0 600 360" aria-label="Track map">
+              <path class="track-base" d="M88 222 C37 137 105 50 192 76 C277 17 463 58 482 157 C501 255 404 311 322 270 C239 331 113 306 88 222"/>
+              <path class="track-line" d="M88 222 C37 137 105 50 192 76 C277 17 463 58 482 157 C501 255 404 311 322 270 C239 331 113 306 88 222"/>
+            </svg>
+            <div class="car-dot" id="carDot"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Live Car Data</div>
+          <div class="gauges">
+            <div><span>Speed</span><strong id="speed">238</strong><small>km/h</small></div>
+            <div><span>RPM</span><strong id="rpm">7210</strong><small>rpm</small></div>
+            <div><span>Gear</span><strong id="gear">5</strong><small>gear</small></div>
+            <div><span>Delta</span><strong id="delta" class="green">-0.182</strong><small>sec</small></div>
+          </div>
+          <div class="chart-wrap"><canvas id="dashboardChart"></canvas></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="live" class="view">
+      <div class="titlebar">
+        <div>
+          <h1>Live Pitwall</h1>
+          <p>Timing, gaps e estado de todos os pilotos em pista</p>
+        </div>
+      </div>
+
+      <article class="card table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos</th><th>Driver</th><th>Car</th><th>Lap</th>
+              <th>Last</th><th>Best</th><th>Delta</th><th>Gap</th>
+            </tr>
+          </thead>
+          <tbody id="timingBody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <section id="telemetry" class="view">
+      <div class="titlebar"><div><h1>Telemetry</h1><p>Live traces sincronizados</p></div></div>
+      <div class="telemetry-grid">
+        <article class="card"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
+        <article class="card"><div class="card-title">Throttle</div><div class="chart-wrap"><canvas class="trace" data-trace="throttle"></canvas></div></article>
+        <article class="card"><div class="card-title">Brake</div><div class="chart-wrap"><canvas class="trace" data-trace="brake"></canvas></div></article>
+        <article class="card"><div class="card-title">Steering</div><div class="chart-wrap"><canvas class="trace" data-trace="steering"></canvas></div></article>
+      </div>
+    </section>
+
+    <section id="sessions" class="view">
+      <div class="titlebar"><div><h1>Sessions</h1><p>Histórico de corridas, treinos e qualificações</p></div></div>
+      <article class="card table-card">
+        <table>
+          <thead><tr><th>Date</th><th>Simulator</th><th>Track</th><th>Car</th><th>Laps</th><th>Best</th><th>Status</th></tr></thead>
+          <tbody id="sessionsBody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <section id="laps" class="view">
+      <div class="titlebar"><div><h1>Laps</h1><p>Análise de voltas e setores</p></div></div>
+      <article class="card table-card">
+        <table>
+          <thead><tr><th>Lap</th><th>Time</th><th>S1</th><th>S2</th><th>S3</th><th>Delta</th><th>Fuel</th></tr></thead>
+          <tbody id="lapsBody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <section id="compare" class="view">
+      <div class="titlebar"><div><h1>Lap Comparison</h1><p>Volta selecionada vs referência</p></div></div>
+      <div class="metrics metrics-4">
+        <article class="metric"><span>Reference</span><strong>1:41.862</strong></article>
+        <article class="metric"><span>Selected</span><strong>1:42.104</strong></article>
+        <article class="metric"><span>Difference</span><strong class="red">+0.242</strong></article>
+        <article class="metric"><span>Ideal Lap</span><strong class="green">1:41.431</strong></article>
+      </div>
+      <article class="card"><div class="card-title">Overlay</div><div class="chart-wrap big"><canvas class="trace" data-trace="compare"></canvas></div></article>
+    </section>
+
+    <section id="records" class="view">
+      <div class="titlebar"><div><h1>AMS Records</h1><p>Melhores voltas por simulador, pista e carro</p></div></div>
+      <article class="card table-card">
+        <table>
+          <thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Track</th><th>Lap Time</th></tr></thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <section id="driver" class="view">
+      <div class="titlebar"><div><h1>Driver</h1><p>Performance e evolução</p></div></div>
+      <div class="metrics metrics-4">
+        <article class="metric"><span>Sessions</span><strong>182</strong></article>
+        <article class="metric"><span>Laps</span><strong>4,921</strong></article>
+        <article class="metric"><span>Tracks</span><strong>28</strong></article>
+        <article class="metric"><span>PB Improvements</span><strong class="green">37</strong></article>
+      </div>
+    </section>
+
+    <section id="team" class="view">
+      <div class="titlebar"><div><h1>Team</h1><p>Pilotos, engenheiros e permissões</p></div></div>
+      <article class="card empty-state">Estrutura de equipa preparada para ligação ao Supabase.</article>
+    </section>
+
+    <section id="workspace" class="view">
+      <div class="titlebar"><div><h1>Custom Workspace</h1><p>Construtor de ecrãs de análise</p></div></div>
+      <div class="workspace-grid">
+        <article class="card"><div class="card-title">Track</div><div class="placeholder">Track widget</div></article>
+        <article class="card"><div class="card-title">Timing</div><div class="placeholder">Timing widget</div></article>
+        <article class="card"><div class="card-title">Telemetry</div><div class="placeholder">Telemetry widget</div></article>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="js/mock-data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/track-map.js"></script>
+<script src="js/supabase.js"></script>
+<script src="js/realtime.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
