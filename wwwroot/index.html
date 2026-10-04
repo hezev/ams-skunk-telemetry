@@ -41,6 +41,7 @@
       <strong id="simName">iRacing</strong>
       <span id="trackName">Algarve International Circuit</span>
       <span id="carName">Ferrari 296 GT3</span>
+      <span>Race · 42 min</span>
     </div>
     <div class="live-badge"><i></i> LIVE</div>
   </header>
@@ -51,38 +52,101 @@
       <div class="titlebar">
         <div>
           <h1>Race Control</h1>
-          <p>AMS Skunk Telemetry · Live Session</p>
+          <p>AMS Skunk Telemetry · Live Session · Car #27</p>
+        </div>
+        <div class="session-clock">
+          <span>SESSION</span>
+          <strong id="sessionTime">00:18:34</strong>
         </div>
       </div>
 
-      <div class="metrics metrics-4">
+      <div class="metrics metrics-6">
         <article class="metric"><span>Best Lap</span><strong class="red">1:41.862</strong></article>
         <article class="metric"><span>Last Lap</span><strong>1:42.104</strong></article>
         <article class="metric"><span>Position</span><strong class="green">P3</strong></article>
+        <article class="metric"><span>Class</span><strong class="blue">P2</strong></article>
         <article class="metric"><span>Fuel</span><strong class="yellow" id="fuel">31.8 L</strong></article>
+        <article class="metric"><span>Est. Laps</span><strong id="fuelLaps">13.4</strong></article>
       </div>
 
       <div class="layout-main">
         <article class="card">
-          <div class="card-title">Track Position</div>
+          <div class="card-head">
+            <div class="card-title">Track Position</div>
+            <div class="chip">PORTIMÃO · S2</div>
+          </div>
           <div class="track-stage">
             <svg id="trackMap" viewBox="0 0 600 360" aria-label="Track map">
               <path class="track-base" d="M88 222 C37 137 105 50 192 76 C277 17 463 58 482 157 C501 255 404 311 322 270 C239 331 113 306 88 222"/>
               <path class="track-line" d="M88 222 C37 137 105 50 192 76 C277 17 463 58 482 157 C501 255 404 311 322 270 C239 331 113 306 88 222"/>
             </svg>
+            <div class="sector s1">S1</div>
+            <div class="sector s2">S2</div>
+            <div class="sector s3">S3</div>
             <div class="car-dot" id="carDot"></div>
           </div>
         </article>
 
         <article class="card">
-          <div class="card-title">Live Car Data</div>
+          <div class="card-head">
+            <div class="card-title">Live Car Data</div>
+            <div class="chip green-chip">VALID LAP</div>
+          </div>
+
           <div class="gauges">
             <div><span>Speed</span><strong id="speed">238</strong><small>km/h</small></div>
             <div><span>RPM</span><strong id="rpm">7210</strong><small>rpm</small></div>
             <div><span>Gear</span><strong id="gear">5</strong><small>gear</small></div>
             <div><span>Delta</span><strong id="delta" class="green">-0.182</strong><small>sec</small></div>
           </div>
+
+          <div class="inputs">
+            <div><span>Throttle</span><div class="bar"><i id="throttleBar"></i></div><b id="throttlePct">76%</b></div>
+            <div><span>Brake</span><div class="bar brake"><i id="brakeBar"></i></div><b id="brakePct">0%</b></div>
+            <div><span>Steering</span><div class="bar steer"><i id="steerBar"></i></div><b id="steerDeg">+3°</b></div>
+          </div>
+
           <div class="chart-wrap"><canvas id="dashboardChart"></canvas></div>
+        </article>
+      </div>
+
+      <div class="dashboard-lower">
+        <article class="card">
+          <div class="card-title">Tyres</div>
+          <div class="tyres">
+            <div class="tyre"><span>FL</span><strong id="tireFL">86°</strong><small>27.4 PSI</small></div>
+            <div class="tyre"><span>FR</span><strong id="tireFR">88°</strong><small>27.6 PSI</small></div>
+            <div class="tyre"><span>RL</span><strong id="tireRL">82°</strong><small>27.1 PSI</small></div>
+            <div class="tyre"><span>RR</span><strong id="tireRR">84°</strong><small>27.2 PSI</small></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Vehicle Dynamics</div>
+          <div class="dynamics-grid">
+            <div><span>Lat G</span><strong id="latG">+1.42</strong></div>
+            <div><span>Long G</span><strong id="longG">-0.18</strong></div>
+            <div><span>Ride FL</span><strong>54 mm</strong></div>
+            <div><span>Ride FR</span><strong>55 mm</strong></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Fuel Strategy</div>
+          <div class="strategy">
+            <div><span>Average</span><strong>2.37 L/lap</strong></div>
+            <div><span>Target</span><strong>2.30 L/lap</strong></div>
+            <div><span>Window</span><strong class="yellow">Lap 35–38</strong></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-title">Sectors</div>
+          <div class="sector-times">
+            <div><span>S1</span><strong class="green">33.310</strong></div>
+            <div><span>S2</span><strong>37.392</strong></div>
+            <div><span>S3</span><strong class="red">31.402</strong></div>
+          </div>
         </article>
       </div>
     </section>
@@ -91,16 +155,24 @@
       <div class="titlebar">
         <div>
           <h1>Live Pitwall</h1>
-          <p>Timing, gaps e estado de todos os pilotos em pista</p>
+          <p>Timing, gaps, stint e estado de todos os pilotos em pista</p>
         </div>
+      </div>
+
+      <div class="live-summary">
+        <article><span>Track</span><strong>Portimão</strong></article>
+        <article><span>Race Time</span><strong id="liveRaceTime">18:34</strong></article>
+        <article><span>Leader Gap</span><strong class="red">+3.120</strong></article>
+        <article><span>Cars</span><strong>24</strong></article>
+        <article><span>Flag</span><strong class="green">GREEN</strong></article>
       </div>
 
       <article class="card table-card">
         <table>
           <thead>
             <tr>
-              <th>Pos</th><th>Driver</th><th>Car</th><th>Lap</th>
-              <th>Last</th><th>Best</th><th>Delta</th><th>Gap</th>
+              <th>Pos</th><th>Cls</th><th>Driver</th><th>Car</th><th>Lap</th>
+              <th>Last</th><th>Best</th><th>Delta</th><th>Gap</th><th>Fuel</th><th>Stint</th>
             </tr>
           </thead>
           <tbody id="timingBody"></tbody>
@@ -120,22 +192,12 @@
 
     <section id="sessions" class="view">
       <div class="titlebar"><div><h1>Sessions</h1><p>Histórico de corridas, treinos e qualificações</p></div></div>
-      <article class="card table-card">
-        <table>
-          <thead><tr><th>Date</th><th>Simulator</th><th>Track</th><th>Car</th><th>Laps</th><th>Best</th><th>Status</th></tr></thead>
-          <tbody id="sessionsBody"></tbody>
-        </table>
-      </article>
+      <article class="card table-card"><table><thead><tr><th>Date</th><th>Simulator</th><th>Track</th><th>Car</th><th>Laps</th><th>Best</th><th>Status</th></tr></thead><tbody id="sessionsBody"></tbody></table></article>
     </section>
 
     <section id="laps" class="view">
       <div class="titlebar"><div><h1>Laps</h1><p>Análise de voltas e setores</p></div></div>
-      <article class="card table-card">
-        <table>
-          <thead><tr><th>Lap</th><th>Time</th><th>S1</th><th>S2</th><th>S3</th><th>Delta</th><th>Fuel</th></tr></thead>
-          <tbody id="lapsBody"></tbody>
-        </table>
-      </article>
+      <article class="card table-card"><table><thead><tr><th>Lap</th><th>Time</th><th>S1</th><th>S2</th><th>S3</th><th>Delta</th><th>Fuel</th></tr></thead><tbody id="lapsBody"></tbody></table></article>
     </section>
 
     <section id="compare" class="view">
@@ -151,12 +213,7 @@
 
     <section id="records" class="view">
       <div class="titlebar"><div><h1>AMS Records</h1><p>Melhores voltas por simulador, pista e carro</p></div></div>
-      <article class="card table-card">
-        <table>
-          <thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Track</th><th>Lap Time</th></tr></thead>
-          <tbody id="recordsBody"></tbody>
-        </table>
-      </article>
+      <article class="card table-card"><table><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Track</th><th>Lap Time</th></tr></thead><tbody id="recordsBody"></tbody></table></article>
     </section>
 
     <section id="driver" class="view">
