@@ -13,7 +13,8 @@
   const timing=q("#timingBody");
   AMSMock.drivers.forEach(d=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td><strong>${d.pos}</strong></td><td><strong>${d.driver}</strong><br><small>${d.number}</small></td><td>${d.car}</td><td>${d.lap}</td><td>${d.last}</td><td>${d.best}</td><td class="${d.delta.startsWith("-")?"green":"red"}">${d.delta}</td><td>${d.gap}</td>`;
+    if(d.driver==="H. Azevedo") tr.classList.add("focus-row");
+    tr.innerHTML=`<td><strong>${d.pos}</strong></td><td>P${d.cls}</td><td><strong>${d.driver}</strong><br><small>${d.number}</small></td><td>${d.car}</td><td>${d.lap}</td><td>${d.last}</td><td>${d.best}</td><td class="${d.delta.startsWith("-")?"green":"red"}">${d.delta}</td><td>${d.gap}</td><td>${d.fuel} L</td><td>${d.stint}</td>`;
     timing.appendChild(tr);
   });
 
