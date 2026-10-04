@@ -46,6 +46,68 @@
 
   AMSAuth.init();
 
+
+  const fmtLapMs=ms=>{
+    const n=Number(ms);
+    if(!Number.isFinite(n)) return "—";
+    const min=Math.floor(n/60000);
+    const sec=(n-min*60000)/1000;
+    return min+":"+sec.toFixed(3).padStart(6,"0");
+  };
+
+  async function loadCloudAccountData(){
+    if(!AMSAuth.user?.id) return;
+
+    const token=await AMSAuth.token();
+    if(!token) return;
+
+    try{
+      const [own,shared]=await Promise.all([
+        AMSSupabase.getBestLaps(token,AMSAuth.user.id,false),
+        AMSSupabase.getBestLaps(token,null,true)
+      ]);
+
+      if(Array.isArray(own) && own.length){
+        const laps=q("#lapsBody");
+        laps.innerHTML="";
+        own.slice(0,50).forEach((l,i)=>{
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td>${i+1}</td><td><strong>${fmtLapMs(l.lap_time_ms)}</strong></td><td colspan="3">${l.circuit||"—"} · ${l.circuit_layout||""}</td><td class="${l.verified?"green":""}">${l.verified?"VERIFIED":"—"}</td><td>${l.car||"—"}</td>`;
+          laps.appendChild(tr);
+        });
+      }
+
+      if(Array.isArray(shared) && shared.length){
+        const records=q("#recordsBody");
+        records.innerHTML="";
+        shared.slice(0,50).forEach((r,i)=>{
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td><strong>${i+1}</strong></td><td>${r.pilot_id===AMSAuth.user.id?"Tu":"AMS Pilot"}</td><td>${r.car||"—"}</td><td>${[r.circuit,r.circuit_layout].filter(Boolean).join(" · ")}</td><td><strong>${fmtLapMs(r.lap_time_ms)}</strong></td>`;
+          records.appendChild(tr);
+        });
+      }
+
+      const c=document.getElementById("connectionText");
+      if(c && AMSRealtime.mode!=="cloud") c.textContent="SUPABASE ACCOUNT";
+    }catch(err){
+      console.warn("AMS cloud laps:",err);
+    }
+  }
+
+  document.addEventListener("ams-auth-changed",e=>{
+    if(e.detail?.user){
+      loadCloudAccountData();
+      AMSRealtime.nextCloudPoll=0;
+      AMSRealtime.pollCloud();
+    }else{
+      AMSRealtime.mode="mock";
+      AMSRealtime.liveRows=[];
+      const c=document.getElementById("connectionText");
+      if(c)c.textContent="MOCK LIVE";
+    }
+  });
+
+
   const trackEl = q("#trackName");
   const loadCurrentTrack = () => AMSTrack.load(trackEl?.textContent || "Algarve International Circuit");
   loadCurrentTrack();
