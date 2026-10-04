@@ -39,7 +39,21 @@
     records.appendChild(tr);
   });
 
-  window.addEventListener("resize",()=>AMSCharts.drawAll(AMSRealtime.phase));
+  window.addEventListener("resize",()=>{
+    AMSCharts.drawAll(AMSRealtime.phase);
+    AMSTrack.setPosition(AMSTrack.progress);
+  });
+
+  AMSAuth.init();
+
+  const trackEl = q("#trackName");
+  const loadCurrentTrack = () => AMSTrack.load(trackEl?.textContent || "Algarve International Circuit");
+  loadCurrentTrack();
+
+  if(trackEl){
+    new MutationObserver(loadCurrentTrack).observe(trackEl,{childList:true,subtree:true,characterData:true});
+  }
+
   AMSCharts.drawAll();
   AMSRealtime.start();
 })();
