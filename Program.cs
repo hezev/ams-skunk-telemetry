@@ -1,4 +1,24 @@
-var builder = WebApplication.CreateBuilder(args);
+var currentDirectory = Directory.GetCurrentDirectory();
+
+string contentRoot;
+
+if (Directory.Exists(Path.Combine(currentDirectory, "wwwroot")))
+{
+    contentRoot = currentDirectory;
+}
+else
+{
+    // Visual Studio can launch the compiled executable from bin/Debug/netX.
+    // Walk back to the project root so static files are still found.
+    contentRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", ".."));
+}
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = contentRoot,
+    WebRootPath = Path.Combine(contentRoot, "wwwroot")
+});
 
 var app = builder.Build();
 
@@ -15,6 +35,8 @@ app.MapGet("/api/health", () => Results.Ok(new
 {
     service = "AMS Skunk Telemetry",
     status = "ok",
+    contentRoot,
+    webRoot = app.Environment.WebRootPath,
     utc = DateTime.UtcNow
 }));
 
