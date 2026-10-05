@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null};
+  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1};
 
   async function coachFlag(token){
     try{
@@ -158,6 +158,27 @@
     setText("workspaceTelemetry",d?`${samples.length.toLocaleString("pt-PT")} amostras · ${samples.length?Object.keys(samples[0]).length:0} canais`:"Sem volta selecionada");
   }
 
+  function maxFinite(samples,key,absolute=false){
+    const vals=(samples||[]).map(s=>Number(s?.[key])).filter(Number.isFinite);
+    if(!vals.length)return null;
+    return absolute?Math.max(...vals.map(Math.abs)):Math.max(...vals);
+  }
+
+  function updateTelemetrySummary(d){
+    const s=d?.telemetry||[];
+    const first=s[0],last=s[s.length-1];
+    const fuelUsed=Number(first?.fuel)-Number(last?.fuel);
+    setText("telemetryLapTime",fmtLap(d?.lap_time_ms));
+    const maxSpeed=maxFinite(s,"speed");
+    setText("telemetryMaxSpeed",maxSpeed===null?"—":maxSpeed.toFixed(1)+" km/h");
+    const maxRpm=maxFinite(s,"rpm");
+    setText("telemetryMaxRpm",maxRpm===null?"—":Math.round(maxRpm).toLocaleString("pt-PT"));
+    setText("telemetryFuelUsed",Number.isFinite(fuelUsed)&&fuelUsed>=0?fuelUsed.toFixed(2)+" L":"—");
+    const lat=maxFinite(s,"gLat",true),lng=maxFinite(s,"gLong",true);
+    setText("telemetryPeakLatG",lat===null?"—":lat.toFixed(2)+" g");
+    setText("telemetryPeakLongG",lng===null?"—":lng.toFixed(2)+" g");
+  }
+
   function updateReplayDerived(d){
     const s=d?.telemetry||[];
     if(!s.length)return;
@@ -167,6 +188,7 @@
     setText("fuelWindow","N/D");
     setText("trackChip",d.circuit||"—");
     setText("dashboardSubtitle",`Replay disponível · volta #${d.lap_number??"—"} · ${fmtLap(d.lap_time_ms)}`);
+    updateTelemetrySummary(d);
   }
 
   async function selectLap(id,goTelemetry=false){
@@ -176,7 +198,10 @@
     setText("telemetryStatus",`${(d.telemetry||[]).length} amostras`);
     const sel=q("#telemetryLapSelect"); if(sel)sel.value=id;
     setText("simName",d.simulator||"—"); setText("trackName",d.circuit||"—"); setText("carName",d.car||"—");
-    AMSTrack.load(d.circuit||"");
+    await AMSTrack.load(d.circuit||"");
+    state.replayCursor=0;
+    const seek=q("#replaySeek"); if(seek)seek.value="0";
+    setText("replayPositionText","0.0%");
     updateWorkspace(); updateReplayDerived(d);
     if(goTelemetry)switchView("telemetry");
   }
@@ -187,23 +212,45 @@
     body.innerHTML=`<tr class="focus-row"><td><strong>${pos}</strong></td><td>${cls==="—"?"—":"P"+cls}</td><td><strong>${pilotName(d.pilot_id)}</strong><br><small>REPLAY</small></td><td>${d.car||"—"}</td><td>${d.lap_number??"—"}</td><td>${fmtLap(d.lap_time_ms)}</td><td>${fmtLap(sample?.bestLapTime*1000)}</td><td>${Number.isFinite(Number(sample?.delta))?Number(sample.delta).toFixed(3):"—"}</td><td>—</td><td>${Number.isFinite(Number(sample?.fuel))?Number(sample.fuel).toFixed(1)+" L":"—"}</td><td>—</td></tr>`;
   }
 
+  function applyReplaySample(d,index){
+    const samples=d?.telemetry||[];
+    if(!samples.length)return;
+    const i=Math.max(0,Math.min(samples.length-1,Math.floor(index)));
+    const s=samples[i];
+    AMSRealtime.applySample({sample:s,circuit:d.circuit,car:d.car,simulator:d.simulator});
+    const t=Number(s.t);
+    if(Number.isFinite(t))setText("sessionTime",t.toFixed(2)+"s");
+    setText("liveRaceTime",Number.isFinite(t)?t.toFixed(1)+"s":"—");
+    setText("liveFlag",s.flagText||"—");
+    setText("lapStateChip","REPLAY");
+    renderReplayTiming(d,s);
+
+    const seek=q("#replaySeek");
+    const ratio=samples.length>1?i/(samples.length-1):0;
+    if(seek)seek.value=String(Math.round(ratio*1000));
+    const pos=Number(s.position);
+    setText("replayPositionText",Number.isFinite(pos)?pos.toFixed(1)+"%":(ratio*100).toFixed(1)+"%");
+  }
+
   async function startReplay(){
     if(!state.selectedDetail&&state.laps[0])await selectLap(state.laps[0].id);
     const d=state.selectedDetail, samples=d?.telemetry||[]; if(!samples.length)return;
     if(state.replayTimer){clearInterval(state.replayTimer);state.replayTimer=null;}
+    if(state.replayCursor>=samples.length-1)state.replayCursor=0;
+
     AMSRealtime.mode="replay";
     const btn=q("#replayBtn"); if(btn)btn.textContent="■ Parar replay";
+    const tbtn=q("#telemetryReplayBtn"); if(tbtn)tbtn.textContent="■ Parar";
     const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="■ Parar simulação";
     setText("connectionText","REPLAY SUPABASE"); setText("liveBadgeText","REPLAY");
     setText("liveTrack",d.circuit||"—"); setText("liveCars","1"); setText("liveGap","—");
-    let i=0; const duration=Math.max(1,Number(d.lap_time_ms)/1000), step=Math.max(1,Math.round(samples.length/(duration*20)));
+
+    const duration=Math.max(1,Number(d.lap_time_ms)/1000);
     state.replayTimer=setInterval(()=>{
-      const s=samples[i]; if(!s){stopReplay();return;}
-      AMSRealtime.applySample({sample:s,circuit:d.circuit,car:d.car,simulator:d.simulator});
-      const t=Number(s.t); if(Number.isFinite(t))setText("sessionTime",t.toFixed(1)+"s");
-      setText("liveRaceTime",Number.isFinite(t)?t.toFixed(1)+"s":"—");
-      setText("liveFlag",s.flagText||"—"); setText("lapStateChip","REPLAY");
-      renderReplayTiming(d,s); i+=step;
+      if(state.replayCursor>=samples.length){stopReplay();return;}
+      applyReplaySample(d,state.replayCursor);
+      const samplesPerTick=samples.length/(duration*20);
+      state.replayCursor+=Math.max(.1,samplesPerTick*state.replaySpeed);
     },50);
   }
 
@@ -211,8 +258,37 @@
     if(state.replayTimer)clearInterval(state.replayTimer); state.replayTimer=null;
     AMSRealtime.mode="offline";
     const btn=q("#replayBtn"); if(btn)btn.textContent="▶ Replay volta";
+    const tbtn=q("#telemetryReplayBtn"); if(tbtn)tbtn.textContent="▶ Replay";
     const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="▶ Simular com volta gravada";
-    setText("connectionText","SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE"); setText("lapStateChip","SEM LIVE");
+    setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT");
+    setText("liveBadgeText","OFFLINE"); setText("lapStateChip","SEM LIVE");
+  }
+
+  function seekReplay(value){
+    const d=state.selectedDetail,samples=d?.telemetry||[];
+    if(!samples.length)return;
+    const ratio=Math.max(0,Math.min(1,Number(value)/1000));
+    state.replayCursor=ratio*(samples.length-1);
+    applyReplaySample(d,state.replayCursor);
+  }
+
+  function exportTelemetryCsv(){
+    const d=state.selectedDetail,samples=d?.telemetry||[];
+    if(!samples.length)return;
+    const keys=[...new Set(samples.flatMap(s=>Object.keys(s||{})))];
+    const esc=v=>{
+      if(v===null||v===undefined)return "";
+      const s=String(v);
+      return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+    };
+    const rows=[keys.join(","),...samples.map(s=>keys.map(k=>esc(s?.[k])).join(","))];
+    const blob=new Blob([rows.join("\n")],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=`AMS-${(d.circuit||"track").replace(/[^a-z0-9]+/gi,"-")}-lap-${d.lap_number??"x"}.csv`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
   async function compare(){
@@ -254,7 +330,11 @@
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
   q("#compareBtn")?.addEventListener("click",compare);
   q("#replayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
+  q("#telemetryReplayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
   q("#simulateLiveBtn")?.addEventListener("click",()=>{switchView("live");state.replayTimer?stopReplay():startReplay();});
+  q("#replaySeek")?.addEventListener("input",e=>seekReplay(e.target.value));
+  q("#replaySpeed")?.addEventListener("change",e=>{state.replaySpeed=Math.max(.25,Number(e.target.value)||1);});
+  q("#exportCsvBtn")?.addEventListener("click",exportTelemetryCsv);
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
   document.addEventListener("ams-auth-changed",e=>{if(e.detail?.user)loadCloud();else stopReplay();});
