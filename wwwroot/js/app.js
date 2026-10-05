@@ -2,6 +2,21 @@
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null};
 
+  async function coachFlag(token,userId){
+    try{
+      const qs=new URLSearchParams({select:"user_id",user_id:"eq."+userId,limit:"1"});
+      const rows=await AMSSupabase.request("/rest/v1/ams_coaches?"+qs,{token});
+      return Array.isArray(rows)&&rows.length>0;
+    }catch{return false;}
+  }
+
+  async function visiblePilots(token){
+    try{
+      const qs=new URLSearchParams({select:"id,pilot_name,team,created_at",order:"pilot_name.asc",limit:"500"});
+      return await AMSSupabase.request("/rest/v1/ams_pilots?"+qs,{token})||[];
+    }catch{return [];}
+  }
+
   const fmtLap=ms=>{
     const n=Number(ms); if(!Number.isFinite(n)) return "—";
     const m=Math.floor(n/60000), s=(n-m*60000)/1000;
@@ -206,9 +221,9 @@
     if(!AMSAuth.user?.id)return;
     const token=await AMSAuth.token(); if(!token)return;
     try{
-      state.isCoach=await AMSSupabase.isCoach(token,AMSAuth.user.id);
+      state.isCoach=await coachFlag(token,AMSAuth.user.id);
       state.laps=await AMSSupabase.getLaps(token,state.isCoach?null:AMSAuth.user.id)||[];
-      try{state.pilots=await AMSSupabase.getPilots(token)||[];}catch{state.pilots=[];}
+      state.pilots=await visiblePilots(token);
       renderLaps();renderSessions();renderRecords();renderDriver();renderTeam();fillSelectors();
       if(state.laps.length)await selectLap(state.laps[0].id);
       setText("connectionText","SUPABASE ACCOUNT");
