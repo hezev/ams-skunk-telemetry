@@ -14,6 +14,24 @@ window.AMSAuth = {
     else localStorage.removeItem("ams_auth_session");
   },
 
+  async signup(email,password){
+    const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/signup",{
+      method:"POST",
+      headers:this.headers(),
+      body:JSON.stringify({email,password})
+    });
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||"Falha ao criar conta.");
+    if(data.access_token){
+      data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
+      this.user=data.user||null;
+      this.save(data);
+      this.render();
+      document.dispatchEvent(new CustomEvent("ams-auth-changed",{detail:{user:this.user}}));
+    }
+    return data;
+  },
+
   async login(email,password){
     const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/token?grant_type=password",{
       method:"POST",headers:this.headers(),body:JSON.stringify({email,password})
@@ -98,6 +116,27 @@ window.AMSAuth = {
     document.getElementById("loginClose")?.addEventListener("click",()=>modal?.classList.remove("open"));
     document.getElementById("logoutBtn")?.addEventListener("click",()=>this.logout());
     modal?.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("open")});
+
+    document.getElementById("signupBtn")?.addEventListener("click",async()=>{
+      if(error) error.textContent="";
+      const email=document.getElementById("loginEmail").value.trim();
+      const password=document.getElementById("loginPassword").value;
+      if(!email || !password){
+        if(error) error.textContent="Indica email e password para criar a conta.";
+        return;
+      }
+      try{
+        const data=await this.signup(email,password);
+        if(data.access_token){
+          modal?.classList.remove("open");
+          form?.reset();
+        }else if(error){
+          error.textContent="Conta criada. Confirma o email e depois inicia sessão.";
+        }
+      }catch(err){
+        if(error) error.textContent=err.message;
+      }
+    });
 
     form?.addEventListener("submit",async e=>{
       e.preventDefault();
