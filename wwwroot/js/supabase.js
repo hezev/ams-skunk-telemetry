@@ -35,6 +35,16 @@ window.AMSSupabase = {
     return this.request("/rest/v1/ams_live_sessions?"+new URLSearchParams(params),{token});
   },
 
+  async getLaps(token,pilotId=null){
+    const params={
+      select:"id,pilot_id,local_lap_id,simulator,circuit,car,lap_time_ms,completed_at,lap_number,session_id,verified",
+      order:"completed_at.desc",
+      limit:"250"
+    };
+    if(pilotId) params.pilot_id="eq."+pilotId;
+    return this.request("/rest/v1/ams_laps?"+new URLSearchParams(params),{token});
+  },
+
   async getBestLaps(token,pilotId=null,shared=false){
     const params={
       select:"id,pilot_id,simulator,circuit,circuit_layout,car,lap_time_ms,completed_at,verified",
@@ -48,11 +58,11 @@ window.AMSSupabase = {
 
   async getLapTelemetry(token,id){
     const q=new URLSearchParams({
-      select:"id,pilot_id,simulator,circuit,circuit_layout,car,lap_time_ms,telemetry",
+      select:"id,pilot_id,simulator,circuit,car,lap_time_ms,lap_number,session_id,completed_at,telemetry",
       id:"eq."+id,
       limit:"1"
     });
-    const rows=await this.request("/rest/v1/ams_best_laps?"+q,{token});
+    const rows=await this.request("/rest/v1/ams_laps?"+q,{token});
     return rows?.[0]||null;
   },
 
