@@ -61,20 +61,50 @@
 
     try{
       const [own,shared]=await Promise.all([
-        AMSSupabase.getBestLaps(token,AMSAuth.user.id,false),
+        AMSSupabase.getLaps(token,AMSAuth.user.id),
         AMSSupabase.getBestLaps(token,null,true)
       ]);
 
       const laps=q("#lapsBody");
       laps.innerHTML="";
       if(Array.isArray(own) && own.length){
-        own.slice(0,50).forEach((l,i)=>{
+        own.slice(0,100).forEach(l=>{
           const tr=document.createElement("tr");
-          tr.innerHTML=`<td>${i+1}</td><td><strong>${fmtLapMs(l.lap_time_ms)}</strong></td><td colspan="3">${l.circuit||"—"} · ${l.circuit_layout||""}</td><td class="${l.verified?"green":""}">${l.verified?"VERIFIED":"—"}</td><td>${l.car||"—"}</td>`;
+          tr.dataset.lapId=l.id;
+          tr.classList.add("cloud-lap-row");
+          const when=l.completed_at?new Date(l.completed_at).toLocaleString("pt-PT"):"—";
+          tr.innerHTML=`<td><strong>${l.lap_number??"—"}</strong></td><td><strong>${fmtLapMs(l.lap_time_ms)}</strong></td><td>${l.circuit||"—"}</td><td>${l.car||"—"}</td><td><small>${l.session_id||"—"}</small></td><td>${when}</td><td class="${l.verified?"green":""}">${l.verified?"VERIFIED":"RECORDED"}</td>`;
           laps.appendChild(tr);
         });
       }else{
         laps.innerHTML='<tr><td colspan="7" class="empty-cloud">Nenhuma volta encontrada nesta conta.</td></tr>';
+      }
+
+      const sessions=q("#sessionsBody");
+      sessions.innerHTML="";
+      const grouped=new Map();
+      for(const l of (own||[])){
+        const key=l.session_id||[l.simulator,l.circuit,l.car,l.completed_at?.slice(0,10)].join("|");
+        if(!grouped.has(key)){
+          grouped.set(key,{
+            id:key,sim:l.simulator,track:l.circuit,car:l.car,
+            laps:0,best:null,last:null
+          });
+        }
+        const s=grouped.get(key);
+        s.laps++;
+        if(Number.isFinite(Number(l.lap_time_ms)) && (s.best===null || Number(l.lap_time_ms)<s.best)) s.best=Number(l.lap_time_ms);
+        const d=l.completed_at?new Date(l.completed_at):null;
+        if(d && (!s.last || d>s.last)) s.last=d;
+      }
+      if(grouped.size){
+        [...grouped.values()].sort((a,b)=>(b.last?.getTime()||0)-(a.last?.getTime()||0)).forEach(s=>{
+          const tr=document.createElement("tr");
+          tr.innerHTML=`<td>${s.last?s.last.toLocaleDateString("pt-PT"):"—"}</td><td>${s.sim||"—"}</td><td>${s.track||"—"}</td><td>${s.car||"—"}</td><td>${s.laps}</td><td><strong>${fmtLapMs(s.best)}</strong></td><td><span class="status complete">Complete</span></td>`;
+          sessions.appendChild(tr);
+        });
+      }else{
+        sessions.innerHTML='<tr><td colspan="7" class="empty-cloud">Sem sessões gravadas nesta conta.</td></tr>';
       }
 
       const records=q("#recordsBody");
@@ -86,7 +116,7 @@
           records.appendChild(tr);
         });
       }else{
-        records.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem voltas partilhadas disponíveis.</td></tr>';
+        records.innerHTML='<tr><td colspan="5" class="empty-cloud">Ainda não existem melhores voltas partilhadas em ams_best_laps.</td></tr>';
       }
 
       const c=document.getElementById("connectionText");
