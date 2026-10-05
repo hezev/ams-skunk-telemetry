@@ -176,7 +176,7 @@
     AMSRealtime.mode="replay";
     const btn=q("#replayBtn"); if(btn)btn.textContent="■ Parar replay";
     const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="■ Parar simulação";
-    setText("connectionText","REPLAY SUPABASE");
+    setText("connectionText","REPLAY SUPABASE"); setText("liveBadgeText","REPLAY");
     setText("liveTrack",d.circuit||"—"); setText("liveCars","1"); setText("liveGap","—");
     let i=0; const duration=Math.max(1,Number(d.lap_time_ms)/1000), step=Math.max(1,Math.round(samples.length/(duration*20)));
     state.replayTimer=setInterval(()=>{
@@ -194,7 +194,7 @@
     AMSRealtime.mode="offline";
     const btn=q("#replayBtn"); if(btn)btn.textContent="▶ Replay volta";
     const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="▶ Simular com volta gravada";
-    setText("connectionText","SUPABASE ACCOUNT"); setText("lapStateChip","SEM LIVE");
+    setText("connectionText","SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE"); setText("lapStateChip","SEM LIVE");
   }
 
   async function compare(){
@@ -226,7 +226,7 @@
       state.pilots=await visiblePilots(token);
       renderLaps();renderSessions();renderRecords();renderDriver();renderTeam();fillSelectors();
       if(state.laps.length)await selectLap(state.laps[0].id);
-      setText("connectionText","SUPABASE ACCOUNT");
+      setText("connectionText","SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
     }catch(err){
       console.warn("AMS portal data:",err); setText("connectionText","SUPABASE ERROR");
       const body=q("#lapsBody");if(body)body.innerHTML='<tr><td colspan="7" class="error-cloud">Erro: '+String(err.message||err)+'</td></tr>';
