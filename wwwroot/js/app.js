@@ -67,30 +67,40 @@
         AMSSupabase.getBestLaps(token,null,true)
       ]);
 
+      const laps=q("#lapsBody");
+      laps.innerHTML="";
       if(Array.isArray(own) && own.length){
-        const laps=q("#lapsBody");
-        laps.innerHTML="";
         own.slice(0,50).forEach((l,i)=>{
           const tr=document.createElement("tr");
           tr.innerHTML=`<td>${i+1}</td><td><strong>${fmtLapMs(l.lap_time_ms)}</strong></td><td colspan="3">${l.circuit||"—"} · ${l.circuit_layout||""}</td><td class="${l.verified?"green":""}">${l.verified?"VERIFIED":"—"}</td><td>${l.car||"—"}</td>`;
           laps.appendChild(tr);
         });
+      }else{
+        laps.innerHTML='<tr><td colspan="7" class="empty-cloud">Nenhuma volta encontrada nesta conta.</td></tr>';
       }
 
+      const records=q("#recordsBody");
+      records.innerHTML="";
       if(Array.isArray(shared) && shared.length){
-        const records=q("#recordsBody");
-        records.innerHTML="";
         shared.slice(0,50).forEach((r,i)=>{
           const tr=document.createElement("tr");
           tr.innerHTML=`<td><strong>${i+1}</strong></td><td>${r.pilot_id===AMSAuth.user.id?"Tu":"AMS Pilot"}</td><td>${r.car||"—"}</td><td>${[r.circuit,r.circuit_layout].filter(Boolean).join(" · ")}</td><td><strong>${fmtLapMs(r.lap_time_ms)}</strong></td>`;
           records.appendChild(tr);
         });
+      }else{
+        records.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem voltas partilhadas disponíveis.</td></tr>';
       }
 
       const c=document.getElementById("connectionText");
       if(c && AMSRealtime.mode!=="cloud") c.textContent="SUPABASE ACCOUNT";
     }catch(err){
       console.warn("AMS cloud laps:",err);
+      const laps=q("#lapsBody");
+      const records=q("#recordsBody");
+      if(laps) laps.innerHTML='<tr><td colspan="7" class="empty-cloud error-cloud">Erro Supabase: '+String(err.message||err)+'</td></tr>';
+      if(records) records.innerHTML='<tr><td colspan="5" class="empty-cloud error-cloud">Não foi possível carregar referências.</td></tr>';
+      const c=document.getElementById("connectionText");
+      if(c)c.textContent="SUPABASE ERROR";
     }
   }
 
