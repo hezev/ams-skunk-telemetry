@@ -1,299 +1,282 @@
 window.AMSTrack = {
-  phase: 0,
-  progress: 0,
-  index: null,
-  activeEntry: null,
-  activePath: null,
+  phase:0,
+  progress:0,
+  index:null,
+  activeEntry:null,
+  activePath:null,
+  centerline:[],
+  startOffset:0,
 
   normalize(value){
-    return String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/&/g, " and ")
-      .replace(/[^a-z0-9]+/g, " ")
-      .trim();
+    return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/&/g," and ").replace(/[^a-z0-9]+/g," ").trim();
   },
 
-  encodePath(path){
-    return String(path).split("/").map(encodeURIComponent).join("/");
-  },
+  encodePath(path){ return String(path).split("/").map(encodeURIComponent).join("/"); },
 
   collectStrings(obj){
-    return Object.values(obj || {})
-      .filter(v => typeof v === "string" && v.length < 500)
-      .map(v => v.trim())
-      .filter(Boolean);
+    return Object.values(obj||{}).filter(v=>typeof v==="string"&&v.length<500).map(v=>v.trim()).filter(Boolean);
   },
 
   buildIndex(data){
-    const found = [];
-    const seen = new Set();
-    const categories = ["Road", "Oval", "Dirt Road", "Dirt Oval"];
-
-    const walk = (node, parents=[]) => {
-      if(Array.isArray(node)){
-        node.forEach(v => walk(v, parents));
-        return;
-      }
-      if(!node || typeof node !== "object") return;
-
-      const direct = this.collectStrings(node);
-      const context = [...parents, ...direct].slice(-24);
-
-      let localPath = null;
-      let cdnBase = null;
-
+    const found=[],seen=new Set(),categories=["Road","Oval","Dirt Road","Dirt Oval"];
+    const walk=(node,parents=[])=>{
+      if(Array.isArray(node)){node.forEach(v=>walk(v,parents));return;}
+      if(!node||typeof node!=="object")return;
+      const direct=this.collectStrings(node),context=[...parents,...direct].slice(-24);
+      let localPath=null,cdnBase=null;
       for(const s of direct){
-        const clean = s.replace(/\\/g, "/");
-
-        const category = categories.find(c => clean.startsWith(c + "/"));
-        if(category && clean.split("/").length >= 3){
-          const pieces = clean.split("/");
-          localPath = pieces.slice(0,3).join("/");
-        }
-
+        const clean=s.replace(/\\/g,"/");
+        const category=categories.find(c=>clean.startsWith(c+"/"));
+        if(category&&clean.split("/").length>=3)localPath=clean.split("/").slice(0,3).join("/");
         if(clean.includes("members-assets.iracing.com/public/track-maps/")){
-          const ix = clean.indexOf("https://");
-          if(ix >= 0){
-            const url = clean.slice(ix).split(/[?#]/)[0].replace(/\/(active|background|inactive|pitroad|start-finish|turns)\.svg$/i,"");
-            cdnBase = url.replace(/\/$/,"");
-          }
+          const ix=clean.indexOf("https://");
+          if(ix>=0)cdnBase=clean.slice(ix).split(/[?#]/)[0].replace(/\/(active|background|inactive|pitroad|start-finish|turns)\.svg$/i,"").replace(/\/$/,"");
         }
       }
-
-      if(localPath || cdnBase){
-        const key = localPath || cdnBase;
+      if(localPath||cdnBase){
+        const key=localPath||cdnBase;
         if(!seen.has(key)){
           seen.add(key);
-          const search = this.normalize(context.join(" "));
-          const parts = localPath ? localPath.split("/") : [];
-          found.push({
-            localPath,
-            cdnBase,
-            category: parts[0] || "",
-            family: parts[1] || "",
-            config: parts[2] || "",
-            search
-          });
+          const parts=localPath?localPath.split("/"):[];
+          found.push({localPath,cdnBase,category:parts[0]||"",family:parts[1]||"",config:parts[2]||"",search:this.normalize(context.join(" "))});
         }
       }
-
-      const parentContext = context.filter(s => s.length < 120);
-      Object.values(node).forEach(v => {
-        if(v && typeof v === "object") walk(v, parentContext);
-      });
+      const parentContext=context.filter(s=>s.length<120);
+      Object.values(node).forEach(v=>{if(v&&typeof v==="object")walk(v,parentContext);});
     };
-
     walk(data);
     return found;
   },
 
   aliases(target){
-    const n = this.normalize(target);
-    const extra = [];
-    if(n.includes("algarve") || n.includes("portimao")) extra.push("portimao", "algarve");
-    if(n.includes("spa")) extra.push("spa francorchamps", "spa");
-    if(n.includes("nurburgring") || n.includes("nuerburgring")) extra.push("nurburgring", "nuerburgring");
-    if(n.includes("le mans")) extra.push("lemans");
-    return [n, ...extra];
+    const n=this.normalize(target),extra=[];
+    if(n.includes("algarve")||n.includes("portimao"))extra.push("portimao","algarve");
+    if(n.includes("spa"))extra.push("spa francorchamps","spa");
+    if(n.includes("nurburgring")||n.includes("nuerburgring"))extra.push("nurburgring","nuerburgring");
+    if(n.includes("le mans"))extra.push("lemans");
+    return [n,...extra];
   },
 
   async getIndex(){
-    if(this.index) return this.index;
-
-    const cached = sessionStorage.getItem("ams_track_index_v1");
-    if(cached){
-      try{
-        this.index = JSON.parse(cached);
-        return this.index;
-      }catch{}
-    }
-
-    const res = await fetch(AMS_CONFIG.trackMetadataUrl, {cache:"force-cache"});
-    if(!res.ok) throw new Error("Não foi possível carregar o catálogo de pistas.");
-    const data = await res.json();
-
-    this.index = this.buildIndex(data);
-
-    try{
-      sessionStorage.setItem("ams_track_index_v1", JSON.stringify(this.index));
-    }catch{}
-
+    if(this.index)return this.index;
+    const cached=sessionStorage.getItem("ams_track_index_v1");
+    if(cached){try{this.index=JSON.parse(cached);return this.index;}catch{}}
+    const res=await fetch(AMS_CONFIG.trackMetadataUrl,{cache:"force-cache"});
+    if(!res.ok)throw new Error("Não foi possível carregar o catálogo de pistas.");
+    this.index=this.buildIndex(await res.json());
+    try{sessionStorage.setItem("ams_track_index_v1",JSON.stringify(this.index));}catch{}
     return this.index;
   },
 
-  score(entry, trackName, configHint=""){
-    const targets = this.aliases(trackName);
-    const hint = this.normalize(configHint);
-    let score = 0;
-
+  score(entry,trackName,configHint=""){
+    const targets=this.aliases(trackName),hint=this.normalize(configHint);let score=0;
     for(const target of targets){
-      if(!target) continue;
-      if(entry.search.includes(target)) score = Math.max(score, 120);
-      const words = target.split(" ").filter(x => x.length > 2);
-      if(words.length && words.every(w => entry.search.includes(w))) score = Math.max(score, 90);
-      score += words.filter(w => entry.search.includes(w)).length * 6;
+      if(!target)continue;
+      if(entry.search.includes(target))score=Math.max(score,120);
+      const words=target.split(" ").filter(x=>x.length>2);
+      if(words.length&&words.every(w=>entry.search.includes(w)))score=Math.max(score,90);
+      score+=words.filter(w=>entry.search.includes(w)).length*6;
     }
-
     if(hint){
-      if(entry.search.includes(hint)) score += 80;
-      const words = hint.split(" ").filter(x=>x.length>2);
-      score += words.filter(w=>entry.search.includes(w)).length * 8;
+      if(entry.search.includes(hint))score+=80;
+      score+=hint.split(" ").filter(x=>x.length>2&&entry.search.includes(x)).length*8;
     }
-
-    if(/grand.?prix|gp\b/i.test(entry.config)) score += 2;
+    if(/grand.?prix|gp\b/i.test(entry.config))score+=2;
     return score;
   },
 
-  async resolve(trackName, configHint=""){
-    const index = await this.getIndex();
-    if(!index.length) return null;
-
-    return index
-      .map(entry => ({entry, score:this.score(entry, trackName, configHint)}))
-      .sort((a,b)=>b.score-a.score)[0]?.entry || null;
+  async resolve(trackName,configHint=""){
+    const index=await this.getIndex();
+    return index.map(entry=>({entry,score:this.score(entry,trackName,configHint)})).sort((a,b)=>b.score-a.score)[0]?.entry||null;
   },
 
   baseUrl(entry){
-    if(entry.cdnBase) return entry.cdnBase;
-    if(entry.localPath) return AMS_CONFIG.trackRawBase + "/" + this.encodePath(entry.localPath);
+    if(entry.cdnBase)return entry.cdnBase;
+    if(entry.localPath)return AMS_CONFIG.trackRawBase+"/"+this.encodePath(entry.localPath);
     return "";
   },
 
-  async load(trackName, configHint=""){
-    const status = document.getElementById("trackSource");
+  async load(trackName,configHint=""){
+    const status=document.getElementById("trackSource");
     try{
-      if(status) status.textContent = "A localizar traçado…";
-      const entry = await this.resolve(trackName, configHint);
-      if(!entry) throw new Error("Traçado não encontrado.");
-
-      this.activeEntry = entry;
-      const base = this.baseUrl(entry);
-      const stack = document.getElementById("trackVectorStack");
-      if(!stack) return;
-
-      stack.querySelectorAll("img.track-layer").forEach(img => img.remove());
-
-      const layers = [
-        ["background","background.svg"],
-        ["inactive","inactive.svg"],
-        ["active","active.svg"],
-        ["pitroad","pitroad.svg"],
-        ["startfinish","start-finish.svg"],
-        ["turns","turns.svg"]
-      ];
-
+      if(status)status.textContent="A localizar traçado…";
+      const entry=await this.resolve(trackName,configHint);
+      if(!entry)throw new Error("Traçado não encontrado.");
+      this.activeEntry=entry;
+      const base=this.baseUrl(entry),stack=document.getElementById("trackVectorStack");
+      if(!stack)return;
+      stack.querySelectorAll("img.track-layer").forEach(img=>img.remove());
+      const layers=[["background","background.svg"],["inactive","inactive.svg"],["active","active.svg"],["pitroad","pitroad.svg"],["startfinish","start-finish.svg"],["turns","turns.svg"]];
       for(const [cls,file] of layers){
-        const img = document.createElement("img");
-        img.className = "track-layer track-" + cls;
-        img.alt = "";
-        img.src = base + "/" + file;
-        img.onerror = () => img.remove();
-        stack.appendChild(img);
+        const img=document.createElement("img");
+        img.className="track-layer track-"+cls;img.alt="";img.src=base+"/"+file;img.onerror=()=>img.remove();stack.appendChild(img);
       }
-
-      await this.prepareMotionPath(base + "/active.svg");
-
-      if(status){
-        status.textContent = [entry.family, entry.config].filter(Boolean).join(" · ") || trackName;
-      }
-
+      await this.prepareCenterline(base+"/active.svg",base+"/start-finish.svg");
+      if(status)status.textContent=[entry.family,entry.config].filter(Boolean).join(" · ")||trackName;
       return entry;
     }catch(err){
-      if(status) status.textContent = "Mapa indisponível";
-      console.warn("AMS track map:", err);
-      return null;
+      this.centerline=[];if(status)status.textContent="Mapa indisponível";console.warn("AMS track map:",err);return null;
     }
   },
 
-  async prepareMotionPath(url){
-    this.activePath = null;
-    const host = document.getElementById("trackMotionSvg");
-    if(!host) return;
+  distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);},
 
-    try{
-      const res = await fetch(url, {cache:"force-cache"});
-      if(!res.ok) return;
-      const text = await res.text();
-      const doc = new DOMParser().parseFromString(text, "image/svg+xml");
-      const src = doc.documentElement;
-      const viewBox = src.getAttribute("viewBox");
-      if(viewBox) host.setAttribute("viewBox", viewBox);
-
-      host.innerHTML = src.innerHTML;
-      const paths = [...host.querySelectorAll("path")];
-      let best = null, bestLen = 0;
-      for(const p of paths){
-        try{
-          const len = p.getTotalLength();
-          if(len > bestLen){ best = p; bestLen = len; }
-        }catch{}
-      }
-      this.activePath = best;
-      requestAnimationFrame(()=>this.setPosition(this.progress));
-    }catch{}
+  sampleCompoundPath(path,count=5000){
+    const total=path.getTotalLength(),points=[];
+    for(let i=0;i<count;i++){
+      const p=path.getPointAtLength(total*i/(count-1));
+      points.push({x:p.x,y:p.y});
+    }
+    return points;
   },
 
-  positionElement(el, progress){
-    const svg = document.getElementById("trackMotionSvg");
-    if(!el || !svg || !this.activePath || !Number.isFinite(Number(progress))) return;
+  splitContours(points){
+    if(points.length<20)return [];
+    let jumpIndex=-1,jumpDistance=-1;
+    const distances=[];
+    for(let i=1;i<points.length;i++){
+      const d=this.distance(points[i-1],points[i]);distances.push(d);
+      if(d>jumpDistance){jumpDistance=d;jumpIndex=i;}
+    }
+    const sorted=[...distances].sort((a,b)=>a-b);
+    const typical=sorted[Math.floor(sorted.length*.75)]||1;
+    if(jumpDistance<typical*8)return [points];
+    return [points.slice(0,jumpIndex),points.slice(jumpIndex)];
+  },
 
-    const length = this.activePath.getTotalLength();
-    const p = ((Number(progress)%1)+1)%1;
-    const point = this.activePath.getPointAtLength(p * length);
-    // Use the selected path CTM, not only the root SVG CTM. Many iRacing
-    // track SVGs contain nested transforms; ignoring them puts the car dot
-    // outside the visible racing line.
-    const matrix = this.activePath.getScreenCTM?.() || svg.getScreenCTM();
-    if(!matrix) return;
+  pointAtSequence(seq,fraction){
+    if(!seq.length)return {x:0,y:0};
+    const n=seq.length;
+    const x=((fraction%1)+1)%1*(n-1);
+    const i=Math.floor(x),j=(i+1)%n,t=x-i;
+    return {x:seq[i].x+(seq[j].x-seq[i].x)*t,y:seq[i].y+(seq[j].y-seq[i].y)*t};
+  },
 
-    const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
-    const stage = document.querySelector(".track-stage")?.getBoundingClientRect();
-    if(!stage) return;
+  buildCenterline(a,b,count=1600){
+    if(!a.length)return [];
+    if(!b.length)return a.slice(0,count);
 
-    el.style.left = (screen.x - stage.left) + "px";
-    el.style.top = (screen.y - stage.top) + "px";
+    const anchor=a[0];
+    let nearest=0,best=Infinity;
+    for(let i=0;i<b.length;i++){
+      const d=this.distance(anchor,b[i]);
+      if(d<best){best=d;nearest=i;}
+    }
+
+    const aNext=this.pointAtSequence(a,1/count);
+    const plus=this.pointAtSequence(b,(nearest/b.length)+1/count);
+    const minus=this.pointAtSequence(b,(nearest/b.length)-1/count);
+    const dir=this.distance(aNext,plus)<=this.distance(aNext,minus)?1:-1;
+    const offset=nearest/Math.max(1,b.length-1);
+
+    const out=[];
+    for(let i=0;i<count;i++){
+      const f=i/count;
+      const p1=this.pointAtSequence(a,f);
+      const p2=this.pointAtSequence(b,offset+dir*f);
+      out.push({x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2});
+    }
+    return out;
+  },
+
+  async startFinishPoint(url,host){
+    try{
+      const res=await fetch(url,{cache:"force-cache"});if(!res.ok)return null;
+      const doc=new DOMParser().parseFromString(await res.text(),"image/svg+xml");
+      const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.setAttribute("visibility","hidden");
+      [...doc.documentElement.children].forEach(node=>g.appendChild(document.importNode(node,true)));
+      host.appendChild(g);
+      const paths=[...g.querySelectorAll("path")];
+      let candidate=null,bestArea=Infinity;
+      for(const p of paths){
+        try{
+          const b=p.getBBox(),area=Math.max(.001,b.width*b.height);
+          if(area<bestArea&&Math.max(b.width,b.height)>5){bestArea=area;candidate=b;}
+        }catch{}
+      }
+      g.remove();
+      return candidate?{x:candidate.x+candidate.width/2,y:candidate.y+candidate.height/2}:null;
+    }catch{return null;}
+  },
+
+  rotateToStart(points,start){
+    if(!points.length||!start)return points;
+    let nearest=0,best=Infinity;
+    for(let i=0;i<points.length;i++){
+      const d=this.distance(points[i],start);
+      if(d<best){best=d;nearest=i;}
+    }
+    return [...points.slice(nearest),...points.slice(0,nearest)];
+  },
+
+  async prepareCenterline(activeUrl,startFinishUrl){
+    this.activePath=null;this.centerline=[];
+    const host=document.getElementById("trackMotionSvg");if(!host)return;
+
+    const res=await fetch(activeUrl,{cache:"force-cache"});if(!res.ok)return;
+    const text=await res.text(),doc=new DOMParser().parseFromString(text,"image/svg+xml"),src=doc.documentElement;
+    const viewBox=src.getAttribute("viewBox");if(viewBox)host.setAttribute("viewBox",viewBox);
+    const par=src.getAttribute("preserveAspectRatio");if(par)host.setAttribute("preserveAspectRatio",par);
+    host.innerHTML=src.innerHTML;
+
+    const paths=[...host.querySelectorAll("path")];
+    let best=null,bestLen=0;
+    for(const p of paths){try{const len=p.getTotalLength();if(len>bestLen){best=p;bestLen=len;}}catch{}}
+    if(!best)return;
+    this.activePath=best;
+
+    const compound=this.sampleCompoundPath(best,5000);
+    const contours=this.splitContours(compound).sort((x,y)=>y.length-x.length);
+    let center=this.buildCenterline(contours[0]||[],contours[1]||[]);
+    const sf=await this.startFinishPoint(startFinishUrl,host);
+    center=this.rotateToStart(center,sf);
+    this.centerline=center;
+
+    requestAnimationFrame(()=>this.setPosition(this.progress));
+  },
+
+  localPoint(progress){
+    const pts=this.centerline;
+    if(!pts.length)return null;
+    const p=((Number(progress)%1)+1)%1;
+    const x=p*pts.length,i=Math.floor(x)%pts.length,j=(i+1)%pts.length,t=x-Math.floor(x);
+    return {x:pts[i].x+(pts[j].x-pts[i].x)*t,y:pts[i].y+(pts[j].y-pts[i].y)*t};
+  },
+
+  positionElement(el,progress){
+    const svg=document.getElementById("trackMotionSvg"),point=this.localPoint(progress);
+    if(!el||!svg||!point)return;
+    const matrix=svg.getScreenCTM();if(!matrix)return;
+    const screen=new DOMPoint(point.x,point.y).matrixTransform(matrix);
+    const stage=document.querySelector(".track-stage")?.getBoundingClientRect();if(!stage)return;
+    el.style.left=(screen.x-stage.left)+"px";el.style.top=(screen.y-stage.top)+"px";
   },
 
   setPosition(progress){
-    this.positionElement(document.getElementById("carDot"), progress);
+    this.progress=((Number(progress)%1)+1)%1;
+    this.positionElement(document.getElementById("carDot"),this.progress);
   },
 
-  renderCars(rows=[], ownPilotId=null){
-    const stage=document.querySelector(".track-stage");
-    if(!stage || !this.activePath) return;
-
+  renderCars(rows=[],ownPilotId=null){
+    const stage=document.querySelector(".track-stage");if(!stage||!this.centerline.length)return;
     stage.querySelectorAll(".map-car-dot").forEach(el=>el.remove());
-
     for(const row of rows){
-      const pos=AMSSupabase.samplePosition(row?.sample);
-      if(pos===null) continue;
-
-      const isOwn=ownPilotId && row.pilot_id===ownPilotId;
-      if(isOwn){
-        this.progress=pos;
-        this.setPosition(pos);
-        continue;
-      }
-
-      const el=document.createElement("div");
-      el.className="map-car-dot";
-      const number=row?.sample?.carNumber ?? row?.sample?.car_number ?? row?.sample?.number ?? "";
-      const driver=row?.sample?.driverName ?? row?.sample?.driver_name ?? row?.sample?.name ?? "";
+      const pos=AMSSupabase.samplePosition(row?.sample);if(pos===null)continue;
+      const isOwn=ownPilotId&&row.pilot_id===ownPilotId;
+      if(isOwn){this.setPosition(pos);continue;}
+      const el=document.createElement("div");el.className="map-car-dot";
+      const number=row?.sample?.carNumber??row?.sample?.car_number??row?.sample?.number??"";
+      const driver=row?.sample?.driverName??row?.sample?.driver_name??row?.sample?.name??"";
       el.title=[number?("#"+String(number).replace("#","")):"",driver].filter(Boolean).join(" ");
-      if(number) el.dataset.label=String(number).replace("#","");
-      stage.appendChild(el);
-      this.positionElement(el,pos);
+      if(number)el.dataset.label=String(number).replace("#","");
+      stage.appendChild(el);this.positionElement(el,pos);
     }
   },
 
   tick(trackPosition=null){
-    this.phase += 0.04;
-    this.progress = Number.isFinite(Number(trackPosition))
-      ? Number(trackPosition)
-      : (this.progress + 0.0018) % 1;
-
-    this.setPosition(this.progress);
+    this.phase+=.04;
+    const next=Number.isFinite(Number(trackPosition))?Number(trackPosition):(this.progress+.0018)%1;
+    this.setPosition(next);
   }
 };
