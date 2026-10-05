@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <title>AMS Skunk Telemetry</title>
-  <link rel="stylesheet" href="css/app.css?v=20261005-4">
-  <link rel="stylesheet" href="css/responsive.css?v=20261005-4">
+  <link rel="stylesheet" href="css/app.css?v=20261005-5">
+  <link rel="stylesheet" href="css/responsive.css?v=20261005-5">
 </head>
 <body>
 
@@ -41,7 +41,7 @@
       <strong id="simName">iRacing</strong>
       <span id="trackName">Algarve International Circuit</span>
       <span id="carName">Ferrari 296 GT3</span>
-      <span>Race · 42 min</span>
+      <span id="sessionLabel">Sem sessão live</span>
     </div>
     <div class="top-actions">
       <button id="loginBtn" class="login-btn">Login Piloto</button>
@@ -59,11 +59,14 @@
       <div class="titlebar">
         <div>
           <h1>Race Control</h1>
-          <p>AMS Skunk Telemetry · Live Session · Car #27</p>
+          <p id="dashboardSubtitle">Dados reais do AMS Telemetry · seleciona uma volta ou inicia um replay</p>
         </div>
-        <div class="session-clock">
-          <span>SESSION</span>
-          <strong id="sessionTime">00:18:34</strong>
+        <div class="title-actions">
+          <button id="replayBtn" class="action-btn" type="button">▶ Replay volta</button>
+          <div class="session-clock">
+            <span>SESSION / REPLAY</span>
+            <strong id="sessionTime">—</strong>
+          </div>
         </div>
       </div>
 
@@ -80,7 +83,7 @@
         <article class="card">
           <div class="card-head">
             <div class="card-title">Track Position</div>
-            <div class="chip">PORTIMÃO · S2</div>
+            <div class="chip" id="trackChip">SEM DADOS LIVE</div>
           </div>
           <div class="track-stage">
             <div id="trackVectorStack" class="track-vector-stack">
@@ -94,20 +97,20 @@
         <article class="card">
           <div class="card-head">
             <div class="card-title">Live Car Data</div>
-            <div class="chip green-chip">VALID LAP</div>
+            <div class="chip" id="lapStateChip">SEM LIVE</div>
           </div>
 
           <div class="gauges">
-            <div><span>Speed</span><strong id="speed">238</strong><small>km/h</small></div>
-            <div><span>RPM</span><strong id="rpm">7210</strong><small>rpm</small></div>
-            <div><span>Gear</span><strong id="gear">5</strong><small>gear</small></div>
-            <div><span>Delta</span><strong id="delta" class="green">-0.182</strong><small>sec</small></div>
+            <div><span>Speed</span><strong id="speed">—</strong><small>km/h</small></div>
+            <div><span>RPM</span><strong id="rpm">—</strong><small>rpm</small></div>
+            <div><span>Gear</span><strong id="gear">—</strong><small>gear</small></div>
+            <div><span>Delta</span><strong id="delta">—</strong><small>sec</small></div>
           </div>
 
           <div class="inputs">
-            <div><span>Throttle</span><div class="bar"><i id="throttleBar"></i></div><b id="throttlePct">76%</b></div>
-            <div><span>Brake</span><div class="bar brake"><i id="brakeBar"></i></div><b id="brakePct">0%</b></div>
-            <div><span>Steering</span><div class="bar steer"><i id="steerBar"></i></div><b id="steerDeg">+3°</b></div>
+            <div><span>Throttle</span><div class="bar"><i id="throttleBar"></i></div><b id="throttlePct">—</b></div>
+            <div><span>Brake</span><div class="bar brake"><i id="brakeBar"></i></div><b id="brakePct">—</b></div>
+            <div><span>Steering</span><div class="bar steer"><i id="steerBar"></i></div><b id="steerDeg">—</b></div>
           </div>
 
           <div class="chart-wrap"><canvas id="dashboardChart"></canvas></div>
@@ -118,38 +121,38 @@
         <article class="card">
           <div class="card-title">Tyres</div>
           <div class="tyres">
-            <div class="tyre"><span>FL</span><strong id="tireFL">86°</strong><small>27.4 PSI</small></div>
-            <div class="tyre"><span>FR</span><strong id="tireFR">88°</strong><small>27.6 PSI</small></div>
-            <div class="tyre"><span>RL</span><strong id="tireRL">82°</strong><small>27.1 PSI</small></div>
-            <div class="tyre"><span>RR</span><strong id="tireRR">84°</strong><small>27.2 PSI</small></div>
+            <div class="tyre"><span>FL</span><strong id="tireFL">—</strong><small>N/D PSI</small></div>
+            <div class="tyre"><span>FR</span><strong id="tireFR">—</strong><small>N/D PSI</small></div>
+            <div class="tyre"><span>RL</span><strong id="tireRL">—</strong><small>N/D PSI</small></div>
+            <div class="tyre"><span>RR</span><strong id="tireRR">—</strong><small>N/D PSI</small></div>
           </div>
         </article>
 
         <article class="card">
           <div class="card-title">Vehicle Dynamics</div>
           <div class="dynamics-grid">
-            <div><span>Lat G</span><strong id="latG">+1.42</strong></div>
-            <div><span>Long G</span><strong id="longG">-0.18</strong></div>
-            <div><span>Ride FL</span><strong>54 mm</strong></div>
-            <div><span>Ride FR</span><strong>55 mm</strong></div>
+            <div><span>Lat G</span><strong id="latG">—</strong></div>
+            <div><span>Long G</span><strong id="longG">—</strong></div>
+            <div><span>Ride FL</span><strong>N/D</strong></div>
+            <div><span>Ride FR</span><strong>N/D</strong></div>
           </div>
         </article>
 
         <article class="card">
           <div class="card-title">Fuel Strategy</div>
           <div class="strategy">
-            <div><span>Average</span><strong>2.37 L/lap</strong></div>
-            <div><span>Target</span><strong>2.30 L/lap</strong></div>
-            <div><span>Window</span><strong class="yellow">Lap 35–38</strong></div>
+            <div><span>Average</span><strong id="fuelAverage">—</strong></div>
+            <div><span>Target</span><strong>N/D</strong></div>
+            <div><span>Window</span><strong id="fuelWindow">N/D</strong></div>
           </div>
         </article>
 
         <article class="card">
           <div class="card-title">Sectors</div>
           <div class="sector-times">
-            <div><span>S1</span><strong class="green">33.310</strong></div>
-            <div><span>S2</span><strong>37.392</strong></div>
-            <div><span>S3</span><strong class="red">31.402</strong></div>
+            <div><span>S1</span><strong>N/D</strong></div>
+            <div><span>S2</span><strong>N/D</strong></div>
+            <div><span>S3</span><strong>N/D</strong></div>
           </div>
         </article>
       </div>
@@ -159,16 +162,17 @@
       <div class="titlebar">
         <div>
           <h1>Live Pitwall</h1>
-          <p>Timing, gaps, stint e estado de todos os pilotos em pista</p>
+          <p>Timing live quando disponível; replay de uma volta gravada para validação do painel</p>
         </div>
+        <button id="simulateLiveBtn" class="action-btn" type="button">▶ Simular com volta gravada</button>
       </div>
 
       <div class="live-summary">
-        <article><span>Track</span><strong>Portimão</strong></article>
-        <article><span>Race Time</span><strong id="liveRaceTime">18:34</strong></article>
-        <article><span>Leader Gap</span><strong class="red">+3.120</strong></article>
-        <article><span>Cars</span><strong>24</strong></article>
-        <article><span>Flag</span><strong class="green">GREEN</strong></article>
+        <article><span>Track</span><strong id="liveTrack">—</strong></article>
+        <article><span>Race Time</span><strong id="liveRaceTime">—</strong></article>
+        <article><span>Leader Gap</span><strong id="liveGap">—</strong></article>
+        <article><span>Cars</span><strong id="liveCars">—</strong></article>
+        <article><span>Flag</span><strong id="liveFlag">—</strong></article>
       </div>
 
       <article class="card table-card">
@@ -185,7 +189,13 @@
     </section>
 
     <section id="telemetry" class="view">
-      <div class="titlebar"><div><h1>Telemetry</h1><p>Live traces sincronizados</p></div></div>
+      <div class="titlebar">
+        <div><h1>Telemetry</h1><p>Telemetria real da volta selecionada no Supabase</p></div>
+        <div class="analysis-actions">
+          <label>Volta <select id="telemetryLapSelect"></select></label>
+          <span id="telemetryStatus" class="chip">SEM VOLTA</span>
+        </div>
+      </div>
       <div class="telemetry-grid">
         <article class="card"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
         <article class="card"><div class="card-title">Throttle</div><div class="chart-wrap"><canvas class="trace" data-trace="throttle"></canvas></div></article>
@@ -205,14 +215,21 @@
     </section>
 
     <section id="compare" class="view">
-      <div class="titlebar"><div><h1>Lap Comparison</h1><p>Volta selecionada vs referência</p></div></div>
-      <div class="metrics metrics-4">
-        <article class="metric"><span>Reference</span><strong>1:41.862</strong></article>
-        <article class="metric"><span>Selected</span><strong>1:42.104</strong></article>
-        <article class="metric"><span>Difference</span><strong class="red">+0.242</strong></article>
-        <article class="metric"><span>Ideal Lap</span><strong class="green">1:41.431</strong></article>
+      <div class="titlebar">
+        <div><h1>Lap Comparison</h1><p>Comparação real de duas voltas gravadas</p></div>
+        <div class="analysis-actions">
+          <label>A <select id="compareLapA"></select></label>
+          <label>B <select id="compareLapB"></select></label>
+          <button id="compareBtn" class="action-btn" type="button">Comparar</button>
+        </div>
       </div>
-      <article class="card"><div class="card-title">Overlay</div><div class="chart-wrap big"><canvas class="trace" data-trace="compare"></canvas></div></article>
+      <div class="metrics metrics-4">
+        <article class="metric"><span>Lap A</span><strong id="compareTimeA">—</strong></article>
+        <article class="metric"><span>Lap B</span><strong id="compareTimeB">—</strong></article>
+        <article class="metric"><span>Difference</span><strong id="compareDiff">—</strong></article>
+        <article class="metric"><span>Compatibility</span><strong id="compareCompatibility">—</strong></article>
+      </div>
+      <article class="card"><div class="card-head"><div class="card-title">Speed Overlay</div><div id="compareNote" class="chip">Seleciona duas voltas</div></div><div class="chart-wrap big"><canvas class="trace" data-trace="compare"></canvas></div></article>
     </section>
 
     <section id="records" class="view">
@@ -223,24 +240,31 @@
     <section id="driver" class="view">
       <div class="titlebar"><div><h1>Driver</h1><p>Performance e evolução</p></div></div>
       <div class="metrics metrics-4">
-        <article class="metric"><span>Sessions</span><strong>182</strong></article>
-        <article class="metric"><span>Laps</span><strong>4,921</strong></article>
-        <article class="metric"><span>Tracks</span><strong>28</strong></article>
-        <article class="metric"><span>PB Improvements</span><strong class="green">37</strong></article>
+        <article class="metric"><span>Sessions</span><strong id="driverSessions">—</strong></article>
+        <article class="metric"><span>Laps</span><strong id="driverLaps">—</strong></article>
+        <article class="metric"><span>Tracks</span><strong id="driverTracks">—</strong></article>
+        <article class="metric"><span>PB Improvements</span><strong class="green" id="driverPBs">—</strong></article>
       </div>
     </section>
 
     <section id="team" class="view">
-      <div class="titlebar"><div><h1>Team</h1><p>Pilotos, engenheiros e permissões</p></div></div>
-      <article class="card empty-state">Estrutura de equipa preparada para ligação ao Supabase.</article>
+      <div class="titlebar"><div><h1>Team / Coach</h1><p id="teamSubtitle">Pilotos e permissões disponíveis para a conta autenticada</p></div></div>
+      <article class="card table-card"><table><thead><tr><th>Pilot</th><th>Team</th><th>Laps</th><th>Sessions</th><th>Best</th></tr></thead><tbody id="teamBody"></tbody></table></article>
     </section>
 
     <section id="workspace" class="view">
-      <div class="titlebar"><div><h1>Custom Workspace</h1><p>Construtor de ecrãs de análise</p></div></div>
+      <div class="titlebar">
+        <div><h1>Custom Workspace</h1><p>Workspace persistente no browser para a volta selecionada</p></div>
+        <div class="workspace-controls">
+          <label><input type="checkbox" data-widget="track" checked> Track</label>
+          <label><input type="checkbox" data-widget="timing" checked> Timing</label>
+          <label><input type="checkbox" data-widget="telemetry" checked> Telemetry</label>
+        </div>
+      </div>
       <div class="workspace-grid">
-        <article class="card"><div class="card-title">Track</div><div class="placeholder">Track widget</div></article>
-        <article class="card"><div class="card-title">Timing</div><div class="placeholder">Timing widget</div></article>
-        <article class="card"><div class="card-title">Telemetry</div><div class="placeholder">Telemetry widget</div></article>
+        <article class="card workspace-widget" data-workspace-widget="track"><div class="card-title">Track</div><div id="workspaceTrack" class="workspace-value">Sem volta selecionada</div></article>
+        <article class="card workspace-widget" data-workspace-widget="timing"><div class="card-title">Timing</div><div id="workspaceTiming" class="workspace-value">Sem volta selecionada</div></article>
+        <article class="card workspace-widget" data-workspace-widget="telemetry"><div class="card-title">Telemetry</div><div id="workspaceTelemetry" class="workspace-value">Sem volta selecionada</div></article>
       </div>
     </section>
 
@@ -267,13 +291,12 @@
   </div>
 </div>
 
-<script src="js/config.js?v=20261005-4"></script>
-<script src="js/mock-data.js?v=20261005-4"></script>
-<script src="js/charts.js?v=20261005-4"></script>
-<script src="js/track-map.js?v=20261005-4"></script>
-<script src="js/supabase.js?v=20261005-4"></script>
-<script src="js/auth.js?v=20261005-4"></script>
-<script src="js/realtime.js?v=20261005-4"></script>
-<script src="js/app.js?v=20261005-4"></script>
+<script src="js/config.js?v=20261005-5"></script>
+<script src="js/charts.js?v=20261005-5"></script>
+<script src="js/track-map.js?v=20261005-5"></script>
+<script src="js/supabase.js?v=20261005-5"></script>
+<script src="js/auth.js?v=20261005-5"></script>
+<script src="js/realtime.js?v=20261005-5"></script>
+<script src="js/app.js?v=20261005-5"></script>
 </body>
 </html>
