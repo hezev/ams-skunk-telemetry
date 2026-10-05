@@ -5,6 +5,7 @@ window.AMSRealtime = {
   liveRows:[],
   polling:false,
   nextCloudPoll:0,
+  liveCloudAvailable:true,
 
   set(id,value){
     const e=document.getElementById(id);
@@ -150,7 +151,7 @@ window.AMSRealtime = {
   },
 
   async pollCloud(){
-    if(this.polling || !AMSAuth.user?.id) return;
+    if(this.polling || !AMSAuth.user?.id || !this.liveCloudAvailable) return;
     this.polling=true;
     try{
       const token=await AMSAuth.token();
@@ -181,7 +182,12 @@ window.AMSRealtime = {
       this.mode="offline";
       this.liveRows=[];
       const msg=String(err?.message||err||"Erro Supabase");
-      this.clearRealData("CLOUD: "+msg.slice(0,48));
+      if(msg.includes("ams_live_sessions") && /not find|does not exist|relation/i.test(msg)){
+        this.liveCloudAvailable=false;
+        this.clearRealData("LIVE CLOUD NÃO CONFIGURADO");
+      }else{
+        this.clearRealData("CLOUD: "+msg.slice(0,48));
+      }
       const c=document.getElementById("connectionText");
       if(c)c.title=msg;
       console.warn("AMS Supabase live:",err);
