@@ -31,3 +31,6 @@
 .analysis-actions select{margin-left:5px;background:#090c10;border:1px solid #252c35;color:#fff;padding:7px;border-radius:4px}
 .cloud-lap-row{cursor:pointer}
 .workspace-value{min-height:110px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px}
+
+.login-secondary{width:100%;margin-top:8px;padding:10px;border:1px solid #39424d;border-radius:5px;background:#11161c;color:#fff;font-size:9px;font-weight:900;text-transform:uppercase;cursor:pointer}
+.login-secondary:hover{border-color:#ef1824}
