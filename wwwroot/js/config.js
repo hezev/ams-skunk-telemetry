@@ -4,5 +4,7 @@ window.AMS_CONFIG = Object.freeze({
   livePollMs: 2500,
   liveFreshnessMs: 12000,
   trackMetadataUrl: "https://raw.githubusercontent.com/meowmachine/racing-track-maps-vector/main/from-iracing/iracing-tracks-metadata.json",
-  trackRawBase: "https://raw.githubusercontent.com/meowmachine/racing-track-maps-vector/main/from-iracing"
+  trackRawBase: "https://raw.githubusercontent.com/meowmachine/racing-track-maps-vector/main/from-iracing",
+  raceStudioManifestUrl: "https://raw.githubusercontent.com/meowmachine/racing-track-maps-vector/main/from-racestudio3/manifest.json",
+  raceStudioRawBase: "https://raw.githubusercontent.com/meowmachine/racing-track-maps-vector/main/from-racestudio3/output"
 });
