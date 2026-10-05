@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <title>AMS Skunk Telemetry</title>
-  <link rel="stylesheet" href="css/app.css?v=20261005-6">
-  <link rel="stylesheet" href="css/responsive.css?v=20261005-6">
+  <link rel="stylesheet" href="css/app.css?v=20261005-7">
+  <link rel="stylesheet" href="css/responsive.css?v=20261005-7">
 </head>
 <body>
 
@@ -190,17 +190,59 @@
 
     <section id="telemetry" class="view">
       <div class="titlebar">
-        <div><h1>Telemetry</h1><p>Telemetria real da volta selecionada no Supabase</p></div>
+        <div><h1>Telemetry</h1><p>Análise detalhada da telemetria gravada pelo AMS Telemetry v5.12.17</p></div>
         <div class="analysis-actions">
           <label>Volta <select id="telemetryLapSelect"></select></label>
+          <button id="telemetryReplayBtn" class="action-btn" type="button">▶ Replay</button>
+          <button id="exportCsvBtn" class="action-btn" type="button">Export CSV</button>
           <span id="telemetryStatus" class="chip">SEM VOLTA</span>
         </div>
       </div>
-      <div class="telemetry-grid">
-        <article class="card"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
+
+      <div class="telemetry-kpis">
+        <article class="metric"><span>Lap Time</span><strong id="telemetryLapTime">—</strong></article>
+        <article class="metric"><span>Max Speed</span><strong id="telemetryMaxSpeed">—</strong></article>
+        <article class="metric"><span>Max RPM</span><strong id="telemetryMaxRpm">—</strong></article>
+        <article class="metric"><span>Fuel Used</span><strong id="telemetryFuelUsed">—</strong></article>
+        <article class="metric"><span>Peak Lat G</span><strong id="telemetryPeakLatG">—</strong></article>
+        <article class="metric"><span>Peak Long G</span><strong id="telemetryPeakLongG">—</strong></article>
+      </div>
+
+      <article class="card replay-control-card">
+        <div class="replay-control-row">
+          <span>Replay / Seek</span>
+          <input id="replaySeek" type="range" min="0" max="1000" value="0">
+          <span id="replayPositionText">0.0%</span>
+          <label>Speed
+            <select id="replaySpeed">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+        </div>
+      </article>
+
+      <div class="telemetry-grid telemetry-grid-dense">
+        <article class="card telemetry-wide"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
         <article class="card"><div class="card-title">Throttle</div><div class="chart-wrap"><canvas class="trace" data-trace="throttle"></canvas></div></article>
         <article class="card"><div class="card-title">Brake</div><div class="chart-wrap"><canvas class="trace" data-trace="brake"></canvas></div></article>
+        <article class="card"><div class="card-title">RPM + Shift RPM</div><div class="chart-wrap"><canvas class="trace" data-trace="rpm"></canvas></div></article>
+        <article class="card"><div class="card-title">Gear</div><div class="chart-wrap"><canvas class="trace" data-trace="gear"></canvas></div></article>
         <article class="card"><div class="card-title">Steering</div><div class="chart-wrap"><canvas class="trace" data-trace="steering"></canvas></div></article>
+        <article class="card"><div class="card-title">Steering Torque</div><div class="chart-wrap"><canvas class="trace" data-trace="steeringTorque"></canvas></div></article>
+        <article class="card telemetry-wide"><div class="card-title">Delta</div><div class="chart-wrap"><canvas class="trace" data-trace="delta"></canvas></div></article>
+        <article class="card telemetry-wide"><div class="card-title">Lateral / Longitudinal G</div><div class="chart-wrap"><canvas class="trace" data-trace="gforce"></canvas></div></article>
+        <article class="card"><div class="card-title">Fuel</div><div class="chart-wrap"><canvas class="trace" data-trace="fuel"></canvas></div></article>
+        <article class="card"><div class="card-title">Fuel Use / Hour</div><div class="chart-wrap"><canvas class="trace" data-trace="fuelUse"></canvas></div></article>
+        <article class="card telemetry-wide"><div class="card-title">Tyre Temperatures FL / FR / RL / RR</div><div class="chart-wrap"><canvas class="trace" data-trace="tyres"></canvas></div></article>
+        <article class="card telemetry-wide"><div class="card-title">Water / Oil / Track / Air Temperature</div><div class="chart-wrap"><canvas class="trace" data-trace="temps"></canvas></div></article>
+        <article class="card telemetry-wide"><div class="card-title">Yaw / Pitch / Roll Rates</div><div class="chart-wrap"><canvas class="trace" data-trace="attitude"></canvas></div></article>
+        <article class="card"><div class="card-title">Brake Bias</div><div class="chart-wrap"><canvas class="trace" data-trace="brakeBias"></canvas></div></article>
+        <article class="card"><div class="card-title">TC / ABS / Clutch</div><div class="chart-wrap"><canvas class="trace" data-trace="systems"></canvas></div></article>
+        <article class="card"><div class="card-title">Humidity / Wind</div><div class="chart-wrap"><canvas class="trace" data-trace="environment"></canvas></div></article>
+        <article class="card"><div class="card-title">Oil Pressure / Voltage</div><div class="chart-wrap"><canvas class="trace" data-trace="pressure"></canvas></div></article>
       </div>
     </section>
 
@@ -292,12 +334,12 @@
   </div>
 </div>
 
-<script src="js/config.js?v=20261005-6"></script>
-<script src="js/charts.js?v=20261005-6"></script>
-<script src="js/track-map.js?v=20261005-6"></script>
-<script src="js/supabase.js?v=20261005-6"></script>
-<script src="js/auth.js?v=20261005-6"></script>
-<script src="js/realtime.js?v=20261005-6"></script>
-<script src="js/app.js?v=20261005-6"></script>
+<script src="js/config.js?v=20261005-7"></script>
+<script src="js/charts.js?v=20261005-7"></script>
+<script src="js/track-map.js?v=20261005-7"></script>
+<script src="js/supabase.js?v=20261005-7"></script>
+<script src="js/auth.js?v=20261005-7"></script>
+<script src="js/realtime.js?v=20261005-7"></script>
+<script src="js/app.js?v=20261005-7"></script>
 </body>
 </html>
