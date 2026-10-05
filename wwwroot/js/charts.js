@@ -3,6 +3,7 @@ window.AMSCharts = {
   compareA: [],
   compareB: [],
   cursorRatio: null,
+  redrawFrame: null,
 
   specs: {
     speed: {title:"Speed",unit:"km/h",series:[["speed","Speed","#ef1824"]]},
@@ -19,7 +20,8 @@ window.AMSCharts = {
     tyres: {title:"Tyre Temperatures",unit:"°C",series:[["tyreFL","FL","#ef1824"],["tyreFR","FR","#22a8ff"],["tyreRL","RL","#31d878"],["tyreRR","RR","#ffd329"]]},
     temps: {title:"Temperatures",unit:"°C",series:[["waterTemp","Water","#22a8ff"],["oilTemp","Oil","#ffd329"],["trackTemp","Track","#ef1824"],["airTemp","Air","#31d878"]]},
     attitude: {title:"Body Rates",unit:"°/s",series:[["yawRate","Yaw","#ef1824"],["pitchRate","Pitch","#22a8ff"],["rollRate","Roll","#31d878"]]},
-    systems: {title:"Driver Aids / Clutch",unit:"%",series:[["clutch","Clutch","#ffd329"],["tc","TC","#31d878"],["abs","ABS","#ef1824"]]},
+    systems: {title:"TC / ABS",unit:"level",fixed:[0,2],series:[["tc","TC","#31d878"],["abs","ABS","#ef1824"]]},
+    clutch: {title:"Clutch",unit:"%",fixed:[0,100],series:[["clutch","Clutch","#ffd329"]]},
     brakeBias: {title:"Brake Bias",unit:"%",series:[["brakeBias","Bias","#ff9f43"]]},
     environment: {title:"Environment",unit:"",series:[["humidity","Humidity %","#22a8ff"],["windSpeed","Wind","#31d878"]]},
     pressure: {title:"Oil / Electrical",unit:"",series:[["oilPressure","Oil Pressure","#ffd329"],["voltage","Voltage","#22a8ff"]]}
@@ -212,9 +214,22 @@ window.AMSCharts = {
       const r=canvas.getBoundingClientRect();
       const left=58,right=14;
       this.cursorRatio=Math.max(0,Math.min(1,(e.clientX-r.left-left)/(r.width-left-right)));
-      this.drawAll();
+      if(!this.redrawFrame){
+        this.redrawFrame=requestAnimationFrame(()=>{
+          this.redrawFrame=null;
+          this.drawAll();
+        });
+      }
     });
-    canvas.addEventListener("mouseleave",()=>{this.cursorRatio=null;this.drawAll();});
+    canvas.addEventListener("mouseleave",()=>{
+      this.cursorRatio=null;
+      if(!this.redrawFrame){
+        this.redrawFrame=requestAnimationFrame(()=>{
+          this.redrawFrame=null;
+          this.drawAll();
+        });
+      }
+    });
   },
 
   draw(canvas,type){
