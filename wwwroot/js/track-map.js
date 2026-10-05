@@ -220,15 +220,13 @@ window.AMSTrack = {
     // section of circuit.
     const raw=[];
     let current=start;
-    const strideA=Math.max(1,Math.floor(a.length/count));
     const localWindow=Math.max(18,Math.floor(b.length*.018));
 
     for(let k=0;k<count;k++){
       const ai=Math.min(a.length-1,Math.floor(k*a.length/count));
       const p1=a[ai];
       const predicted=((start+dir*Math.floor(k*b.length/count))%b.length+b.length)%b.length;
-      const expected=Math.round(current*.65+predicted*.35);
-      current=this.nearestIndex(b,p1,expected,localWindow);
+      current=this.nearestIndex(b,p1,predicted,localWindow);
       const p2=b[current];
       raw.push({x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2});
     }
