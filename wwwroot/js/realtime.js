@@ -117,6 +117,17 @@ window.AMSRealtime = {
     }
   },
 
+  clearRealData(message="SEM LIVE CLOUD"){
+    const ids=["speed","rpm","gear","delta","fuel","fuelLaps","throttlePct","brakePct","steerDeg","latG","longG","tireFL","tireFR","tireRL","tireRR"];
+    ids.forEach(id=>this.set(id,"—"));
+    for(const id of ["throttleBar","brakeBar","steerBar"]){
+      const e=document.getElementById(id);
+      if(e)e.style.width="0%";
+    }
+    const c=document.getElementById("connectionText");
+    if(c)c.textContent=message;
+  },
+
   async pollCloud(){
     if(this.polling || !AMSAuth.user?.id) return;
     this.polling=true;
@@ -124,7 +135,7 @@ window.AMSRealtime = {
       const token=await AMSAuth.token();
       if(!token) return;
 
-      const rows=await AMSSupabase.getLiveSessions(token);
+      const rows=await AMSSupabase.getLiveSessions(token,AMSAuth.user.id);
       const fresh=(rows||[]).filter(r=>AMSSupabase.fresh(r));
 
       if(fresh.length){
@@ -141,14 +152,17 @@ window.AMSRealtime = {
         const top=document.querySelector(".live-badge");
         if(top) top.title="Dados cloud AMS Telemetry";
       }else{
-        this.mode="mock";
-        const c=document.getElementById("connectionText");
-        if(c) c.textContent="MOCK · SEM LIVE CLOUD";
+        this.mode="offline";
+        this.liveRows=[];
+        this.clearRealData("SEM LIVE CLOUD");
       }
     }catch(err){
-      this.mode="mock";
+      this.mode="offline";
+      this.liveRows=[];
+      const msg=String(err?.message||err||"Erro Supabase");
+      this.clearRealData("CLOUD: "+msg.slice(0,48));
       const c=document.getElementById("connectionText");
-      if(c) c.textContent="CLOUD INDISPONÍVEL";
+      if(c)c.title=msg;
       console.warn("AMS Supabase live:",err);
     }finally{
       this.polling=false;
@@ -201,8 +215,8 @@ window.AMSRealtime = {
         this.pollCloud();
       }
 
-      if(this.mode!=="cloud") this.mockTick();
-      else{
+      if(this.mode==="mock" && !AMSAuth.user?.id) this.mockTick();
+      else if(this.mode==="cloud"){
         this.elapsed+=.25;
         const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
         this.set("sessionTime",fmt(this.elapsed)); this.set("liveRaceTime",fmt(this.elapsed).slice(3));
