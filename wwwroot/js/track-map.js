@@ -152,31 +152,90 @@ window.AMSTrack = {
     return {x:seq[i].x+(seq[j].x-seq[i].x)*t,y:seq[i].y+(seq[j].y-seq[i].y)*t};
   },
 
-  buildCenterline(a,b,count=1600){
-    if(!a.length)return [];
-    if(!b.length)return a.slice(0,count);
-
-    const anchor=a[0];
-    let nearest=0,best=Infinity;
-    for(let i=0;i<b.length;i++){
-      const d=this.distance(anchor,b[i]);
-      if(d<best){best=d;nearest=i;}
+  nearestIndex(seq,target,expected,windowSize){
+    const n=seq.length;
+    let bestIndex=((expected%n)+n)%n,best=Infinity;
+    for(let d=-windowSize;d<=windowSize;d++){
+      const i=((expected+d)%n+n)%n;
+      const dist=this.distance(seq[i],target);
+      if(dist<best){best=dist;bestIndex=i;}
     }
+    return bestIndex;
+  },
 
-    const aNext=this.pointAtSequence(a,1/count);
-    const plus=this.pointAtSequence(b,(nearest/b.length)+1/count);
-    const minus=this.pointAtSequence(b,(nearest/b.length)-1/count);
-    const dir=this.distance(aNext,plus)<=this.distance(aNext,minus)?1:-1;
-    const offset=nearest/Math.max(1,b.length-1);
+  smoothClosed(points,radius=4){
+    if(points.length<radius*2+1)return points;
+    return points.map((_,i)=>{
+      let x=0,y=0,w=0;
+      for(let d=-radius;d<=radius;d++){
+        const p=points[(i+d+points.length)%points.length];
+        const weight=radius+1-Math.abs(d);
+        x+=p.x*weight;y+=p.y*weight;w+=weight;
+      }
+      return {x:x/w,y:y/w};
+    });
+  },
+
+  resampleClosed(points,count=2400){
+    if(points.length<2)return points;
+    const seg=[],cum=[0];
+    let total=0;
+    for(let i=0;i<points.length;i++){
+      const d=this.distance(points[i],points[(i+1)%points.length]);
+      seg.push(d);total+=d;cum.push(total);
+    }
+    if(total<=0)return points;
 
     const out=[];
-    for(let i=0;i<count;i++){
-      const f=i/count;
-      const p1=this.pointAtSequence(a,f);
-      const p2=this.pointAtSequence(b,offset+dir*f);
-      out.push({x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2});
+    let segment=0;
+    for(let k=0;k<count;k++){
+      const target=total*k/count;
+      while(segment<seg.length-1 && cum[segment+1]<target)segment++;
+      const a=points[segment],b=points[(segment+1)%points.length];
+      const len=seg[segment]||1;
+      const t=Math.max(0,Math.min(1,(target-cum[segment])/len));
+      out.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
     }
     return out;
+  },
+
+  buildCenterline(a,b,count=2000){
+    if(!a.length)return [];
+    if(!b.length)return this.resampleClosed(a,count);
+
+    // Find the matching point on the opposite edge and its direction.
+    let start=0,best=Infinity;
+    for(let i=0;i<b.length;i++){
+      const d=this.distance(a[0],b[i]);
+      if(d<best){best=d;start=i;}
+    }
+
+    const aForward=a[Math.min(8,a.length-1)];
+    const bPlus=b[(start+8)%b.length];
+    const bMinus=b[(start-8+b.length)%b.length];
+    const dir=this.distance(aForward,bPlus)<=this.distance(aForward,bMinus)?1:-1;
+
+    // Pair both edges locally instead of by equal percentage. This prevents
+    // cumulative scale drift and avoids pairing with a nearby but unrelated
+    // section of circuit.
+    const raw=[];
+    let current=start;
+    const strideA=Math.max(1,Math.floor(a.length/count));
+    const localWindow=Math.max(18,Math.floor(b.length*.018));
+
+    for(let k=0;k<count;k++){
+      const ai=Math.min(a.length-1,Math.floor(k*a.length/count));
+      const p1=a[ai];
+      const predicted=((start+dir*Math.floor(k*b.length/count))%b.length+b.length)%b.length;
+      const expected=Math.round(current*.65+predicted*.35);
+      current=this.nearestIndex(b,p1,expected,localWindow);
+      const p2=b[current];
+      raw.push({x:(p1.x+p2.x)/2,y:(p1.y+p2.y)/2});
+    }
+
+    // LapDistPct/position represents distance along the circuit, not array
+    // index. Re-sample by actual centreline arc length so 25/50/75% line up.
+    return this.resampleClosed(this.smoothClosed(raw,5),2400);
   },
 
   async startFinishPoint(url,host){
