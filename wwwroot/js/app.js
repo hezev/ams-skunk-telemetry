@@ -184,7 +184,10 @@
     if(!s.length)return;
     const first=s[0], last=s[s.length-1];
     const fuelUsed=Number(first.fuel)-Number(last.fuel);
-    if(Number.isFinite(fuelUsed)&&fuelUsed>=0)setText("fuelAverage",fuelUsed.toFixed(2)+" L/lap");
+    if(Number.isFinite(fuelUsed)&&fuelUsed>=0){
+      setText("fuelAverage",fuelUsed.toFixed(2)+" L/lap");
+      AMSRealtime.fuelPerLap=fuelUsed>0?fuelUsed:null;
+    }
     setText("fuelWindow","N/D");
     setText("trackChip",d.circuit||"—");
     setText("dashboardSubtitle",`Replay disponível · volta #${d.lap_number??"—"} · ${fmtLap(d.lap_time_ms)}`);
