@@ -35,8 +35,8 @@ window.AMSRealtime = {
     const trackPos=AMSSupabase.samplePosition(p);
     const bestLap=num("bestLap","best_lap","bestLapTime","best_lap_time");
     const lastLap=num("lastLap","last_lap","lastLapTime","last_lap_time");
-    const position=num("position","overallPosition","overall_position");
-    const classPosition=num("classPosition","class_position");
+    const position=num("positionOverall","position","overallPosition","overall_position");
+    const classPosition=num("positionClass","classPosition","class_position");
 
     const lapText=v=>{
       if(v===null) return null;
@@ -65,6 +65,12 @@ window.AMSRealtime = {
     if(steer!==null){ this.set("steerDeg",(steer>=0?"+":"")+steer.toFixed(0)+"°"); const e=document.getElementById("steerBar"); if(e)e.style.width=Math.max(0,Math.min(100,50+steer*2))+"%"; }
     if(latG!==null) this.set("latG",(latG>=0?"+":"")+latG.toFixed(2));
     if(longG!==null) this.set("longG",(longG>=0?"+":"")+longG.toFixed(2));
+    for(const [id,key] of [["tireFL","tyreFL"],["tireFR","tyreFR"],["tireRL","tyreRL"],["tireRR","tyreRR"]]){
+      const v=Number(p[key]); if(Number.isFinite(v)) this.set(id,v.toFixed(1)+"°");
+    }
+    const session=Number(p.sessionTime); if(Number.isFinite(session)) this.set("sessionTime",session.toFixed(1)+"s");
+    const flag=p.flagText; if(flag) this.set("liveFlag",String(flag));
+    if(row?.circuit) this.set("liveTrack",row.circuit);
 
     const d=document.getElementById("delta");
     if(d && delta!==null){
