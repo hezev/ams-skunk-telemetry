@@ -1,11 +1,12 @@
 window.AMSRealtime = {
   phase:0,
   elapsed:1114,
-  mode:"mock",
+  mode:"offline",
   liveRows:[],
   polling:false,
   nextCloudPoll:0,
   liveCloudAvailable:true,
+  fuelPerLap:null,
 
   set(id,value){
     const e=document.getElementById(id);
@@ -59,7 +60,11 @@ window.AMSRealtime = {
     if(rpm!==null) this.set("rpm",Math.round(rpm));
     if(gear!==null) this.set("gear",Math.round(gear));
     if(delta!==null) this.set("delta",(delta>=0?"+":"")+delta.toFixed(3));
-    if(fuel!==null){ this.set("fuel",fuel.toFixed(1)+" L"); this.set("fuelLaps",(fuel/2.37).toFixed(1)); }
+    if(fuel!==null){
+      this.set("fuel",fuel.toFixed(1)+" L");
+      const fpl=Number(this.fuelPerLap);
+      this.set("fuelLaps",Number.isFinite(fpl)&&fpl>0?(fuel/fpl).toFixed(1):"—");
+    }
     if(throttle!==null){ this.set("throttlePct",Math.round(throttle)+"%"); const e=document.getElementById("throttleBar"); if(e)e.style.width=Math.max(0,Math.min(100,throttle))+"%"; }
     if(brake!==null){ this.set("brakePct",Math.round(brake)+"%"); const e=document.getElementById("brakeBar"); if(e)e.style.width=Math.max(0,Math.min(100,brake))+"%"; }
     if(steer!==null){ this.set("steerDeg",(steer>=0?"+":"")+steer.toFixed(0)+"°"); const e=document.getElementById("steerBar"); if(e)e.style.width=Math.max(0,Math.min(100,50+steer*2))+"%"; }
@@ -248,8 +253,7 @@ window.AMSRealtime = {
         this.pollCloud();
       }
 
-      if(this.mode==="mock" && !AMSAuth.user?.id) this.mockTick();
-      else if(this.mode==="cloud"){
+      if(this.mode==="cloud"){
         this.elapsed+=.25;
         const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
         this.set("sessionTime",fmt(this.elapsed)); this.set("liveRaceTime",fmt(this.elapsed).slice(3));
