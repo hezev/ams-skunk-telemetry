@@ -27,7 +27,8 @@
   }
 
   const fmtLap=ms=>{
-    const n=Number(ms); if(!Number.isFinite(n)) return "—";
+    if(ms===null || ms===undefined || ms==="") return "—";
+    const n=Number(ms); if(!Number.isFinite(n) || n<=0) return "—";
     const m=Math.floor(n/60000), s=(n-m*60000)/1000;
     return m+":"+s.toFixed(3).padStart(6,"0");
   };
@@ -114,8 +115,8 @@
       if(!groups.has(l.pilot_id))groups.set(l.pilot_id,[]);
       groups.get(l.pilot_id).push(l);
     }
-    const ids=new Set([...state.pilots.map(p=>p.id),...groups.keys()]);
-    if(!ids.size){body.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem pilotos visíveis para esta conta.</td></tr>';return;}
+    const ids=new Set([...groups.keys()]);
+    if(!ids.size){body.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem pilotos com telemetria gravada.</td></tr>';return;}
     for(const id of ids){
       const laps=groups.get(id)||[], profile=state.pilots.find(p=>p.id===id);
       const sessions=groupSessions(laps).length, best=laps.length?Math.min(...laps.map(x=>Number(x.lap_time_ms)).filter(Number.isFinite)):null;
