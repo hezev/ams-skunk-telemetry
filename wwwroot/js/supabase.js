@@ -36,13 +36,23 @@ window.AMSSupabase = {
 
   async getBestLaps(token,pilotId=null,shared=false){
     const params={
-      select:"id,pilot_id,simulator,circuit,circuit_layout,car,lap_time_ms,completed_at,verified,shared,telemetry",
+      select:"id,pilot_id,simulator,circuit,circuit_layout,car,lap_time_ms,completed_at,verified",
       order:"lap_time_ms.asc",
       limit:"150"
     };
     if(pilotId) params.pilot_id="eq."+pilotId;
     if(shared) params.shared="eq.true";
     return this.request("/rest/v1/ams_best_laps?"+new URLSearchParams(params),{token});
+  },
+
+  async getLapTelemetry(token,id){
+    const q=new URLSearchParams({
+      select:"id,pilot_id,simulator,circuit,circuit_layout,car,lap_time_ms,telemetry",
+      id:"eq."+id,
+      limit:"1"
+    });
+    const rows=await this.request("/rest/v1/ams_best_laps?"+q,{token});
+    return rows?.[0]||null;
   },
 
   fresh(row){
