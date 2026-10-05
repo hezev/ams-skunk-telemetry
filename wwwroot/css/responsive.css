@@ -24,3 +24,10 @@
   .track-stage{height:310px}
   .session-clock{display:none}
 }
+
+.action-btn{border:1px solid #39424d;background:#11161c;color:#fff;border-radius:5px;padding:8px 11px;font-size:9px;font-weight:900;text-transform:uppercase;cursor:pointer}
+.title-actions,.analysis-actions,.workspace-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.analysis-actions label,.workspace-controls label{font-size:9px;color:#8c96a4;text-transform:uppercase}
+.analysis-actions select{margin-left:5px;background:#090c10;border:1px solid #252c35;color:#fff;padding:7px;border-radius:4px}
+.cloud-lap-row{cursor:pointer}
+.workspace-value{min-height:110px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px}
