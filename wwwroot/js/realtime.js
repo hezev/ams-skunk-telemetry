@@ -32,7 +32,28 @@ window.AMSRealtime = {
     const latG=num("latG","lat_g","lateralG","lateral_g");
     const longG=num("longG","long_g","longitudinalG","longitudinal_g");
     const trackPos=AMSSupabase.samplePosition(p);
+    const bestLap=num("bestLap","best_lap","bestLapTime","best_lap_time");
+    const lastLap=num("lastLap","last_lap","lastLapTime","last_lap_time");
+    const position=num("position","overallPosition","overall_position");
+    const classPosition=num("classPosition","class_position");
 
+    const lapText=v=>{
+      if(v===null) return null;
+      if(v>10000){
+        const m=Math.floor(v/60000);
+        return m+":"+((v-m*60000)/1000).toFixed(3).padStart(6,"0");
+      }
+      if(v>60){
+        const m=Math.floor(v/60);
+        return m+":"+(v-m*60).toFixed(3).padStart(6,"0");
+      }
+      return v.toFixed(3);
+    };
+
+    if(bestLap!==null) this.set("bestLap",lapText(bestLap));
+    if(lastLap!==null) this.set("lastLap",lapText(lastLap));
+    if(position!==null) this.set("position","P"+Math.round(position));
+    if(classPosition!==null) this.set("classPosition","P"+Math.round(classPosition));
     if(speed!==null) this.set("speed",Math.round(speed));
     if(rpm!==null) this.set("rpm",Math.round(rpm));
     if(gear!==null) this.set("gear",Math.round(gear));
@@ -118,7 +139,7 @@ window.AMSRealtime = {
   },
 
   clearRealData(message="SEM LIVE CLOUD"){
-    const ids=["speed","rpm","gear","delta","fuel","fuelLaps","throttlePct","brakePct","steerDeg","latG","longG","tireFL","tireFR","tireRL","tireRR"];
+    const ids=["bestLap","lastLap","position","classPosition","speed","rpm","gear","delta","fuel","fuelLaps","throttlePct","brakePct","steerDeg","latG","longG","tireFL","tireFR","tireRL","tireRR"];
     ids.forEach(id=>this.set(id,"—"));
     for(const id of ["throttleBar","brakeBar","steerBar"]){
       const e=document.getElementById(id);
