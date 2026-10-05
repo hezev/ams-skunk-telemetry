@@ -72,12 +72,21 @@ window.AMSSupabase = {
 
   samplePosition(sample){
     if(!sample || typeof sample!=="object") return null;
-    const keys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
-    for(const k of keys){
+
+    // AMS Telemetry v5.12.17 stores replay position as 0..100 percent.
+    const percentKeys=["position","trackPositionPct","track_position_pct"];
+    for(const k of percentKeys){
+      const v=Number(sample[k]);
+      if(Number.isFinite(v)) return Math.max(0,Math.min(1,v/100));
+    }
+
+    // Native/normalized variants may already be 0..1.
+    const normalizedKeys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
+    for(const k of normalizedKeys){
       const v=Number(sample[k]);
       if(Number.isFinite(v)){
         if(v>1 && v<=100) return v/100;
-        return ((v%1)+1)%1;
+        return Math.max(0,Math.min(1,v));
       }
     }
     return null;
