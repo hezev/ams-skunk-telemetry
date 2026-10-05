@@ -44,8 +44,6 @@
     AMSTrack.setPosition(AMSTrack.progress);
   });
 
-  AMSAuth.init();
-
 
   const fmtLapMs=ms=>{
     const n=Number(ms);
@@ -117,6 +115,18 @@
     }
   });
 
+  AMSAuth.init();
+
+  // If a valid session was restored very quickly, ensure cloud data still loads.
+  const restoredProbe=setInterval(()=>{
+    if(AMSAuth.user?.id){
+      clearInterval(restoredProbe);
+      loadCloudAccountData();
+      AMSRealtime.nextCloudPoll=0;
+      AMSRealtime.pollCloud();
+    }
+  },250);
+  setTimeout(()=>clearInterval(restoredProbe),5000);
 
   const trackEl = q("#trackName");
   const loadCurrentTrack = () => AMSTrack.load(trackEl?.textContent || "Algarve International Circuit");
