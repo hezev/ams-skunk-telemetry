@@ -2,19 +2,28 @@
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null};
 
-  async function coachFlag(token,userId){
+  async function coachFlag(token){
     try{
-      const qs=new URLSearchParams({select:"user_id",user_id:"eq."+userId,limit:"1"});
-      const rows=await AMSSupabase.request("/rest/v1/ams_coaches?"+qs,{token});
-      return Array.isArray(rows)&&rows.length>0;
+      const rows=await AMSSupabase.request("/rest/v1/rpc/ams_is_coach",{token,method:"POST",body:{}});
+      return rows===true || rows==="true";
     }catch{return false;}
   }
 
-  async function visiblePilots(token){
+  async function visiblePilots(token,isCoach){
     try{
-      const qs=new URLSearchParams({select:"id,pilot_name,team,created_at",order:"pilot_name.asc",limit:"500"});
+      if(isCoach){
+        return await AMSSupabase.request("/rest/v1/rpc/ams_coach_pilots",{token,method:"POST",body:{}})||[];
+      }
+      const qs=new URLSearchParams({select:"id,pilot_name,team,created_at",id:"eq."+AMSAuth.user.id,limit:"1"});
       return await AMSSupabase.request("/rest/v1/ams_pilots?"+qs,{token})||[];
     }catch{return [];}
+  }
+
+  async function visibleLaps(token,isCoach){
+    if(isCoach){
+      return await AMSSupabase.request("/rest/v1/rpc/ams_coach_laps",{token,method:"POST",body:{}})||[];
+    }
+    return await AMSSupabase.getLaps(token,AMSAuth.user.id)||[];
   }
 
   const fmtLap=ms=>{
@@ -130,7 +139,15 @@
     if(!id)return null;
     if(state.cache.has(id))return state.cache.get(id);
     const token=await AMSAuth.token(); if(!token)return null;
-    const d=await AMSSupabase.getLapTelemetry(token,id); if(d)state.cache.set(id,d); return d;
+    let d=null;
+    if(state.isCoach){
+      const rows=await AMSSupabase.request("/rest/v1/rpc/ams_coach_lap_detail",{token,method:"POST",body:{target_id:id}});
+      d=rows?.[0]||null;
+    }else{
+      d=await AMSSupabase.getLapTelemetry(token,id);
+    }
+    if(d)state.cache.set(id,d);
+    return d;
   }
 
   function updateWorkspace(){
@@ -221,12 +238,12 @@
     if(!AMSAuth.user?.id)return;
     const token=await AMSAuth.token(); if(!token)return;
     try{
-      state.isCoach=await coachFlag(token,AMSAuth.user.id);
-      state.laps=await AMSSupabase.getLaps(token,state.isCoach?null:AMSAuth.user.id)||[];
-      state.pilots=await visiblePilots(token);
+      state.isCoach=await coachFlag(token);
+      state.laps=await visibleLaps(token,state.isCoach);
+      state.pilots=await visiblePilots(token,state.isCoach);
       renderLaps();renderSessions();renderRecords();renderDriver();renderTeam();fillSelectors();
       if(state.laps.length)await selectLap(state.laps[0].id);
-      setText("connectionText","SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
+      setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
     }catch(err){
       console.warn("AMS portal data:",err); setText("connectionText","SUPABASE ERROR");
       const body=q("#lapsBody");if(body)body.innerHTML='<tr><td colspan="7" class="error-cloud">Erro: '+String(err.message||err)+'</td></tr>';
