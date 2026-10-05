@@ -25,13 +25,14 @@ window.AMSSupabase = {
     return text?JSON.parse(text):null;
   },
 
-  async getLiveSessions(token){
-    const q=new URLSearchParams({
+  async getLiveSessions(token,pilotId=null){
+    const params={
       select:"pilot_id,simulator,circuit,car,sample,updated_at",
       order:"updated_at.desc",
       limit:"100"
-    });
-    return this.request("/rest/v1/ams_live_sessions?"+q,{token});
+    };
+    if(pilotId) params.pilot_id="eq."+pilotId;
+    return this.request("/rest/v1/ams_live_sessions?"+new URLSearchParams(params),{token});
   },
 
   async getBestLaps(token,pilotId=null,shared=false){
