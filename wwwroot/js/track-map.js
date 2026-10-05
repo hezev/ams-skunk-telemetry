@@ -231,7 +231,7 @@ window.AMSTrack = {
         }catch{}
       }
       this.activePath = best;
-      this.setPosition(this.progress);
+      requestAnimationFrame(()=>this.setPosition(this.progress));
     }catch{}
   },
 
@@ -242,7 +242,10 @@ window.AMSTrack = {
     const length = this.activePath.getTotalLength();
     const p = ((Number(progress)%1)+1)%1;
     const point = this.activePath.getPointAtLength(p * length);
-    const matrix = svg.getScreenCTM();
+    // Use the selected path CTM, not only the root SVG CTM. Many iRacing
+    // track SVGs contain nested transforms; ignoring them puts the car dot
+    // outside the visible racing line.
+    const matrix = this.activePath.getScreenCTM?.() || svg.getScreenCTM();
     if(!matrix) return;
 
     const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
