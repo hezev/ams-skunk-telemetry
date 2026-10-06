@@ -1,241 +1,249 @@
 window.AMSCharts = {
   telemetry: [],
+  reference: [],
   compareA: [],
   compareB: [],
-  cursorRatio: null,
+  comparisonProfile: [],
+  cursorPos: null,
+  zoomStart: 0,
+  zoomEnd: 1,
   redrawFrame: null,
+  cursorCallback: null,
 
   specs: {
-    speed: {title:"Speed",unit:"km/h",series:[["speed","Speed","#ef1824"]]},
-    throttle: {title:"Throttle",unit:"%",fixed:[0,100],series:[["throttle","Throttle","#31d878"]]},
-    brake: {title:"Brake",unit:"%",fixed:[0,100],series:[["brake","Brake","#ef1824"]]},
-    rpm: {title:"RPM",unit:"rpm",series:[["rpm","RPM","#ffd329"],["shiftRpm","Shift","#ef1824"]]},
-    gear: {title:"Gear",unit:"",fixed:[-1,8],series:[["gear","Gear","#22a8ff"]]},
-    steering: {title:"Steering",unit:"°",series:[["steer","Steering","#22a8ff"]]},
-    steeringTorque: {title:"Steering Torque",unit:"Nm",series:[["steeringTorque","Torque","#a884ff"]]},
-    delta: {title:"Delta",unit:"s",series:[["delta","Delta","#ef1824"]]},
-    gforce: {title:"G Forces",unit:"g",series:[["gLat","Lat G","#22a8ff"],["gLong","Long G","#ef1824"]]},
-    fuel: {title:"Fuel",unit:"L",series:[["fuel","Fuel","#ffd329"]]},
-    fuelUse: {title:"Fuel Use",unit:"L/h",series:[["fuelUsePerHour","Fuel/h","#ff9f43"]]},
-    tyres: {title:"Tyre Temperatures",unit:"°C",series:[["tyreFL","FL","#ef1824"],["tyreFR","FR","#22a8ff"],["tyreRL","RL","#31d878"],["tyreRR","RR","#ffd329"]]},
-    temps: {title:"Temperatures",unit:"°C",series:[["waterTemp","Water","#22a8ff"],["oilTemp","Oil","#ffd329"],["trackTemp","Track","#ef1824"],["airTemp","Air","#31d878"]]},
-    attitude: {title:"Body Rates",unit:"°/s",series:[["yawRate","Yaw","#ef1824"],["pitchRate","Pitch","#22a8ff"],["rollRate","Roll","#31d878"]]},
-    systems: {title:"TC / ABS",unit:"level",fixed:[0,2],series:[["tc","TC","#31d878"],["abs","ABS","#ef1824"]]},
-    clutch: {title:"Clutch",unit:"%",fixed:[0,100],series:[["clutch","Clutch","#ffd329"]]},
-    brakeBias: {title:"Brake Bias",unit:"%",series:[["brakeBias","Bias","#ff9f43"]]},
-    environment: {title:"Environment",unit:"",series:[["humidity","Humidity %","#22a8ff"],["windSpeed","Wind","#31d878"]]},
-    pressure: {title:"Oil / Electrical",unit:"",series:[["oilPressure","Oil Pressure","#ffd329"],["voltage","Voltage","#22a8ff"]]}
+    speed: {unit:"km/h",series:[["speed","Speed","#ef1824"]]},
+    throttle: {unit:"%",fixed:[0,100],series:[["throttle","Throttle","#31d878"]]},
+    brake: {unit:"%",fixed:[0,100],series:[["brake","Brake","#ef1824"]]},
+    rpm: {unit:"rpm",series:[["rpm","RPM","#ffd329"],["shiftRpm","Shift","#ef1824"]]},
+    gear: {unit:"",fixed:[-1,8],series:[["gear","Gear","#22a8ff"]]},
+    steering: {unit:"°",series:[["steer","Steering","#22a8ff"]]},
+    steeringTorque: {unit:"Nm",series:[["steeringTorque","Torque","#a884ff"]]},
+    delta: {unit:"s",series:[["delta","Delta","#ef1824"]]},
+    gforce: {unit:"g",series:[["gLat","Lat G","#22a8ff"],["gLong","Long G","#ef1824"]]},
+    fuel: {unit:"L",series:[["fuel","Fuel","#ffd329"]]},
+    fuelUse: {unit:"L/h",series:[["fuelUsePerHour","Fuel/h","#ff9f43"]]},
+    tyres: {unit:"°C",series:[["tyreFL","FL","#ef1824"],["tyreFR","FR","#22a8ff"],["tyreRL","RL","#31d878"],["tyreRR","RR","#ffd329"]]},
+    temps: {unit:"°C",series:[["waterTemp","Water","#22a8ff"],["oilTemp","Oil","#ffd329"],["trackTemp","Track","#ef1824"],["airTemp","Air","#31d878"]]},
+    attitude: {unit:"°/s",series:[["yawRate","Yaw","#ef1824"],["pitchRate","Pitch","#22a8ff"],["rollRate","Roll","#31d878"]]},
+    systems: {unit:"level",fixed:[0,2],series:[["tc","TC","#31d878"],["abs","ABS","#ef1824"]]},
+    clutch: {unit:"%",fixed:[0,100],series:[["clutch","Clutch","#ffd329"]]},
+    brakeBias: {unit:"%",series:[["brakeBias","Bias","#ff9f43"]]},
+    environment: {unit:"",series:[["humidity","Humidity %","#22a8ff"],["windSpeed","Wind","#31d878"]]},
+    pressure: {unit:"",series:[["oilPressure","Oil Pressure","#ffd329"],["voltage","Voltage","#22a8ff"]]}
   },
 
-  setTelemetry(samples){
-    this.telemetry = Array.isArray(samples) ? samples : [];
+  pos(sample,index,total){
+    const p=Number(sample?._p);
+    if(Number.isFinite(p)) return Math.max(0,Math.min(1,p));
+    const raw=Number(sample?.position);
+    if(Number.isFinite(raw)) return Math.max(0,Math.min(1,raw/100));
+    return total>1?index/(total-1):0;
+  },
+
+  setTelemetry(samples){ this.telemetry=Array.isArray(samples)?samples:[]; this.drawAll(); },
+  setReference(samples,profile=[]){
+    this.reference=Array.isArray(samples)?samples:[];
+    this.comparisonProfile=Array.isArray(profile)?profile:[];
     this.drawAll();
   },
-
-  setCompare(a,b){
-    this.compareA = Array.isArray(a) ? a : [];
-    this.compareB = Array.isArray(b) ? b : [];
+  setCompare(a,b){ this.compareA=Array.isArray(a)?a:[]; this.compareB=Array.isArray(b)?b:[]; this.drawAll(); },
+  setZoom(start,end){
+    let a=Math.max(0,Math.min(1,Number(start))),b=Math.max(0,Math.min(1,Number(end)));
+    if(!Number.isFinite(a))a=0;if(!Number.isFinite(b))b=1;
+    if(b-a<.01){b=Math.min(1,a+.01);a=Math.max(0,b-.01);}
+    this.zoomStart=Math.min(a,b);this.zoomEnd=Math.max(a,b);
     this.drawAll();
   },
-
-  xRatio(sample,index,total){
-    const p=Number(sample?.position);
-    if(Number.isFinite(p) && p>=0 && p<=100) return p/100;
-    return total>1 ? index/(total-1) : 0;
+  setCursorCallback(fn){ this.cursorCallback=typeof fn==="function"?fn:null; },
+  setExternalCursor(pos){
+    const p=Number(pos);this.cursorPos=Number.isFinite(p)?Math.max(0,Math.min(1,p)):null;this.scheduleDraw();
+  },
+  clearCursor(){this.cursorPos=null;this.scheduleDraw();},
+  scheduleDraw(){
+    if(this.redrawFrame)return;
+    this.redrawFrame=requestAnimationFrame(()=>{this.redrawFrame=null;this.drawAll();});
   },
 
   numeric(source,key){
-    const out=[];
-    (source||[]).forEach((s,i)=>{
-      const v=Number(s?.[key]);
-      if(Number.isFinite(v)) out.push({v,x:this.xRatio(s,i,source.length),sample:s,index:i});
+    const out=[],data=source||[];
+    data.forEach((s,i)=>{
+      const v=Number(s?.[key]),p=this.pos(s,i,data.length);
+      if(Number.isFinite(v)&&p>=this.zoomStart&&p<=this.zoomEnd) out.push({v,p,s,index:i});
     });
     return out;
   },
 
-  extent(spec,source){
-    if(spec.fixed) return spec.fixed;
+  mapX(p,plot){ return plot.left+((p-this.zoomStart)/(this.zoomEnd-this.zoomStart))*plot.w; },
+
+  extent(spec){
+    if(spec.fixed)return spec.fixed;
     const vals=[];
     for(const [key] of spec.series){
-      for(const p of this.numeric(source,key)) vals.push(p.v);
+      for(const p of this.numeric(this.telemetry,key))vals.push(p.v);
+      for(const p of this.numeric(this.reference,key))vals.push(p.v);
     }
-    if(!vals.length) return [0,1];
-    let lo=Math.min(...vals), hi=Math.max(...vals);
+    if(!vals.length)return [0,1];
+    let lo=Math.min(...vals),hi=Math.max(...vals);
     if(lo===hi){lo-=1;hi+=1;}
     const pad=(hi-lo)*.08;
     return [lo-pad,hi+pad];
   },
 
   fmt(v,unit){
-    if(!Number.isFinite(Number(v))) return "—";
+    if(!Number.isFinite(Number(v)))return "—";
     const n=Number(v);
-    if(unit==="rpm") return Math.round(n).toLocaleString("pt-PT");
-    if(unit==="km/h" || unit==="%" || unit==="°C") return n.toFixed(Math.abs(n)>=100?0:1);
-    if(unit==="g" || unit==="s" || unit==="Nm") return n.toFixed(3);
-    return Math.abs(n)>=100 ? n.toFixed(0) : n.toFixed(2);
+    if(unit==="rpm")return Math.round(n).toLocaleString("pt-PT");
+    if(unit==="km/h"||unit==="%"||unit==="°C")return n.toFixed(Math.abs(n)>=100?0:1);
+    if(unit==="g"||unit==="s"||unit==="Nm")return n.toFixed(3);
+    return Math.abs(n)>=100?n.toFixed(0):n.toFixed(2);
   },
 
-  nearest(source,ratio){
-    if(!source?.length) return null;
-    let best=source[0],bestD=Infinity;
-    for(let i=0;i<source.length;i++){
-      const d=Math.abs(this.xRatio(source[i],i,source.length)-ratio);
-      if(d<bestD){bestD=d;best=source[i];}
-    }
+  nearest(source,pos){
+    const data=source||[];if(!data.length)return null;
+    let best=null,dist=Infinity;
+    data.forEach((s,i)=>{
+      const p=this.pos(s,i,data.length),d=Math.abs(p-pos);
+      if(d<dist){dist=d;best=s;}
+    });
     return best;
   },
 
   setupCanvas(canvas){
-    const dpr=window.devicePixelRatio||1;
-    const w=canvas.clientWidth||600,h=canvas.clientHeight||240;
+    const dpr=window.devicePixelRatio||1,w=canvas.clientWidth||600,h=canvas.clientHeight||240;
     canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
     const ctx=canvas.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
     return {ctx,w,h};
   },
 
   drawGrid(ctx,w,h,plot){
-    ctx.clearRect(0,0,w,h);
-    ctx.fillStyle="#090c10";ctx.fillRect(0,0,w,h);
+    ctx.clearRect(0,0,w,h);ctx.fillStyle="#090c10";ctx.fillRect(0,0,w,h);
     ctx.strokeStyle="#202731";ctx.lineWidth=1;
     for(let i=0;i<=4;i++){
-      const y=plot.top+(plot.h*i/4);
-      ctx.beginPath();ctx.moveTo(plot.left,y);ctx.lineTo(plot.left+plot.w,y);ctx.stroke();
+      const y=plot.top+plot.h*i/4;ctx.beginPath();ctx.moveTo(plot.left,y);ctx.lineTo(plot.left+plot.w,y);ctx.stroke();
     }
-    for(let i=0;i<=4;i++){
-      const x=plot.left+(plot.w*i/4);
-      ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
+    for(let i=0;i<=5;i++){
+      const x=plot.left+plot.w*i/5;ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
     }
   },
 
-  drawSeries(ctx,plot,points,lo,hi,color){
+  drawSeries(ctx,plot,points,lo,hi,color,dashed=false,width=1.8){
     if(points.length<2)return;
-    ctx.strokeStyle=color;ctx.lineWidth=1.8;ctx.beginPath();
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.globalAlpha=dashed?.72:1;ctx.setLineDash(dashed?[6,4]:[]);
+    ctx.beginPath();
     points.forEach((p,i)=>{
-      const x=plot.left+p.x*plot.w;
-      const y=plot.top+plot.h-((p.v-lo)/(hi-lo))*plot.h;
+      const x=this.mapX(p.p,plot),y=plot.top+plot.h-((p.v-lo)/(hi-lo))*plot.h;
       i?ctx.lineTo(x,y):ctx.moveTo(x,y);
     });
-    ctx.stroke();
+    ctx.stroke();ctx.restore();
   },
 
   drawAxes(ctx,plot,lo,hi,spec){
     ctx.fillStyle="#77818d";ctx.font="10px Segoe UI";ctx.textAlign="right";
     for(let i=0;i<=4;i++){
-      const v=hi-(hi-lo)*i/4;
-      const y=plot.top+plot.h*i/4+3;
+      const v=hi-(hi-lo)*i/4,y=plot.top+plot.h*i/4+3;
       ctx.fillText(this.fmt(v,spec.unit),plot.left-7,y);
     }
     ctx.textAlign="center";
-    for(let i=0;i<=4;i++){
-      const x=plot.left+plot.w*i/4;
-      ctx.fillText((i*25)+"%",x,plot.top+plot.h+18);
+    for(let i=0;i<=5;i++){
+      const ratio=i/5,pct=(this.zoomStart+(this.zoomEnd-this.zoomStart)*ratio)*100;
+      ctx.fillText(pct.toFixed(pct%1?1:0)+"%",plot.left+plot.w*ratio,plot.top+plot.h+18);
     }
-    ctx.textAlign="left";ctx.fillStyle="#9aa4b0";
-    ctx.fillText(spec.unit?("Y · "+spec.unit):"Y",plot.left,13);
+    ctx.textAlign="left";ctx.fillStyle="#9aa4b0";ctx.fillText(spec.unit?("Y · "+spec.unit):"Y",plot.left,13);
     ctx.textAlign="right";ctx.fillText("TRACK POSITION",plot.left+plot.w,13);
   },
 
   drawLegend(ctx,plot,spec){
-    let x=plot.left;
-    const y=plot.top+14;
-    ctx.font="10px Segoe UI";ctx.textAlign="left";
+    let x=plot.left;const y=plot.top+14;ctx.font="10px Segoe UI";ctx.textAlign="left";
     for(const [,label,color] of spec.series){
-      ctx.fillStyle=color;ctx.fillRect(x,y-8,12,2);
-      ctx.fillStyle="#b8c0ca";ctx.fillText(label,x+16,y-4);
+      ctx.fillStyle=color;ctx.fillRect(x,y-8,12,2);ctx.fillStyle="#b8c0ca";ctx.fillText(label,x+16,y-4);
       x+=ctx.measureText(label).width+42;
+    }
+    if(this.reference.length){
+      ctx.strokeStyle="#dbe2ea";ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x+16,y-7);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="#9aa4b0";ctx.fillText("REF",x+21,y-4);
     }
   },
 
-  drawCursor(ctx,plot,source,spec){
-    if(this.cursorRatio===null || !source?.length)return;
-    const x=plot.left+this.cursorRatio*plot.w;
-    ctx.strokeStyle="#e9eef5";ctx.globalAlpha=.45;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
+  drawCursor(ctx,plot,spec){
+    if(this.cursorPos===null)return;
+    if(this.cursorPos<this.zoomStart||this.cursorPos>this.zoomEnd)return;
+    const x=this.mapX(this.cursorPos,plot);
+    ctx.strokeStyle="#f4f7fb";ctx.globalAlpha=.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
     ctx.setLineDash([]);ctx.globalAlpha=1;
 
-    const s=this.nearest(source,this.cursorRatio);
-    if(!s)return;
-    const values=[];
-    for(const [key,label] of spec.series){
-      const v=Number(s[key]); if(Number.isFinite(v))values.push(label+" "+this.fmt(v,spec.unit));
+    const a=this.nearest(this.telemetry,this.cursorPos),b=this.nearest(this.reference,this.cursorPos);
+    const text=[(this.cursorPos*100).toFixed(1)+"%"];
+    for(const [key,label] of spec.series.slice(0,2)){
+      const av=Number(a?.[key]),bv=Number(b?.[key]);
+      if(Number.isFinite(av))text.push("A "+label+" "+this.fmt(av,spec.unit));
+      if(Number.isFinite(bv))text.push("R "+label+" "+this.fmt(bv,spec.unit));
     }
-    const pos=Number(s.position);
-    const t=Number(s.t);
-    const header=[Number.isFinite(pos)?pos.toFixed(1)+"%":null,Number.isFinite(t)?t.toFixed(2)+"s":null].filter(Boolean).join(" · ");
-    const text=[header,...values].filter(Boolean).join("   ");
-    ctx.font="10px Segoe UI";
-    const tw=ctx.measureText(text).width+14;
+    const label=text.join("   ");ctx.font="10px Segoe UI";const tw=Math.min(plot.w-10,ctx.measureText(label).width+14);
     let bx=x+8;if(bx+tw>plot.left+plot.w)bx=x-tw-8;
-    ctx.fillStyle="rgba(5,8,12,.92)";ctx.fillRect(bx,plot.top+25,tw,22);
-    ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(text,bx+7,plot.top+40);
+    ctx.fillStyle="rgba(5,8,12,.94)";ctx.fillRect(bx,plot.top+24,tw,22);
+    ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(label,bx+7,plot.top+39);
   },
 
   drawTelemetry(canvas,type){
-    const spec=this.specs[type]||this.specs.speed;
-    const {ctx,w,h}=this.setupCanvas(canvas);
+    const spec=this.specs[type]||this.specs.speed,{ctx,w,h}=this.setupCanvas(canvas);
     const plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
-    this.drawGrid(ctx,w,h,plot);
-    const source=this.telemetry;
-    const [lo,hi]=this.extent(spec,source);
-    this.drawAxes(ctx,plot,lo,hi,spec);
-    this.drawLegend(ctx,plot,spec);
-
+    this.drawGrid(ctx,w,h,plot);const [lo,hi]=this.extent(spec);
+    this.drawAxes(ctx,plot,lo,hi,spec);this.drawLegend(ctx,plot,spec);
     let has=false;
     for(const [key,,color] of spec.series){
-      const pts=this.numeric(source,key);if(pts.length){has=true;this.drawSeries(ctx,plot,pts,lo,hi,color);}
+      const a=this.numeric(this.telemetry,key),b=this.numeric(this.reference,key);
+      if(a.length){has=true;this.drawSeries(ctx,plot,a,lo,hi,color,false,1.9);}
+      if(b.length){has=true;this.drawSeries(ctx,plot,b,lo,hi,color,true,1.35);}
     }
-    if(!has){
-      ctx.fillStyle="#687381";ctx.font="12px Segoe UI";ctx.textAlign="center";
-      ctx.fillText("Canal não disponível nesta volta",plot.left+plot.w/2,plot.top+plot.h/2);
+    if(!has){ctx.fillStyle="#687381";ctx.font="12px Segoe UI";ctx.textAlign="center";ctx.fillText("Canal não disponível nesta volta",plot.left+plot.w/2,plot.top+plot.h/2);}
+    this.drawCursor(ctx,plot,spec);
+  },
+
+  drawTimeDelta(canvas){
+    const {ctx,w,h}=this.setupCanvas(canvas),plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
+    this.drawGrid(ctx,w,h,plot);
+    const pts=(this.comparisonProfile||[]).map(x=>({p:Number(x.position)/100,v:Number(x.delta)}))
+      .filter(x=>Number.isFinite(x.p)&&Number.isFinite(x.v)&&x.p>=this.zoomStart&&x.p<=this.zoomEnd);
+    let maxAbs=pts.length?Math.max(...pts.map(x=>Math.abs(x.v))):1;if(maxAbs<.05)maxAbs=.05;
+    const lo=-maxAbs*1.08,hi=maxAbs*1.08,spec={unit:"s"};
+    this.drawAxes(ctx,plot,lo,hi,spec);
+    const y0=plot.top+plot.h-(0-lo)/(hi-lo)*plot.h;
+    ctx.strokeStyle="#a6afba";ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(plot.left,y0);ctx.lineTo(plot.left+plot.w,y0);ctx.stroke();ctx.globalAlpha=1;
+    for(let i=1;i<pts.length;i++){
+      const prev=pts[i-1],cur=pts[i],color=cur.v>0?"#ef1824":"#31d878";
+      this.drawSeries(ctx,plot,[prev,cur],lo,hi,color,false,2.4);
     }
-    this.drawCursor(ctx,plot,source,spec);
+    ctx.fillStyle="#31d878";ctx.font="10px Segoe UI";ctx.textAlign="left";ctx.fillText("GAIN",plot.left,plot.top+13);
+    ctx.fillStyle="#ef1824";ctx.textAlign="right";ctx.fillText("LOSS",plot.left+plot.w,plot.top+13);
+    this.drawCursor(ctx,plot,{unit:"s",series:[]});
   },
 
   drawCompare(canvas){
-    const {ctx,w,h}=this.setupCanvas(canvas);
-    const plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
+    const {ctx,w,h}=this.setupCanvas(canvas),plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
     this.drawGrid(ctx,w,h,plot);
-    const spec={unit:"km/h"};
     const vals=[...this.numeric(this.compareA,"speed").map(p=>p.v),...this.numeric(this.compareB,"speed").map(p=>p.v)];
-    let lo=vals.length?Math.min(...vals):0,hi=vals.length?Math.max(...vals):1;
-    if(lo===hi){lo-=1;hi+=1;}const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
-    this.drawAxes(ctx,plot,lo,hi,spec);
-    this.drawSeries(ctx,plot,this.numeric(this.compareA,"speed"),lo,hi,"#ef1824");
-    this.drawSeries(ctx,plot,this.numeric(this.compareB,"speed"),lo,hi,"#22a8ff");
-    ctx.font="10px Segoe UI";ctx.textAlign="left";
-    ctx.fillStyle="#ef1824";ctx.fillText("LAP A",plot.left,plot.top+12);
-    ctx.fillStyle="#22a8ff";ctx.fillText("LAP B",plot.left+55,plot.top+12);
+    let lo=vals.length?Math.min(...vals):0,hi=vals.length?Math.max(...vals):1;if(lo===hi){lo-=1;hi+=1;}const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+    this.drawAxes(ctx,plot,lo,hi,{unit:"km/h"});
+    this.drawSeries(ctx,plot,this.numeric(this.compareA,"speed"),lo,hi,"#ef1824",false,2);
+    this.drawSeries(ctx,plot,this.numeric(this.compareB,"speed"),lo,hi,"#22a8ff",false,2);
   },
 
   attach(canvas){
-    if(canvas.dataset.amsBound)return;
-    canvas.dataset.amsBound="1";
+    if(canvas.dataset.amsBound)return;canvas.dataset.amsBound="1";
     canvas.addEventListener("mousemove",e=>{
-      const r=canvas.getBoundingClientRect();
-      const left=58,right=14;
-      this.cursorRatio=Math.max(0,Math.min(1,(e.clientX-r.left-left)/(r.width-left-right)));
-      if(!this.redrawFrame){
-        this.redrawFrame=requestAnimationFrame(()=>{
-          this.redrawFrame=null;
-          this.drawAll();
-        });
-      }
+      const r=canvas.getBoundingClientRect(),left=58,right=14;
+      const local=Math.max(0,Math.min(1,(e.clientX-r.left-left)/(r.width-left-right)));
+      this.cursorPos=this.zoomStart+local*(this.zoomEnd-this.zoomStart);
+      if(this.cursorCallback)this.cursorCallback(this.cursorPos);
+      this.scheduleDraw();
     });
-    canvas.addEventListener("mouseleave",()=>{
-      this.cursorRatio=null;
-      if(!this.redrawFrame){
-        this.redrawFrame=requestAnimationFrame(()=>{
-          this.redrawFrame=null;
-          this.drawAll();
-        });
-      }
-    });
+    canvas.addEventListener("mouseleave",()=>{this.cursorPos=null;if(this.cursorCallback)this.cursorCallback(null);this.scheduleDraw();});
   },
 
   draw(canvas,type){
-    if(!canvas)return;
-    this.attach(canvas);
+    if(!canvas)return;this.attach(canvas);
     if(type==="compare")this.drawCompare(canvas);
+    else if(type==="timeDelta")this.drawTimeDelta(canvas);
     else this.drawTelemetry(canvas,type||"speed");
   },
 
