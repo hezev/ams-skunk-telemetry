@@ -66,10 +66,16 @@ window.AMSCharts = {
 
   numeric(source,key){
     const out=[],data=source||[];
-    data.forEach((s,i)=>{
-      const v=Number(s?.[key]),p=this.pos(s,i,data.length);
-      if(Number.isFinite(v)&&p>=this.zoomStart&&p<=this.zoomEnd) out.push({v,p,s,index:i});
-    });
+    const step=Math.max(1,Math.floor(data.length/1600));
+    for(let i=0;i<data.length;i+=step){
+      const s=data[i],v=Number(s?.[key]),p=this.pos(s,i,data.length);
+      if(Number.isFinite(v)&&p>=this.zoomStart&&p<=this.zoomEnd)out.push({v,p,s,index:i});
+    }
+    const last=data.length-1;
+    if(last>=0&&last%step!==0){
+      const s=data[last],v=Number(s?.[key]),p=this.pos(s,last,data.length);
+      if(Number.isFinite(v)&&p>=this.zoomStart&&p<=this.zoomEnd)out.push({v,p,s,index:last});
+    }
     return out;
   },
 
