@@ -8,10 +8,42 @@ window.AMSAuth = {
     return h;
   },
 
+  cookieName:"ams_login_hint",
+  refreshTimer:null,
+
+  setLoginCookie(){
+    const email=this.user?.email||this.session?.user?.email||"";
+    if(!email)return;
+    const secure=location.protocol==="https:"?"; Secure":"";
+    document.cookie=this.cookieName+"="+encodeURIComponent(email)+"; Max-Age=31536000; Path=/; SameSite=Lax"+secure;
+  },
+
+  clearLoginCookie(){
+    document.cookie=this.cookieName+"=; Max-Age=0; Path=/; SameSite=Lax";
+  },
+
+  loginHint(){
+    const prefix=this.cookieName+"=";
+    const item=document.cookie.split(";").map(x=>x.trim()).find(x=>x.startsWith(prefix));
+    return item?decodeURIComponent(item.slice(prefix.length)):"";
+  },
+
   save(session){
     this.session=session;
-    if(session) localStorage.setItem("ams_auth_session",JSON.stringify(session));
-    else localStorage.removeItem("ams_auth_session");
+    if(session){
+      localStorage.setItem("ams_auth_session",JSON.stringify(session));
+      this.setLoginCookie();
+    }else{
+      localStorage.removeItem("ams_auth_session");
+    }
+  },
+
+  startPersistence(){
+    if(this.refreshTimer)clearInterval(this.refreshTimer);
+    this.refreshTimer=setInterval(()=>{ if(this.session?.refresh_token)this.token(); },30*60*1000);
+    document.addEventListener("visibilitychange",()=>{
+      if(document.visibilityState==="visible"&&this.session?.refresh_token)this.token();
+    });
   },
 
   async signup(email,password){
@@ -41,6 +73,7 @@ window.AMSAuth = {
     data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
     this.user=data.user||null;
     this.save(data);
+    this.setLoginCookie();
     this.render();
     document.dispatchEvent(new CustomEvent("ams-auth-changed",{detail:{user:this.user}}));
     return data;
@@ -56,6 +89,7 @@ window.AMSAuth = {
     data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
     this.user=data.user||this.user;
     this.save(data);
+    this.setLoginCookie();
     return data;
   },
 
@@ -86,7 +120,17 @@ window.AMSAuth = {
   },
 
   logout(notify=true){
-    this.user=null; this.save(null); this.render();
+    const token=this.session?.access_token;
+    if(token){
+      fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/logout",{
+        method:"POST",
+        headers:this.headers(token)
+      }).catch(()=>{});
+    }
+    this.user=null;
+    this.save(null);
+    this.clearLoginCookie();
+    this.render();
     if(notify) document.dispatchEvent(new CustomEvent("ams-auth-changed",{detail:{user:null}}));
   },
 
@@ -109,9 +153,14 @@ window.AMSAuth = {
     const form=document.getElementById("loginForm");
     const error=document.getElementById("loginError");
 
+    const hintedEmail=this.loginHint();
+    const emailInput=document.getElementById("loginEmail");
+    if(hintedEmail&&emailInput)emailInput.value=hintedEmail;
+
     document.getElementById("loginBtn")?.addEventListener("click",()=>{
       modal?.classList.add("open");
-      document.getElementById("loginEmail")?.focus();
+      if(hintedEmail&&emailInput&&!emailInput.value)emailInput.value=hintedEmail;
+      emailInput?.focus();
     });
     document.getElementById("loginClose")?.addEventListener("click",()=>modal?.classList.remove("open"));
     document.getElementById("logoutBtn")?.addEventListener("click",()=>this.logout());
@@ -150,6 +199,7 @@ window.AMSAuth = {
       finally{ if(submit){submit.disabled=false;submit.textContent="Entrar";} }
     });
 
+    this.startPersistence();
     this.restore();
   }
 };
