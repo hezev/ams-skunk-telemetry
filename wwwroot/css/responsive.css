@@ -55,3 +55,16 @@
   .telemetry-grid-dense .telemetry-wide{grid-column:auto}
   .replay-control-row{grid-template-columns:1fr}
 }
+
+@media(max-width:1400px){
+  .analysis-cursor-readout{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:1100px){
+  .engineering-control-grid,.engineering-overview{grid-template-columns:1fr}
+  .analysis-cursor-readout{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:720px){
+  .zoom-row{grid-template-columns:1fr}
+  .analysis-cursor-readout{grid-template-columns:1fr 1fr}
+  .analysis-track-stage{height:260px}
+}
