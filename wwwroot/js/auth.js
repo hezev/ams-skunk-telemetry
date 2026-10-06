@@ -110,6 +110,7 @@ window.AMSAuth = {
       const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/user",{headers:this.headers(token)});
       if(!res.ok) throw new Error();
       this.user=await res.json();
+      this.setLoginCookie();
     }catch{
       this.logout(false);
       return null;
