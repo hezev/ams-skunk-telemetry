@@ -371,7 +371,11 @@
     const ratio=samples.length>1?i/(samples.length-1):0;
     if(seek)seek.value=String(Math.round(ratio*1000));
     const pos=Number(s.position);
+    const progress=Number.isFinite(pos)?Math.max(0,Math.min(1,pos/100)):ratio;
     setText("replayPositionText",Number.isFinite(pos)?pos.toFixed(1)+"%":(ratio*100).toFixed(1)+"%");
+    AMSCharts.setExternalCursor(progress);
+    AMSTrack.setAnalysisPosition(progress);
+    renderAnalysisCursor(progress);
   }
 
   async function startReplay(){
@@ -470,6 +474,11 @@
   }
 
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
+  q("#telemetryReferenceSelect")?.addEventListener("change",()=>refreshEngineeringAnalysis());
+  q("#miniSectorCount")?.addEventListener("change",e=>{state.miniCount=Math.max(5,Number(e.target.value)||20);refreshEngineeringAnalysis();});
+  q("#zoomStart")?.addEventListener("input",e=>setZoomWindow(e.target.value,q("#zoomEnd")?.value||100));
+  q("#zoomEnd")?.addEventListener("input",e=>setZoomWindow(q("#zoomStart")?.value||0,e.target.value));
+  q("#zoomResetBtn")?.addEventListener("click",()=>setZoomWindow(0,100));
   q("#compareBtn")?.addEventListener("click",compare);
   q("#replayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
   q("#telemetryReplayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
@@ -477,6 +486,7 @@
   q("#replaySeek")?.addEventListener("input",e=>seekReplay(e.target.value));
   q("#replaySpeed")?.addEventListener("change",e=>{state.replaySpeed=Math.max(.25,Number(e.target.value)||1);});
   q("#exportCsvBtn")?.addEventListener("click",exportTelemetryCsv);
+  AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
   document.addEventListener("ams-auth-changed",e=>{if(e.detail?.user)loadCloud();else stopReplay();});
