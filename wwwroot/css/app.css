@@ -144,3 +144,44 @@ h1{margin:0;font-size:28px;font-weight:950;font-style:italic;text-transform:uppe
 .mini-sector-row:hover{background:#1b222b!important}
 .event-tag{display:inline-block;padding:4px 6px;border-radius:3px;font-size:7px;font-weight:900;letter-spacing:.7px}
 .event-tag.brake{background:#351319;color:#ff7d85}.event-tag.throttle{background:#113120;color:#73eca0}
+
+/* Compact pitwall density */
+.content{padding:16px 18px}
+.titlebar{margin-bottom:10px}
+.titlebar p{margin-top:3px}
+.metrics{gap:7px;margin-bottom:8px}
+.metric{padding:10px 11px}
+.metric strong{margin-top:4px;font-size:22px}
+.card{padding:11px 12px}
+.card-head{gap:8px}
+.card-title{margin-bottom:8px}
+.layout-main{gap:8px}
+.track-stage{height:350px;margin-top:8px}
+.gauges{gap:6px;margin-top:8px}
+.gauges>div{padding:8px}
+.inputs{gap:6px;margin-top:7px}
+.chart-wrap{height:190px;margin-top:7px}
+.chart-wrap.big{height:285px}
+.dashboard-lower{gap:8px;margin-top:8px}
+.tyres{gap:6px}
+.tyre{padding:7px}
+.dynamics-grid,.strategy,.sector-times{gap:6px}
+.dynamics-grid>div,.strategy>div,.sector-times>div{padding:7px}
+.live-summary{gap:7px;margin-bottom:8px}
+.live-summary article{padding:9px}
+.telemetry-grid{gap:8px}
+.workspace-grid{gap:8px}
+th{padding:7px 7px}
+td{padding:7px 7px}
+.engineering-controls{margin:8px 0}
+.engineering-control-grid{gap:10px}
+.control-title{margin-bottom:5px}
+.zoom-row{gap:7px}
+.analysis-cursor-readout{gap:5px;margin:7px 0}
+.analysis-cursor-readout>div{padding:7px}
+.engineering-overview{gap:8px;margin:8px 0}
+.analysis-track-stage{height:270px}
+.analysis-map-legend{gap:5px}
+.analysis-map-legend span{padding:3px 5px}
+.analysis-tables{gap:8px;margin:8px 0}
+.event-tag{padding:3px 5px}
