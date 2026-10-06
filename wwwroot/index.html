@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <title>AMS Skunk Telemetry</title>
-  <link rel="stylesheet" href="css/app.css?v=20261005-11">
-  <link rel="stylesheet" href="css/responsive.css?v=20261005-11">
+  <link rel="stylesheet" href="css/app.css?v=20261006-1">
+  <link rel="stylesheet" href="css/responsive.css?v=20261006-1">
 </head>
 <body>
 
@@ -192,7 +192,7 @@
       <div class="titlebar">
         <div><h1>Telemetry</h1><p>Análise detalhada da telemetria gravada pelo AMS Telemetry v5.12.17</p></div>
         <div class="analysis-actions">
-          <label>Volta <select id="telemetryLapSelect"></select></label>
+          <label>Volta A <select id="telemetryLapSelect"></select></label><label>Referência <select id="telemetryReferenceSelect"></select></label>
           <button id="telemetryReplayBtn" class="action-btn" type="button">▶ Replay</button>
           <button id="exportCsvBtn" class="action-btn" type="button">Export CSV</button>
           <span id="telemetryStatus" class="chip">SEM VOLTA</span>
@@ -202,10 +202,10 @@
       <div class="telemetry-kpis">
         <article class="metric"><span>Lap Time</span><strong id="telemetryLapTime">—</strong></article>
         <article class="metric"><span>Max Speed</span><strong id="telemetryMaxSpeed">—</strong></article>
-        <article class="metric"><span>Max RPM</span><strong id="telemetryMaxRpm">—</strong></article>
+        <article class="metric"><span>Reference</span><strong id="telemetryReferenceTime">—</strong></article>
         <article class="metric"><span>Fuel Used</span><strong id="telemetryFuelUsed">—</strong></article>
         <article class="metric"><span>Peak Lat G</span><strong id="telemetryPeakLatG">—</strong></article>
-        <article class="metric"><span>Peak Long G</span><strong id="telemetryPeakLongG">—</strong></article>
+        <article class="metric"><span>Lap Delta</span><strong id="telemetryLapDelta">—</strong></article>
       </div>
 
       <article class="card replay-control-card">
@@ -224,7 +224,7 @@
         </div>
       </article>
 
-      <div class="telemetry-grid telemetry-grid-dense">
+      <div id="engineeringAnalysisMount"></div>\n\n      <div class="telemetry-grid telemetry-grid-dense">
         <article class="card telemetry-wide"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
         <article class="card"><div class="card-title">Throttle</div><div class="chart-wrap"><canvas class="trace" data-trace="throttle"></canvas></div></article>
         <article class="card"><div class="card-title">Brake</div><div class="chart-wrap"><canvas class="trace" data-trace="brake"></canvas></div></article>
@@ -335,12 +335,12 @@
   </div>
 </div>
 
-<script src="js/config.js?v=20261005-11"></script>
-<script src="js/charts.js?v=20261005-11"></script>
-<script src="js/track-map.js?v=20261005-11"></script>
-<script src="js/supabase.js?v=20261005-11"></script>
-<script src="js/auth.js?v=20261005-11"></script>
-<script src="js/realtime.js?v=20261005-11"></script>
-<script src="js/app.js?v=20261005-11"></script>
+<script src="js/config.js?v=20261006-1"></script>
+<script src="js/analysis.js?v=20261006-1"></script>\n<script src="js/engineering-ui.js?v=20261006-1"></script>\n<script src="js/charts.js?v=20261006-1"></script>
+<script src="js/track-map.js?v=20261006-1"></script>
+<script src="js/supabase.js?v=20261006-1"></script>
+<script src="js/auth.js?v=20261006-1"></script>
+<script src="js/realtime.js?v=20261006-1"></script>
+<script src="js/app.js?v=20261006-1"></script>
 </body>
 </html>
