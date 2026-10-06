@@ -211,6 +211,11 @@
     const n=Number(v);return (n>=0?"+":"")+n.toFixed(3)+"s";
   };
   const fmtNum=(v,d=1,suffix="")=>Number.isFinite(Number(v))?Number(v).toFixed(d)+suffix:"—";
+  const fmtPair=(a,b,d=1,suffix="")=>{
+    const av=Number.isFinite(Number(a))?Number(a).toFixed(d):"—";
+    const bv=Number.isFinite(Number(b))?Number(b).toFixed(d):"—";
+    return av+" / "+bv+(suffix?" "+suffix:"");
+  };
 
   function renderAnalysisCursor(progress){
     if(progress===null||progress===undefined||!state.analysisLap){
@@ -222,10 +227,11 @@
     setText("cursorTimeA",fmtSec(v.ta));
     setText("cursorTimeB",fmtSec(v.tb));
     setText("cursorTimeDelta",fmtDelta(v.delta));
-    setText("cursorSpeed",fmtNum(v.a.speed,1," / ")+fmtNum(v.b.speed,1," km/h"));
-    setText("cursorBrake",fmtNum(v.a.brake,0," / ")+fmtNum(v.b.brake,0,"%"));
-    setText("cursorThrottle",fmtNum(v.a.throttle,0," / ")+fmtNum(v.b.throttle,0,"%"));
+    setText("cursorSpeed",fmtPair(v.a.speed,v.b.speed,1,"km/h"));
+    setText("cursorBrake",fmtPair(v.a.brake,v.b.brake,0,"%"));
+    setText("cursorThrottle",fmtPair(v.a.throttle,v.b.throttle,0,"%"));
     setText("cursorGear",(Number.isFinite(v.a.gear)?Math.round(v.a.gear):"—")+" / "+(Number.isFinite(v.b.gear)?Math.round(v.b.gear):"—"));
+    AMSTrack.setPosition(progress);
     AMSTrack.setAnalysisPosition(progress);
   }
 
