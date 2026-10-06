@@ -85,3 +85,20 @@
   .telemetry-grid-dense .chart-wrap{height:220px}
   .telemetry-grid-dense .chart-wrap.big{height:260px}
 }
+
+/* Denser desktop telemetry charts */
+@media(min-width:801px){
+  .telemetry-kpis{gap:5px;margin-bottom:6px}
+  .telemetry-grid-dense{gap:6px}
+  .telemetry-grid-dense .chart-wrap{height:180px}
+  .telemetry-grid-dense .chart-wrap.big{height:250px}
+  .analysis-actions{gap:5px}
+  .analysis-actions select{padding:5px 6px}
+  .action-btn{padding:6px 8px}
+}
+@media(max-width:800px){
+  .content{padding:10px}
+  .card{padding:8px}
+  .telemetry-grid-dense{gap:7px}
+  .analysis-track-stage{height:230px}
+}
