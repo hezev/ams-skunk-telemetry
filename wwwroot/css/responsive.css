@@ -102,3 +102,15 @@
   .telemetry-grid-dense{gap:7px}
   .analysis-track-stage{height:230px}
 }
+
+@media(max-width:900px){
+  .layout-panel{width:min(92vw,340px)}
+  .layout-edit-btn{padding:6px 7px}
+}
+@media(max-width:720px){
+  .content{padding:6px}
+  .metric,.card{padding:5px}
+  .telemetry-grid-dense .chart-wrap{height:190px!important}
+  .telemetry-grid-dense .chart-wrap.big{height:230px!important}
+  .ams-span-2,.ams-span-full{grid-column:1/-1!important}
+}
