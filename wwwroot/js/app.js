@@ -205,6 +205,132 @@
     updateTelemetrySummary(d);
   }
 
+  const fmtSec=v=>Number.isFinite(Number(v))?Number(v).toFixed(3)+"s":"—";
+  const fmtDelta=v=>{
+    if(!Number.isFinite(Number(v)))return "—";
+    const n=Number(v);return (n>=0?"+":"")+n.toFixed(3)+"s";
+  };
+  const fmtNum=(v,d=1,suffix="")=>Number.isFinite(Number(v))?Number(v).toFixed(d)+suffix:"—";
+
+  function renderAnalysisCursor(progress){
+    if(progress===null||progress===undefined||!state.analysisLap){
+      for(const id of ["cursorPosition","cursorTimeA","cursorTimeB","cursorTimeDelta","cursorSpeed","cursorBrake","cursorThrottle","cursorGear"])setText(id,"—");
+      return;
+    }
+    const v=AMSAnalysis.cursorValues(state.analysisLap,state.analysisRef,progress);
+    setText("cursorPosition",(v.p*100).toFixed(1)+"%");
+    setText("cursorTimeA",fmtSec(v.ta));
+    setText("cursorTimeB",fmtSec(v.tb));
+    setText("cursorTimeDelta",fmtDelta(v.delta));
+    setText("cursorSpeed",fmtNum(v.a.speed,1," / ")+fmtNum(v.b.speed,1," km/h"));
+    setText("cursorBrake",fmtNum(v.a.brake,0," / ")+fmtNum(v.b.brake,0,"%"));
+    setText("cursorThrottle",fmtNum(v.a.throttle,0," / ")+fmtNum(v.b.throttle,0,"%"));
+    setText("cursorGear",(Number.isFinite(v.a.gear)?Math.round(v.a.gear):"—")+" / "+(Number.isFinite(v.b.gear)?Math.round(v.b.gear):"—"));
+    AMSTrack.setAnalysisPosition(progress);
+  }
+
+  function zoneClass(delta){
+    if(!Number.isFinite(Number(delta)))return "";
+    return Number(delta)>0.003?"loss-cell":Number(delta)<-0.003?"gain-cell":"neutral-cell";
+  }
+
+  function renderSectorAnalysis(rows){
+    const body=q("#sectorAnalysisBody");if(!body)return;body.innerHTML="";
+    for(const z of rows||[]){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><strong>S${z.index}</strong></td>
+        <td>${(z.start*100).toFixed(1)}–${(z.end*100).toFixed(1)}%</td>
+        <td>${fmtSec(z.a?.time)}</td>
+        <td>${fmtSec(z.b?.time)}</td>
+        <td class="${zoneClass(z.delta)}"><strong>${fmtDelta(z.delta)}</strong></td>
+        <td>${fmtNum(z.a?.minSpeed,1)} / ${fmtNum(z.a?.maxSpeed,1)} km/h</td>
+        <td>${fmtNum(z.a?.peakBrake,0,"%")}</td>
+        <td>${fmtNum(z.a?.avgThrottle,0,"%")}</td>`;
+      body.appendChild(tr);
+    }
+  }
+
+  function setZoomWindow(start,end){
+    let a=Math.max(0,Math.min(100,Number(start))),b=Math.max(0,Math.min(100,Number(end)));
+    if(!Number.isFinite(a))a=0;if(!Number.isFinite(b))b=100;
+    if(b-a<1){if(a<=98)b=a+1;else a=b-1;}
+    const zs=q("#zoomStart"),ze=q("#zoomEnd");
+    if(zs)zs.value=String(Math.round(a));if(ze)ze.value=String(Math.round(b));
+    setText("zoomStartText",Math.round(a)+"%");setText("zoomEndText",Math.round(b)+"%");
+    AMSCharts.setZoom(a/100,b/100);
+  }
+
+  function renderMiniSectors(rows){
+    const body=q("#miniSectorBody");if(!body)return;body.innerHTML="";
+    for(const z of rows||[]){
+      const tr=document.createElement("tr");tr.className="mini-sector-row";tr.title="Clicar para ampliar este minissetor";
+      tr.innerHTML=`<td><strong>MS${z.index}</strong></td>
+        <td>${(z.start*100).toFixed(1)}–${(z.end*100).toFixed(1)}%</td>
+        <td>${fmtSec(z.a?.time)}</td>
+        <td>${fmtSec(z.b?.time)}</td>
+        <td class="${zoneClass(z.delta)}"><strong>${fmtDelta(z.delta)}</strong></td>
+        <td>${fmtNum(z.a?.minSpeed,1)} / ${fmtNum(z.a?.maxSpeed,1)}</td>
+        <td>${fmtNum(z.a?.peakBrake,0,"%")}</td>
+        <td>${fmtNum(z.a?.avgThrottle,0,"%")}</td>
+        <td>${Number.isFinite(z.a?.minGear)?Math.round(z.a.minGear):"—"}–${Number.isFinite(z.a?.maxGear)?Math.round(z.a.maxGear):"—"}</td>`;
+      tr.addEventListener("click",()=>setZoomWindow(z.start*100,z.end*100));
+      body.appendChild(tr);
+    }
+  }
+
+  function renderDrivingEvents(events,referenceEvents){
+    const body=q("#drivingEventsBody");if(!body)return;body.innerHTML="";
+    const length=Number(AMSTrack.reference?.lengthM);
+    for(const e of (events||[]).slice(0,40)){
+      const ref=AMSAnalysis.nearestEvent(referenceEvents,e.type,e.position);
+      let offset="—";
+      if(ref&&Number.isFinite(length)){
+        let d=ref.position-e.position;if(d>.5)d-=1;if(d<-.5)d+=1;
+        offset=(d*length>=0?"+":"")+(d*length).toFixed(0)+" m";
+      }else if(ref){
+        offset=((ref.position-e.position)*100).toFixed(1)+"%";
+      }
+      const input=e.type==="brake"?fmtNum(e.peak,0,"%"):fmtNum(e.throttle,0,"%");
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><span class="event-tag ${e.type}">${e.type==="brake"?"BRAKE":"THROTTLE"}</span></td>
+        <td>${(e.position*100).toFixed(1)}%</td><td>${fmtNum(e.speed,1," km/h")}</td>
+        <td>${input}</td><td>${e.type==="brake"?fmtSec(e.duration):"—"}</td><td>${offset}</td>`;
+      tr.addEventListener("click",()=>setZoomWindow(Math.max(0,e.position*100-2),Math.min(100,e.position*100+4)));
+      body.appendChild(tr);
+    }
+    if(!body.children.length)body.innerHTML='<tr><td colspan="6">Sem eventos detetados.</td></tr>';
+  }
+
+  async function refreshEngineeringAnalysis(){
+    if(!state.selectedDetail)return;
+    state.analysisLap=AMSAnalysis.prepareLap(state.selectedDetail);
+    const refId=q("#telemetryReferenceSelect")?.value;
+    let refDetail=refId?await detail(refId):null;
+    state.analysisRef=refDetail?AMSAnalysis.prepareLap(refDetail):null;
+    if(state.analysisRef&&!AMSAnalysis.compatible(state.analysisLap,state.analysisRef))state.analysisRef=null;
+
+    const events=AMSAnalysis.detectEvents(state.analysisLap);
+    const refEvents=state.analysisRef?AMSAnalysis.detectEvents(state.analysisRef):[];
+    state.analysisResult=state.analysisRef
+      ?AMSAnalysis.compare(state.analysisLap,state.analysisRef,state.miniCount)
+      :{compatible:false,profile:[],sectors:AMSAnalysis.zones(state.analysisLap,null,3),minisectors:AMSAnalysis.zones(state.analysisLap,null,state.miniCount),events,referenceEvents:[]};
+
+    AMSCharts.setTelemetry(state.analysisLap.samples);
+    AMSCharts.setReference(state.analysisRef?.samples||[],state.analysisResult.profile||[]);
+
+    const refMs=Number(state.analysisRef?.detail?.lap_time_ms);
+    const ownMs=Number(state.selectedDetail?.lap_time_ms);
+    setText("telemetryReferenceTime",Number.isFinite(refMs)?fmtLap(refMs):"—");
+    setText("telemetryLapDelta",Number.isFinite(refMs)&&Number.isFinite(ownMs)?fmtDelta((ownMs-refMs)/1000):"—");
+    setText("analysisComparisonStatus",state.analysisRef?"A vs REF · distância sincronizada":"SEM REFERÊNCIA COMPATÍVEL");
+
+    renderSectorAnalysis(state.analysisResult.sectors||[]);
+    renderMiniSectors(state.analysisResult.minisectors||[]);
+    renderDrivingEvents(events,refEvents);
+    AMSTrack.renderAnalysisMap(state.analysisResult.minisectors||[],events);
+    renderAnalysisCursor(0);
+  }
+
   async function selectLap(id,goTelemetry=false){
     const d=await detail(id); if(!d)return;
     state.selectedId=id; state.selectedDetail=d; renderLaps();
