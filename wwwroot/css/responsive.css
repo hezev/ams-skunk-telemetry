@@ -68,3 +68,20 @@
   .analysis-cursor-readout{grid-template-columns:1fr 1fr}
   .analysis-track-stage{height:260px}
 }
+
+/* Compact desktop telemetry density */
+.telemetry-kpis{gap:6px;margin-bottom:7px}
+.replay-control-card{margin-bottom:8px;padding:9px 11px}
+.replay-control-row{gap:8px}
+.title-actions,.analysis-actions,.workspace-controls{gap:7px}
+.action-btn{padding:7px 9px}
+.analysis-actions select{padding:6px}
+.telemetry-grid-dense{gap:8px}
+.telemetry-grid-dense .chart-wrap{height:210px}
+.telemetry-grid-dense .chart-wrap.big{height:300px}
+
+@media(max-width:800px){
+  .content{padding:12px}
+  .telemetry-grid-dense .chart-wrap{height:220px}
+  .telemetry-grid-dense .chart-wrap.big{height:260px}
+}
