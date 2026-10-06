@@ -185,3 +185,42 @@ td{padding:7px 7px}
 .analysis-map-legend span{padding:3px 5px}
 .analysis-tables{gap:8px;margin:8px 0}
 .event-tag{padding:3px 5px}
+
+/* Dense telemetry / pitwall pass */
+.content{padding:12px 14px}
+.titlebar{margin-bottom:7px}
+.metrics{gap:5px;margin-bottom:6px}
+.metric{padding:8px 9px}
+.metric strong{margin-top:3px;font-size:20px}
+.card{padding:8px 9px}
+.card-title{margin-bottom:6px}
+.card-head{gap:6px}
+.layout-main{gap:6px}
+.dashboard-lower{gap:6px;margin-top:6px}
+.telemetry-grid{gap:6px}
+.workspace-grid{gap:6px}
+.live-summary{gap:5px;margin-bottom:6px}
+.live-summary article{padding:7px 8px}
+.track-stage{height:330px;margin-top:6px}
+.gauges{gap:5px;margin-top:6px}
+.gauges>div{padding:7px}
+.inputs{gap:5px;margin-top:6px}
+.chart-wrap{margin-top:5px}
+.tyres{gap:5px}
+.tyre{padding:6px}
+.dynamics-grid,.strategy,.sector-times{gap:5px}
+.dynamics-grid>div,.strategy>div,.sector-times>div{padding:6px}
+th{padding:6px 6px}
+td{padding:6px 6px}
+.engineering-controls{margin:6px 0}
+.engineering-control-grid{gap:7px}
+.control-title{margin-bottom:4px}
+.zoom-row{gap:5px}
+.analysis-cursor-readout{gap:4px;margin:5px 0}
+.analysis-cursor-readout>div{padding:6px}
+.engineering-overview{gap:6px;margin:6px 0}
+.analysis-track-stage{height:235px}
+.analysis-tables{gap:6px;margin:6px 0}
+.analysis-map-legend{gap:4px}
+.replay-control-card{margin-bottom:6px!important;padding:7px 9px!important}
+.replay-control-row{gap:6px!important}
