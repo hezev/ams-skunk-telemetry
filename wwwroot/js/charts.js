@@ -15,7 +15,7 @@ window.AMSCharts = {
     throttle: {unit:"%",fixed:[0,100],series:[["throttle","Throttle","#31d878"]]},
     brake: {unit:"%",fixed:[0,100],series:[["brake","Brake","#ef1824"]]},
     rpm: {unit:"rpm",series:[["rpm","RPM","#ffd329"],["shiftRpm","Shift","#ef1824"]]},
-    gear: {unit:"",fixed:[-1,8],series:[["gear","Gear","#22a8ff"]]},
+    gear: {unit:"",fixed:[-1,8],discreteGear:true,series:[["gear","Gear","#22a8ff"]]},
     steering: {unit:"°",series:[["steer","Steering","#22a8ff"]]},
     steeringTorque: {unit:"Nm",series:[["steeringTorque","Torque","#a884ff"]]},
     delta: {unit:"s",series:[["delta","Delta","#ef1824"]]},
@@ -132,22 +132,57 @@ window.AMSCharts = {
     }
   },
 
-  drawSeries(ctx,plot,points,lo,hi,color,dashed=false,width=1.8){
+  gearLabel(v){
+    const n=Math.round(Number(v));
+    if(n===-1)return "R";
+    if(n===0)return "N";
+    return n>=1&&n<=8?String(n):"—";
+  },
+
+  drawGearGrid(ctx,w,h,plot){
+    ctx.clearRect(0,0,w,h);ctx.fillStyle="#090c10";ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle="#202731";ctx.lineWidth=1;
+    for(let gear=-1;gear<=8;gear++){
+      const y=plot.top+plot.h-((gear+1)/9)*plot.h;
+      ctx.beginPath();ctx.moveTo(plot.left,y);ctx.lineTo(plot.left+plot.w,y);ctx.stroke();
+    }
+    for(let i=0;i<=5;i++){
+      const x=plot.left+plot.w*i/5;
+      ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
+    }
+  },
+
+  drawSeries(ctx,plot,points,lo,hi,color,dashed=false,width=1.8,stepped=false){
     if(points.length<2)return;
     ctx.save();ctx.strokeStyle=color;ctx.lineWidth=width;ctx.globalAlpha=dashed?.72:1;ctx.setLineDash(dashed?[6,4]:[]);
     ctx.beginPath();
     points.forEach((p,i)=>{
       const x=this.mapX(p.p,plot),y=plot.top+plot.h-((p.v-lo)/(hi-lo))*plot.h;
-      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      if(!i){ctx.moveTo(x,y);return;}
+      if(stepped){
+        const prev=points[i-1];
+        const prevY=plot.top+plot.h-((prev.v-lo)/(hi-lo))*plot.h;
+        ctx.lineTo(x,prevY);
+        ctx.lineTo(x,y);
+      }else{
+        ctx.lineTo(x,y);
+      }
     });
     ctx.stroke();ctx.restore();
   },
 
   drawAxes(ctx,plot,lo,hi,spec){
     ctx.fillStyle="#77818d";ctx.font="10px Segoe UI";ctx.textAlign="right";
-    for(let i=0;i<=4;i++){
-      const v=hi-(hi-lo)*i/4,y=plot.top+plot.h*i/4+3;
-      ctx.fillText(this.fmt(v,spec.unit),plot.left-7,y);
+    if(spec.discreteGear){
+      for(let gear=-1;gear<=8;gear++){
+        const y=plot.top+plot.h-((gear-lo)/(hi-lo))*plot.h+3;
+        ctx.fillText(this.gearLabel(gear),plot.left-7,y);
+      }
+    }else{
+      for(let i=0;i<=4;i++){
+        const v=hi-(hi-lo)*i/4,y=plot.top+plot.h*i/4+3;
+        ctx.fillText(this.fmt(v,spec.unit),plot.left-7,y);
+      }
     }
     ctx.textAlign="center";
     for(let i=0;i<=5;i++){
@@ -181,8 +216,8 @@ window.AMSCharts = {
     const text=[(this.cursorPos*100).toFixed(1)+"%"];
     for(const [key,label] of spec.series.slice(0,2)){
       const av=Number(a?.[key]),bv=Number(b?.[key]);
-      if(Number.isFinite(av))text.push("A "+label+" "+this.fmt(av,spec.unit));
-      if(Number.isFinite(bv))text.push("R "+label+" "+this.fmt(bv,spec.unit));
+      if(Number.isFinite(av))text.push("A "+label+" "+(spec.discreteGear?this.gearLabel(av):this.fmt(av,spec.unit)));
+      if(Number.isFinite(bv))text.push("R "+label+" "+(spec.discreteGear?this.gearLabel(bv):this.fmt(bv,spec.unit)));
     }
     const label=text.join("   ");ctx.font="10px Segoe UI";const tw=Math.min(plot.w-10,ctx.measureText(label).width+14);
     let bx=x+8;if(bx+tw>plot.left+plot.w)bx=x-tw-8;
@@ -193,13 +228,15 @@ window.AMSCharts = {
   drawTelemetry(canvas,type){
     const spec=this.specs[type]||this.specs.speed,{ctx,w,h}=this.setupCanvas(canvas);
     const plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
-    this.drawGrid(ctx,w,h,plot);const [lo,hi]=this.extent(spec);
+    if(spec.discreteGear)this.drawGearGrid(ctx,w,h,plot);
+    else this.drawGrid(ctx,w,h,plot);
+    const [lo,hi]=this.extent(spec);
     this.drawAxes(ctx,plot,lo,hi,spec);this.drawLegend(ctx,plot,spec);
     let has=false;
     for(const [key,,color] of spec.series){
       const a=this.numeric(this.telemetry,key),b=this.numeric(this.reference,key);
-      if(a.length){has=true;this.drawSeries(ctx,plot,a,lo,hi,color,false,1.9);}
-      if(b.length){has=true;this.drawSeries(ctx,plot,b,lo,hi,color,true,1.35);}
+      if(a.length){has=true;this.drawSeries(ctx,plot,a,lo,hi,color,false,1.9,Boolean(spec.discreteGear));}
+      if(b.length){has=true;this.drawSeries(ctx,plot,b,lo,hi,color,true,1.35,Boolean(spec.discreteGear));}
     }
     if(!has){ctx.fillStyle="#687381";ctx.font="12px Segoe UI";ctx.textAlign="center";ctx.fillText("Canal não disponível nesta volta",plot.left+plot.w/2,plot.top+plot.h/2);}
     this.drawCursor(ctx,plot,spec);
