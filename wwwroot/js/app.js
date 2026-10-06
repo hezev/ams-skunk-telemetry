@@ -334,15 +334,17 @@
   async function selectLap(id,goTelemetry=false){
     const d=await detail(id); if(!d)return;
     state.selectedId=id; state.selectedDetail=d; renderLaps();
-    AMSCharts.setTelemetry(d.telemetry||[]);
     setText("telemetryStatus",`${(d.telemetry||[]).length} amostras`);
     const sel=q("#telemetryLapSelect"); if(sel)sel.value=id;
     setText("simName",d.simulator||"—"); setText("trackName",d.circuit||"—"); setText("carName",d.car||"—");
+    fillReferenceSelector();
     await AMSTrack.load(d.circuit||"");
     state.replayCursor=0;
     const seek=q("#replaySeek"); if(seek)seek.value="0";
     setText("replayPositionText","0.0%");
     updateWorkspace(); updateReplayDerived(d);
+    setZoomWindow(0,100);
+    await refreshEngineeringAnalysis();
     if(goTelemetry)switchView("telemetry");
   }
 
