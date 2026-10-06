@@ -221,7 +221,22 @@ window.AMSCharts = {
     }
     ctx.fillStyle="#31d878";ctx.font="10px Segoe UI";ctx.textAlign="left";ctx.fillText("GAIN",plot.left,plot.top+13);
     ctx.fillStyle="#ef1824";ctx.textAlign="right";ctx.fillText("LOSS",plot.left+plot.w,plot.top+13);
-    this.drawCursor(ctx,plot,{unit:"s",series:[]});
+    if(this.cursorPos!==null&&this.cursorPos>=this.zoomStart&&this.cursorPos<=this.zoomEnd){
+      const x=this.mapX(this.cursorPos,plot);
+      ctx.strokeStyle="#f4f7fb";ctx.globalAlpha=.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();
+      ctx.setLineDash([]);ctx.globalAlpha=1;
+      let nearest=null,dist=Infinity;
+      for(const p of this.comparisonProfile||[]){
+        const pp=Number(p.position)/100,d=Math.abs(pp-this.cursorPos);
+        if(d<dist){dist=d;nearest=p;}
+      }
+      const dv=Number(nearest?.delta);
+      const label=(this.cursorPos*100).toFixed(1)+"% · Δ "+(Number.isFinite(dv)?((dv>=0?"+":"")+dv.toFixed(3)+"s"):"—");
+      ctx.font="10px Segoe UI";const tw=ctx.measureText(label).width+14;
+      let bx=x+8;if(bx+tw>plot.left+plot.w)bx=x-tw-8;
+      ctx.fillStyle="rgba(5,8,12,.94)";ctx.fillRect(bx,plot.top+24,tw,22);
+      ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(label,bx+7,plot.top+39);
+    }
   },
 
   drawCompare(canvas){
