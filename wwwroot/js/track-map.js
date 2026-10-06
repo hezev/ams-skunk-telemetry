@@ -491,6 +491,58 @@ window.AMSTrack = {
     return {x:pts[i].x+(pts[j].x-pts[i].x)*t,y:pts[i].y+(pts[j].y-pts[i].y)*t};
   },
 
+  analysisViewBox(){
+    const host=document.getElementById("trackMotionSvg");
+    return host?.getAttribute("viewBox")||"0 0 1000 600";
+  },
+
+  slicePoints(start,end,steps=80){
+    const out=[];
+    for(let i=0;i<=steps;i++){
+      const p=start+(end-start)*i/steps;
+      const pt=this.localPoint(p);
+      if(pt)out.push(pt);
+    }
+    return out;
+  },
+
+  renderAnalysisMap(segments=[],events=[]){
+    const svg=document.getElementById("analysisTrackSvg");
+    if(!svg||!this.centerline.length)return;
+    svg.setAttribute("viewBox",this.analysisViewBox());
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+
+    const full=this.centerline.filter((_,i)=>i%3===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+    let html='<polyline class="analysis-track-base" points="'+full+'"></polyline>';
+
+    for(const s of segments||[]){
+      const pts=this.slicePoints(Number(s.start)||0,Number(s.end)||0,50);
+      if(pts.length<2)continue;
+      const cls=!Number.isFinite(Number(s.delta))?"neutral":Number(s.delta)>0.003?"loss":Number(s.delta)<-0.003?"gain":"neutral";
+      const pp=pts.map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+      html+='<polyline class="analysis-track-segment '+cls+'" points="'+pp+'"><title>MS'+(s.index||"")+' · '+(Number.isFinite(Number(s.delta))?((s.delta>=0?"+":"")+Number(s.delta).toFixed(3)+"s"):"—")+'</title></polyline>';
+    }
+
+    for(const e of events||[]){
+      const pt=this.localPoint(Number(e.position)||0);if(!pt)continue;
+      const cls=e.type==="brake"?"brake-event":"throttle-event";
+      html+='<circle class="analysis-event '+cls+'" cx="'+pt.x.toFixed(2)+'" cy="'+pt.y.toFixed(2)+'" r="7"><title>'+(e.type==="brake"?"Brake":"Throttle")+' · '+((Number(e.position)||0)*100).toFixed(1)+'%</title></circle>';
+    }
+
+    const cursor=this.localPoint(this.progress)||this.centerline[0];
+    html+='<circle id="analysisTrackCursor" class="analysis-track-cursor" cx="'+cursor.x.toFixed(2)+'" cy="'+cursor.y.toFixed(2)+'" r="10"></circle>';
+    svg.innerHTML=html;
+  },
+
+  setAnalysisPosition(progress){
+    const p=Number(progress);
+    if(!Number.isFinite(p))return;
+    const cursor=document.getElementById("analysisTrackCursor"),pt=this.localPoint(p);
+    if(!cursor||!pt)return;
+    cursor.setAttribute("cx",pt.x.toFixed(2));
+    cursor.setAttribute("cy",pt.y.toFixed(2));
+  },
+
   positionElement(el,progress){
     const svg=document.getElementById("trackMotionSvg"),point=this.localPoint(progress);
     if(!el||!svg||!point)return;
