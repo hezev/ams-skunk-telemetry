@@ -127,6 +127,16 @@
     setText("teamSubtitle",state.isCoach?"Modo treinador · acesso aos pilotos autorizado por RLS":"Modo piloto · apenas os teus dados privados e referências partilhadas");
   }
 
+  function fillReferenceSelector(){
+    const e=q("#telemetryReferenceSelect");if(!e)return;
+    const current=state.laps.find(l=>l.id===state.selectedId)||state.selectedDetail;
+    const compatible=state.laps
+      .filter(l=>current&&l.id!==state.selectedId&&l.simulator===current.simulator&&l.circuit===current.circuit&&l.car===current.car)
+      .sort((a,b)=>Number(a.lap_time_ms)-Number(b.lap_time_ms));
+    e.innerHTML='<option value="">Sem referência</option>'+compatible.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${pilotName(l.pilot_id)}</option>`).join("");
+    if(compatible.length)e.value=compatible[0].id;
+  }
+
   function fillSelectors(){
     const options=state.laps.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
     for(const id of ["telemetryLapSelect","compareLapA","compareLapB"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
@@ -134,6 +144,7 @@
     const a=q("#compareLapA"),b=q("#compareLapB");
     if(a&&state.laps[0])a.value=state.laps[0].id;
     if(b&&state.laps[1])b.value=state.laps[1].id;
+    fillReferenceSelector();
   }
 
   async function detail(id){
