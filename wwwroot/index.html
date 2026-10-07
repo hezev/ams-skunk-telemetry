@@ -411,6 +411,26 @@
         <div id="engineerPriorities" class="engineer-priorities">Sem análise.</div>
       </article>
 
+
+      <article class="card engineer-ai-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">AI Performance Engineer</div>
+            <div class="trajectory-subtitle">Interpretação da evidência calculada pelo AMS · pós-sessão</div>
+          </div>
+          <div class="engineer-ai-actions">
+            <span id="engineerAiStatus" class="chip">AI READY</span>
+            <button id="engineerAiBtn" class="action-btn" type="button">Generate Briefing</button>
+          </div>
+        </div>
+        <div id="engineerAiOutput" class="engineer-ai-output">Analisa a sessão e pede um briefing para receber prioridades, diagnóstico de consistência e leitura setup vs pilotagem.</div>
+        <div class="engineer-ai-question">
+          <input id="engineerQuestion" type="text" maxlength="1200" placeholder="Ex.: Onde estou a perder mais tempo? Devo mexer no setup?">
+          <button id="engineerAskBtn" class="action-btn" type="button">Ask Engineer</button>
+        </div>
+        <div class="engineer-ai-foot">A AI interpreta os cálculos do AMS; não substitui a evidência nem inventa ganhos de setup.</div>
+      </article>
+
       <article class="card table-card">
         <div class="card-head">
           <div>
@@ -495,6 +515,7 @@
 <script src="js/auth.js?v=20261007-11"></script>
 <script src="js/realtime.js?v=20261007-11"></script>
 <script src="js/app.js?v=20261007-11"></script>
-<script src="js/layout.js?v=20261007-11"></script>
+<script src="js/ai-engineer.js?v=20261007-12"></script>
+<script src="js/layout.js?v=20261007-12"></script>
 </body>
 </html>

@@ -624,3 +624,14 @@ th,td{padding:5px 5px}
   .engineer-priority{grid-template-columns:1fr}
   .engineer-priority-meta{grid-column:1}
 }
+
+
+/* AI Performance Engineer */
+.engineer-ai-card{margin-bottom:6px}
+.engineer-ai-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.engineer-ai-output{margin-top:9px;min-height:150px;padding:14px;background:#090d12;border-left:2px solid #46515e;border-radius:3px;color:#e5e9ef;white-space:pre-wrap;line-height:1.55;font-size:12px}
+.engineer-ai-question{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:7px}
+.engineer-ai-question input{min-width:0;border:1px solid #29313b;border-radius:4px;background:#090d12;color:#fff;padding:9px 10px;outline:none;font:inherit;font-size:11px}
+.engineer-ai-question input:focus{border-color:#596575}
+.engineer-ai-foot{margin-top:6px;color:#687482;font-size:8px;text-transform:uppercase;letter-spacing:.55px}
+@media(max-width:720px){.engineer-ai-question{grid-template-columns:1fr}.engineer-ai-actions{justify-content:flex-start}}
