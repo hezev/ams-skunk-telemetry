@@ -30,7 +30,7 @@ for(const token of ["prepareLap","comparisonProfile","detectEvents","segmentStat
 for(const token of ["setReference","setZoom","timeDelta","cursorCallback"]){
   if(!charts.includes(token)) throw new Error("Missing chart capability "+token);
 }
-for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory","renderTrajectoryCoaching","setTrajectoryCoachingPosition","detectCorners","renderFocusedCompare","setFocusedComparePosition","setFocusedCompareZoom","estimateLapLength","lengthMatchScore"]){
+for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory","renderTrajectoryCoaching","setTrajectoryCoachingPosition","detectCorners","renderFocusedCompare","setFocusedComparePosition","setFocusedCompareZoom","estimateLapLength","lengthMatchScore","buildTrackSync","mappedProgress","reconstructRelativeTrajectory"]){
   if(!track.includes(token)) throw new Error("Missing map capability "+token);
 }
 for(const token of ["refreshEngineeringAnalysis","renderMiniSectors","renderDrivingEvents","setZoomWindow","ams-trajectory-seek","startCompareReplay","setCompareProgress","seekCompare"]){
