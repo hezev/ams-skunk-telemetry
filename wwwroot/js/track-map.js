@@ -987,6 +987,36 @@ window.AMSTrack = {
     return {x:0,y:0,w:1000,h:600};
   },
 
+  constrainTrajectoryToTrack(fit,halfWidthM=6.5){
+    if(!fit?.points?.length)return fit;
+    const metersPerUnit=this.viewUnitsToMeters();
+    if(!Number.isFinite(metersPerUnit)||metersPerUnit<=0)return fit;
+    const halfUnits=halfWidthM/metersPerUnit;
+    const points=fit.points.map(pt=>{
+      const center=this.localPoint(pt.p),tan=this.centerTangent(pt.p);
+      if(!center||!tan)return pt;
+      const nx=-tan.y,ny=tan.x;
+      const lateral=(pt.x-center.x)*nx+(pt.y-center.y)*ny;
+      const clipped=Math.max(-halfUnits,Math.min(halfUnits,lateral));
+      return {p:pt.p,x:center.x+nx*clipped,y:center.y+ny*clipped};
+    });
+    return {...fit,points};
+  },
+
+  focusedStrokeWidths(){
+    const metersPerUnit=this.viewUnitsToMeters();
+    if(!Number.isFinite(metersPerUnit)||metersPerUnit<=0){
+      return {edge:18,road:13,line:2.4,marker:4};
+    }
+    const unitsPerMeter=1/metersPerUnit;
+    return {
+      edge:Math.max(7,Math.min(24,13.0*unitsPerMeter)),
+      road:Math.max(5,Math.min(19,10.5*unitsPerMeter)),
+      line:Math.max(1.2,Math.min(3.2,.65*unitsPerMeter)),
+      marker:Math.max(2.3,Math.min(5.5,1.5*unitsPerMeter))
+    };
+  },
+
   renderFocusedCompare(lapA,lapRef){
     const svg=document.getElementById("compareFocusSvg");
     const mini=document.getElementById("compareMiniMapSvg");
@@ -997,14 +1027,19 @@ window.AMSTrack = {
       return false;
     }
 
-    const ref=this.reconstructTrajectory(lapRef);
-    const a=this.reconstructTrajectory(lapA,ref||null);
-    if(!a||!ref){
+    const refRaw=this.reconstructTrajectory(lapRef);
+    const aRaw=this.reconstructTrajectory(lapA,refRaw||null);
+    if(!aRaw||!refRaw){
       this.focusedCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
       return false;
     }
 
+    // Keep the reconstructed driving lines inside a realistic track corridor.
+    // This prevents inertial-integration drift from visually jumping across
+    // nearby sections of circuit while preserving lateral A/REF differences.
+    const ref=this.constrainTrajectoryToTrack(refRaw,6.5);
+    const a=this.constrainTrajectoryToTrack(aRaw,6.5);
     const data={
       a,ref,lapA,lapRef,
       coaching:this.trajectoryCoachRows(lapA,lapRef,{a,ref}),
@@ -1015,17 +1050,18 @@ window.AMSTrack = {
     const full=this.parseViewBox();
     const base=this.centerline.filter((_,i)=>i%2===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
     const pathA=this.svgPath(a.points),pathR=this.svgPath(ref.points);
+    const sw=this.focusedStrokeWidths();
 
     svg.setAttribute("preserveAspectRatio","xMidYMid meet");
     svg.innerHTML=
-      '<polyline class="compare-focus-track-edge" points="'+base+'"></polyline>'+
-      '<polyline class="compare-focus-track-road" points="'+base+'"></polyline>'+
-      '<path class="compare-focus-line trajectory-a ghost" d="'+pathA+'"></path>'+
-      '<path class="compare-focus-line trajectory-ref ghost" d="'+pathR+'"></path>'+
-      '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" d="'+pathA+'"></path>'+
-      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" d="'+pathR+'"></path>'+
-      '<circle id="compareFocusMarkerA" class="compare-focus-marker marker-a" r="8"></circle>'+
-      '<circle id="compareFocusMarkerRef" class="compare-focus-marker marker-ref" r="8"></circle>';
+      '<polyline class="compare-focus-track-edge" style="stroke-width:'+sw.edge.toFixed(2)+'" points="'+base+'"></polyline>'+
+      '<polyline class="compare-focus-track-road" style="stroke-width:'+sw.road.toFixed(2)+'" points="'+base+'"></polyline>'+
+      '<path class="compare-focus-line trajectory-a ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathA+'"></path>'+
+      '<path class="compare-focus-line trajectory-ref ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathR+'"></path>'+
+      '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" style="stroke-width:'+sw.line.toFixed(2)+'" d="'+pathA+'"></path>'+
+      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" style="stroke-width:'+sw.line.toFixed(2)+'" d="'+pathR+'"></path>'+
+      '<circle id="compareFocusMarkerA" class="compare-focus-marker marker-a" r="'+sw.marker.toFixed(2)+'"></circle>'+
+      '<circle id="compareFocusMarkerRef" class="compare-focus-marker marker-ref" r="'+sw.marker.toFixed(2)+'"></circle>';
 
     mini.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
     mini.setAttribute("preserveAspectRatio","xMidYMid meet");
