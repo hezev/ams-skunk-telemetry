@@ -348,7 +348,7 @@
     const sel=q("#telemetryLapSelect"); if(sel)sel.value=id;
     setText("simName",d.simulator||"—"); setText("trackName",d.circuit||"—"); setText("carName",d.car||"—");
     fillReferenceSelector();
-    await AMSTrack.load(d.circuit||"");
+    await AMSTrack.load(d.circuit||"","",d.telemetry||[]);
     state.replayCursor=0;
     const seek=q("#replaySeek"); if(seek)seek.value="0";
     setText("replayPositionText","0.0%");
@@ -528,7 +528,7 @@
       return;
     }
 
-    await AMSTrack.load(a.circuit||"");
+    await AMSTrack.load(a.circuit||"","",a.telemetry||[]);
     state.compareLapA=AMSAnalysis.prepareLap(a);
     state.compareLapB=AMSAnalysis.prepareLap(b);
     state.compareCursorIndex=0;
