@@ -9,6 +9,7 @@ window.AMSCharts = {
   zoomEnd: 1,
   redrawFrame: null,
   cursorCallback: null,
+  compareCursorCallback: null,
 
   specs: {
     speed: {unit:"km/h",series:[["speed","Speed","#ef1824"]]},
@@ -55,6 +56,7 @@ window.AMSCharts = {
     this.drawAll();
   },
   setCursorCallback(fn){ this.cursorCallback=typeof fn==="function"?fn:null; },
+  setCompareCursorCallback(fn){ this.compareCursorCallback=typeof fn==="function"?fn:null; },
   setExternalCursor(pos){
     const p=Number(pos);this.cursorPos=Number.isFinite(p)?Math.max(0,Math.min(1,p)):null;this.scheduleDraw();
   },
@@ -276,15 +278,43 @@ window.AMSCharts = {
     }
   },
 
-  drawCompare(canvas){
+  drawCompareChannel(canvas,key="speed"){
+    const specs={
+      speed:{unit:"km/h",fixed:null},
+      throttle:{unit:"%",fixed:[0,100]},
+      brake:{unit:"%",fixed:[0,100]}
+    };
+    const spec=specs[key]||specs.speed;
     const {ctx,w,h}=this.setupCanvas(canvas),plot={left:58,top:25,w:Math.max(40,w-72),h:Math.max(40,h-55)};
     this.drawGrid(ctx,w,h,plot);
-    const vals=[...this.numeric(this.compareA,"speed").map(p=>p.v),...this.numeric(this.compareB,"speed").map(p=>p.v)];
-    let lo=vals.length?Math.min(...vals):0,hi=vals.length?Math.max(...vals):1;if(lo===hi){lo-=1;hi+=1;}const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
-    this.drawAxes(ctx,plot,lo,hi,{unit:"km/h"});
-    this.drawSeries(ctx,plot,this.numeric(this.compareA,"speed"),lo,hi,"#ef1824",false,2);
-    this.drawSeries(ctx,plot,this.numeric(this.compareB,"speed"),lo,hi,"#22a8ff",false,2);
+    const a=this.numeric(this.compareA,key),b=this.numeric(this.compareB,key);
+    const vals=[...a.map(p=>p.v),...b.map(p=>p.v)];
+    let lo,hi;
+    if(spec.fixed){[lo,hi]=spec.fixed;}
+    else{
+      lo=vals.length?Math.min(...vals):0;hi=vals.length?Math.max(...vals):1;
+      if(lo===hi){lo-=1;hi+=1;}
+      const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+    }
+    this.drawAxes(ctx,plot,lo,hi,{unit:spec.unit});
+    this.drawSeries(ctx,plot,a,lo,hi,"#ff8a00",false,2.1);
+    this.drawSeries(ctx,plot,b,lo,hi,"#2f7fd2",false,2.1);
+
+    if(this.cursorPos!==null&&this.cursorPos>=this.zoomStart&&this.cursorPos<=this.zoomEnd){
+      const x=this.mapX(this.cursorPos,plot);
+      ctx.save();ctx.strokeStyle="#fff";ctx.globalAlpha=.55;ctx.setLineDash([5,5]);
+      ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();ctx.restore();
+      const av=Number(this.nearest(this.compareA,this.cursorPos)?.[key]);
+      const bv=Number(this.nearest(this.compareB,this.cursorPos)?.[key]);
+      const label=(this.cursorPos*100).toFixed(1)+"% · A "+this.fmt(av,spec.unit)+" · REF "+this.fmt(bv,spec.unit);
+      ctx.font="10px Segoe UI";const tw=ctx.measureText(label).width+14;
+      let bx=x+8;if(bx+tw>plot.left+plot.w)bx=x-tw-8;
+      ctx.fillStyle="rgba(5,8,12,.94)";ctx.fillRect(bx,plot.top+24,tw,22);
+      ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(label,bx+7,plot.top+39);
+    }
   },
+
+  drawCompare(canvas){ this.drawCompareChannel(canvas,"speed"); },
 
   attach(canvas){
     if(canvas.dataset.amsBound)return;canvas.dataset.amsBound="1";
@@ -300,7 +330,9 @@ window.AMSCharts = {
 
   draw(canvas,type){
     if(!canvas)return;this.attach(canvas);
-    if(type==="compare")this.drawCompare(canvas);
+    if(type==="compare")this.drawCompareChannel(canvas,"speed");
+    else if(type==="compareThrottle")this.drawCompareChannel(canvas,"throttle");
+    else if(type==="compareBrake")this.drawCompareChannel(canvas,"brake");
     else if(type==="timeDelta")this.drawTimeDelta(canvas);
     else this.drawTelemetry(canvas,type||"speed");
   },
