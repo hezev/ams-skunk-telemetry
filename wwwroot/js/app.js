@@ -234,6 +234,7 @@
     AMSTrack.setPosition(progress);
     AMSTrack.setAnalysisPosition(progress);
     AMSTrack.setTrajectoryPosition(progress);
+    AMSTrack.setTrajectoryCoachingPosition(progress);
   }
 
   function zoneClass(delta){
@@ -336,6 +337,7 @@
     renderDrivingEvents(events,refEvents);
     AMSTrack.renderAnalysisMap(state.analysisResult.minisectors||[],events);
     AMSTrack.renderTrajectoryCompare(state.analysisLap,state.analysisRef);
+    AMSTrack.renderTrajectoryCoaching(state.analysisLap,state.analysisRef);
     renderAnalysisCursor(0);
   }
 
@@ -494,6 +496,11 @@
   q("#replaySeek")?.addEventListener("input",e=>seekReplay(e.target.value));
   q("#replaySpeed")?.addEventListener("change",e=>{state.replaySpeed=Math.max(.25,Number(e.target.value)||1);});
   q("#exportCsvBtn")?.addEventListener("click",exportTelemetryCsv);
+  document.addEventListener("ams-trajectory-seek",e=>{
+    const p=Math.max(0,Math.min(1,Number(e.detail?.progress)||0));
+    seekReplay(p*1000);
+    switchView("telemetry");
+  });
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
