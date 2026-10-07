@@ -624,15 +624,41 @@ window.AMSTrack = {
       const q=transform(raw),r=this.localPoint(raw.p);
       err+=r?(q.x-r.x)**2+(q.y-r.y)**2:0;
     }
-    return {points:points.map(transform),rmse:Math.sqrt(err/src.length),scale:Math.hypot(a,b),reflected:reflectY};
+    return {
+      points:points.map(transform),
+      rmse:Math.sqrt(err/src.length),
+      scale:Math.hypot(a,b),
+      reflected:reflectY,
+      a,b,tx,ty
+    };
   },
 
-  reconstructTrajectory(lap){
+  applyTrajectoryFit(raw,fit){
+    if(!raw?.length||!fit)return null;
+    const transformed=raw.map(p=>{
+      const yy=fit.reflected?-p.y:p.y;
+      return {p:p.p,x:fit.a*p.x-fit.b*yy+fit.tx,y:fit.b*p.x+fit.a*yy+fit.ty};
+    });
+    let err=0,count=0;
+    for(let i=0;i<transformed.length;i+=Math.max(1,Math.floor(transformed.length/700))){
+      const q=transformed[i],r=this.localPoint(q.p);
+      if(!r)continue;
+      err+=(q.x-r.x)**2+(q.y-r.y)**2;count++;
+    }
+    return {...fit,points:transformed,rmse:count?Math.sqrt(err/count):fit.rmse};
+  },
+
+  reconstructTrajectory(lap,sharedFit=null){
     const raw=this.integrateTrajectory(lap);
     if(raw.length<20)return null;
-    const normal=this.fitTrajectory(raw,false);
-    const reflected=this.fitTrajectory(raw,true);
-    const fit=!normal?reflected:!reflected?normal:(normal.rmse<=reflected.rmse?normal:reflected);
+    let fit;
+    if(sharedFit){
+      fit=this.applyTrajectoryFit(raw,sharedFit);
+    }else{
+      const normal=this.fitTrajectory(raw,false);
+      const reflected=this.fitTrajectory(raw,true);
+      fit=!normal?reflected:!reflected?normal:(normal.rmse<=reflected.rmse?normal:reflected);
+    }
     if(!fit)return null;
 
     const maxPoints=950;
@@ -680,8 +706,10 @@ window.AMSTrack = {
       return;
     }
 
-    const a=this.reconstructTrajectory(lapA);
+    // Fit the reference once and apply exactly the same transform to Lap A.
+    // This preserves genuine lateral trajectory differences between laps.
     const ref=lapRef?this.reconstructTrajectory(lapRef):null;
+    const a=this.reconstructTrajectory(lapA,ref||null);
     if(!a){
       this.trajectoryCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
