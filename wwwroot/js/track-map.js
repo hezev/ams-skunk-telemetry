@@ -1010,10 +1010,10 @@ window.AMSTrack = {
     }
     const unitsPerMeter=1/metersPerUnit;
     return {
-      edge:Math.max(7,Math.min(24,13.0*unitsPerMeter)),
-      road:Math.max(5,Math.min(19,10.5*unitsPerMeter)),
-      line:Math.max(1.2,Math.min(3.2,.65*unitsPerMeter)),
-      marker:Math.max(2.3,Math.min(5.5,1.5*unitsPerMeter))
+      edge:Math.max(6,Math.min(18,9.5*unitsPerMeter)),
+      road:Math.max(4.5,Math.min(14,7.5*unitsPerMeter)),
+      line:Math.max(.9,Math.min(2.2,.42*unitsPerMeter)),
+      marker:Math.max(1.8,Math.min(4.2,1.0*unitsPerMeter))
     };
   },
 
@@ -1038,8 +1038,8 @@ window.AMSTrack = {
     // Keep the reconstructed driving lines inside a realistic track corridor.
     // This prevents inertial-integration drift from visually jumping across
     // nearby sections of circuit while preserving lateral A/REF differences.
-    const ref=this.constrainTrajectoryToTrack(refRaw,6.5);
-    const a=this.constrainTrajectoryToTrack(aRaw,6.5);
+    const ref=this.constrainTrajectoryToTrack(refRaw,4.2);
+    const a=this.constrainTrajectoryToTrack(aRaw,4.2);
     const data={
       a,ref,lapA,lapRef,
       coaching:this.trajectoryCoachRows(lapA,lapRef,{a,ref}),
