@@ -40,6 +40,28 @@
     </div>
 
     <div class="engineering-overview">
+      <article class="card trajectory-compare-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Trajectory Compare</div>
+            <div class="trajectory-subtitle">Trajectória reconstruída por yawNorth + speed, alinhada à referência GPS da pista</div>
+          </div>
+          <div class="trajectory-toolbar">
+            <span class="trajectory-legend"><i class="a"></i> Lap A</span>
+            <span class="trajectory-legend"><i class="ref"></i> Reference</span>
+            <span id="trajectoryCompareStatus" class="chip">SEM TRAJECTÓRIA</span>
+          </div>
+        </div>
+        <div class="trajectory-stage">
+          <svg id="trajectoryCompareSvg" aria-label="Comparação de trajectória em pista"></svg>
+        </div>
+        <div class="trajectory-readout">
+          <div><span>Replay</span><strong id="trajectoryProgressText">0.0%</strong></div>
+          <div><span>Separação A / Ref</span><strong id="trajectorySeparation">—</strong></div>
+          <div><span>Fonte</span><strong>Yaw + Speed + GPS Fit</strong></div>
+        </div>
+      </article>
+
       <article class="card">
         <div class="card-head">
           <div class="card-title">Gain / Loss Map</div>
