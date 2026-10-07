@@ -7,6 +7,7 @@ window.AMSTrack = {
   activePath:null,
   centerline:[],
   reference:null,
+  trajectoryCompare:null,
 
   normalize(value){
     return String(value||"")
@@ -541,6 +542,218 @@ window.AMSTrack = {
     if(!cursor||!pt)return;
     cursor.setAttribute("cx",pt.x.toFixed(2));
     cursor.setAttribute("cy",pt.y.toFixed(2));
+  },
+
+  integrateTrajectory(lap){
+    const samples=(lap?.samples||[]).filter(s=>
+      Number.isFinite(Number(s?._p)) &&
+      Number.isFinite(Number(s?.speed)) &&
+      Number.isFinite(Number(s?.yawNorth))
+    );
+    if(samples.length<20)return [];
+
+    const out=[{p:samples[0]._p,x:0,y:0}];
+    let x=0,y=0;
+
+    for(let i=1;i<samples.length;i++){
+      const a=samples[i-1],b=samples[i];
+      const ta=Number.isFinite(Number(a._rawTime))?Number(a._rawTime):Number(a._time);
+      const tb=Number.isFinite(Number(b._rawTime))?Number(b._rawTime):Number(b._time);
+      let dt=tb-ta;
+      if(!Number.isFinite(dt)||dt<=0||dt>.25)dt=1/60;
+
+      const speed=((Number(a.speed)+Number(b.speed))/2)/3.6;
+      const ya=Number(a.yawNorth),yb=Number(b.yawNorth);
+      let vx=Math.sin(ya)+Math.sin(yb);
+      let vy=-Math.cos(ya)-Math.cos(yb);
+      const n=Math.hypot(vx,vy)||1;
+      vx/=n;vy/=n;
+
+      const ds=Math.max(0,speed*dt);
+      x+=vx*ds;y+=vy*ds;
+      out.push({p:b._p,x,y});
+    }
+
+    // Remove accumulated inertial integration drift so the lap closes at S/F.
+    const end=out[out.length-1];
+    return out.map(pt=>({
+      p:pt.p,
+      x:pt.x-end.x*pt.p,
+      y:pt.y-end.y*pt.p
+    }));
+  },
+
+  fitTrajectory(points,reflectY=false){
+    if(!points.length||!this.centerline.length)return null;
+    const src=[],dst=[];
+    const stride=Math.max(1,Math.floor(points.length/700));
+
+    for(let i=0;i<points.length;i+=stride){
+      const p=points[i],r=this.localPoint(p.p);
+      if(!r)continue;
+      src.push({x:p.x,y:reflectY?-p.y:p.y});
+      dst.push(r);
+    }
+    if(src.length<10)return null;
+
+    const cs=src.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0});
+    const cd=dst.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0});
+    cs.x/=src.length;cs.y/=src.length;cd.x/=dst.length;cd.y/=dst.length;
+
+    let denom=0,sumA=0,sumB=0;
+    for(let i=0;i<src.length;i++){
+      const x=src[i].x-cs.x,y=src[i].y-cs.y;
+      const X=dst[i].x-cd.x,Y=dst[i].y-cd.y;
+      denom+=x*x+y*y;
+      sumA+=x*X+y*Y;
+      sumB+=x*Y-y*X;
+    }
+    if(denom<=0)return null;
+
+    const a=sumA/denom,b=sumB/denom;
+    const tx=cd.x-a*cs.x+b*cs.y;
+    const ty=cd.y-b*cs.x-a*cs.y;
+    const transform=p=>{
+      const yy=reflectY?-p.y:p.y;
+      return {p:p.p,x:a*p.x-b*yy+tx,y:b*p.x+a*yy+ty};
+    };
+
+    let err=0;
+    for(let i=0;i<src.length;i++){
+      const raw=points[Math.min(points.length-1,i*stride)];
+      const q=transform(raw),r=this.localPoint(raw.p);
+      err+=r?(q.x-r.x)**2+(q.y-r.y)**2:0;
+    }
+    return {points:points.map(transform),rmse:Math.sqrt(err/src.length),scale:Math.hypot(a,b),reflected:reflectY};
+  },
+
+  reconstructTrajectory(lap){
+    const raw=this.integrateTrajectory(lap);
+    if(raw.length<20)return null;
+    const normal=this.fitTrajectory(raw,false);
+    const reflected=this.fitTrajectory(raw,true);
+    const fit=!normal?reflected:!reflected?normal:(normal.rmse<=reflected.rmse?normal:reflected);
+    if(!fit)return null;
+
+    const maxPoints=950;
+    const step=Math.max(1,Math.floor(fit.points.length/maxPoints));
+    const points=fit.points.filter((_,i)=>i%step===0);
+    const last=fit.points[fit.points.length-1];
+    if(points[points.length-1]!==last)points.push(last);
+    return {...fit,points};
+  },
+
+  trajectoryPoint(points,progress){
+    if(!points?.length)return null;
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    if(p<=points[0].p)return points[0];
+    if(p>=points[points.length-1].p)return points[points.length-1];
+
+    let lo=0,hi=points.length-1;
+    while(hi-lo>1){
+      const m=(lo+hi)>>1;
+      if(points[m].p<=p)lo=m;else hi=m;
+    }
+    const a=points[lo],b=points[hi],span=b.p-a.p||1,t=(p-a.p)/span;
+    return {p,x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};
+  },
+
+  svgPath(points){
+    if(!points?.length)return "";
+    return points.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+" "+p.y.toFixed(2)).join(" ");
+  },
+
+  viewUnitsToMeters(){
+    if(!this.centerline.length||!Number.isFinite(Number(this.reference?.lengthM)))return null;
+    let len=0;
+    for(let i=1;i<this.centerline.length;i++)len+=this.distance(this.centerline[i-1],this.centerline[i]);
+    len+=this.distance(this.centerline[this.centerline.length-1],this.centerline[0]);
+    return len>0?Number(this.reference.lengthM)/len:null;
+  },
+
+  renderTrajectoryCompare(lapA,lapRef=null){
+    const svg=document.getElementById("trajectoryCompareSvg");
+    const status=document.getElementById("trajectoryCompareStatus");
+    if(!svg||!this.centerline.length||!lapA){
+      this.trajectoryCompare=null;
+      if(status)status.textContent="SEM TRAJECTÓRIA";
+      return;
+    }
+
+    const a=this.reconstructTrajectory(lapA);
+    const ref=lapRef?this.reconstructTrajectory(lapRef):null;
+    if(!a){
+      this.trajectoryCompare=null;
+      if(status)status.textContent="DADOS INSUFICIENTES";
+      return;
+    }
+
+    this.trajectoryCompare={a,ref};
+    svg.setAttribute("viewBox",this.analysisViewBox());
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+
+    const base=this.centerline.filter((_,i)=>i%3===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+    const pathA=this.svgPath(a.points);
+    const pathR=ref?this.svgPath(ref.points):"";
+    const start=this.localPoint(0)||this.centerline[0];
+
+    let html='<polyline class="trajectory-track-base" points="'+base+'"></polyline>';
+    html+='<path class="trajectory-line trajectory-a ghost" d="'+pathA+'"></path>';
+    html+='<path id="trajectoryProgressA" class="trajectory-line trajectory-a progress" d="'+pathA+'"></path>';
+    if(ref){
+      html+='<path class="trajectory-line trajectory-ref ghost" d="'+pathR+'"></path>';
+      html+='<path id="trajectoryProgressRef" class="trajectory-line trajectory-ref progress" d="'+pathR+'"></path>';
+    }
+    html+='<circle id="trajectoryMarkerA" class="trajectory-marker marker-a" cx="'+start.x+'" cy="'+start.y+'" r="9"></circle>';
+    if(ref)html+='<circle id="trajectoryMarkerRef" class="trajectory-marker marker-ref" cx="'+start.x+'" cy="'+start.y+'" r="9"></circle>';
+    svg.innerHTML=html;
+
+    requestAnimationFrame(()=>{
+      for(const id of ["trajectoryProgressA","trajectoryProgressRef"]){
+        const p=document.getElementById(id);if(!p)continue;
+        const len=p.getTotalLength?.()||0;
+        p.dataset.pathLength=String(len);
+        p.style.strokeDasharray=len+" "+len;
+        p.style.strokeDashoffset=String(len);
+      }
+      this.setTrajectoryPosition(this.progress);
+    });
+
+    if(status){
+      const quality=Math.max(a.rmse,ref?.rmse||0);
+      status.textContent=(ref?"A + REF":"A")+" · RECONSTRUÍDA YAW/SPEED · FIT "+quality.toFixed(1);
+    }
+  },
+
+  setTrajectoryPosition(progress){
+    const data=this.trajectoryCompare;
+    if(!data)return;
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+
+    const update=(name,fit)=>{
+      if(!fit)return;
+      const marker=document.getElementById("trajectoryMarker"+name);
+      const path=document.getElementById("trajectoryProgress"+(name==="Ref"?"Ref":"A"));
+      const pt=this.trajectoryPoint(fit.points,p);
+      if(marker&&pt){marker.setAttribute("cx",pt.x.toFixed(2));marker.setAttribute("cy",pt.y.toFixed(2));}
+      if(path){
+        const len=Number(path.dataset.pathLength)||path.getTotalLength?.()||0;
+        path.style.strokeDasharray=len+" "+len;
+        path.style.strokeDashoffset=String(len*(1-p));
+      }
+      return pt;
+    };
+
+    const pa=update("A",data.a),pr=update("Ref",data.ref);
+    const progressText=document.getElementById("trajectoryProgressText");
+    if(progressText)progressText.textContent=(p*100).toFixed(1)+"%";
+
+    const sep=document.getElementById("trajectorySeparation");
+    if(sep){
+      const metersPerUnit=this.viewUnitsToMeters();
+      const d=pa&&pr?this.distance(pa,pr):null;
+      sep.textContent=Number.isFinite(d)&&Number.isFinite(metersPerUnit)?(d*metersPerUnit).toFixed(2)+" m":"—";
+    }
   },
 
   positionElement(el,progress){
