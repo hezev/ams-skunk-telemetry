@@ -233,6 +233,7 @@
     setText("cursorGear",(Number.isFinite(v.a.gear)?Math.round(v.a.gear):"—")+" / "+(Number.isFinite(v.b.gear)?Math.round(v.b.gear):"—"));
     AMSTrack.setPosition(progress);
     AMSTrack.setAnalysisPosition(progress);
+    AMSTrack.setTrajectoryPosition(progress);
   }
 
   function zoneClass(delta){
@@ -334,6 +335,7 @@
     renderMiniSectors(state.analysisResult.minisectors||[]);
     renderDrivingEvents(events,refEvents);
     AMSTrack.renderAnalysisMap(state.analysisResult.minisectors||[],events);
+    AMSTrack.renderTrajectoryCompare(state.analysisLap,state.analysisRef);
     renderAnalysisCursor(0);
   }
 
