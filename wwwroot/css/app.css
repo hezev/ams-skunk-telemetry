@@ -379,3 +379,166 @@ th,td{padding:5px 5px}
 .trajectory-coach-row.active{background:#1b2027;box-shadow:inset 3px 0 0 #ff8a00}
 .trajectory-coach-row.active td:first-child{color:#ff9b24}
 .trajectory-diff{color:#ffd166!important;font-weight:800}
+
+/* Lap Compare focused trajectory camera */
+.compare-focus-card{padding:7px!important}
+.compare-focus-stage{
+  position:relative;
+  height:500px;
+  overflow:hidden;
+  background:#1c2023;
+  border-radius:5px;
+}
+.compare-focus-stage>svg{
+  width:100%;
+  height:100%;
+  display:block;
+  overflow:hidden;
+}
+.compare-focus-track-edge{
+  fill:none;
+  stroke:#d7dadd;
+  stroke-width:38;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.compare-focus-track-road{
+  fill:none;
+  stroke:#202427;
+  stroke-width:28;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.compare-focus-line{
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.compare-focus-line.trajectory-a{stroke:#ff8a00}
+.compare-focus-line.trajectory-ref{stroke:#2f7fd2}
+.compare-focus-line.ghost{stroke-width:3.5;opacity:.38}
+.compare-focus-line.progress{stroke-width:5.5;opacity:1}
+.compare-focus-marker{
+  stroke:#fff;
+  stroke-width:2.5;
+  filter:drop-shadow(0 0 5px rgba(0,0,0,.55));
+}
+.compare-focus-marker.marker-a{fill:#ff8a00}
+.compare-focus-marker.marker-ref{fill:#2f7fd2}
+
+.compare-mini-map{
+  position:absolute;
+  left:14px;
+  top:14px;
+  width:125px;
+  height:92px;
+  padding:7px;
+  background:rgba(8,11,14,.78);
+  border-radius:4px;
+  backdrop-filter:blur(3px);
+}
+.compare-mini-map svg{width:100%;height:100%;display:block}
+.compare-mini-track{
+  fill:none;
+  stroke:#858c94;
+  stroke-width:18;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:.55
+}
+.compare-mini-line{fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.compare-mini-line.trajectory-a{stroke:#ff8a00}
+.compare-mini-line.trajectory-ref{stroke:#2f7fd2}
+.compare-mini-marker{stroke:#fff;stroke-width:3}
+.compare-mini-marker.marker-a{fill:#ff8a00}
+.compare-mini-marker.marker-ref{fill:#2f7fd2}
+
+.compare-focus-hud{
+  position:absolute;
+  top:14px;
+  right:14px;
+  display:grid;
+  grid-template-columns:repeat(3,auto);
+  gap:3px;
+}
+.compare-focus-hud>div{
+  min-width:96px;
+  background:rgba(7,10,13,.82);
+  padding:7px 9px;
+  border-radius:3px;
+  backdrop-filter:blur(3px);
+}
+.compare-focus-hud span{
+  display:block;
+  color:#838d99;
+  font-size:7px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.compare-focus-hud strong{display:block;margin-top:3px;font-size:12px;color:#fff}
+
+.compare-focus-coach{
+  position:absolute;
+  left:50%;
+  top:48%;
+  transform:translate(-50%,-50%);
+  max-width:min(620px,70%);
+  padding:12px 16px;
+  background:rgba(6,8,10,.88);
+  color:#dfe5ec;
+  border-radius:4px;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.4;
+  text-align:center;
+  pointer-events:none;
+  opacity:.55;
+  transition:opacity .12s ease;
+}
+.compare-focus-coach.active{
+  opacity:1;
+  box-shadow:inset 3px 0 0 #ff8a00;
+}
+.compare-replay-row{
+  display:grid;
+  grid-template-columns:auto minmax(180px,1fr) 58px auto auto;
+  align-items:center;
+  gap:7px;
+  margin-top:5px;
+}
+.compare-replay-row input[type=range]{width:100%;accent-color:#ff8a00}
+.compare-replay-row>span{font-size:9px;color:#c8d0d9;text-align:center}
+.compare-replay-row label{
+  font-size:8px;
+  color:#8c96a4;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.compare-replay-row select{
+  margin-left:5px;
+  background:#0b0f14;
+  border:0;
+  color:#fff;
+  padding:6px;
+  border-radius:3px;
+}
+.compare-telemetry-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:3px;
+  margin-top:3px;
+}
+.compare-telemetry-grid .compare-wide{grid-column:1/-1}
+
+@media(max-width:900px){
+  .compare-focus-stage{height:380px}
+  .compare-focus-hud{grid-template-columns:1fr;right:8px;top:8px}
+  .compare-focus-hud>div{min-width:80px;padding:5px 7px}
+  .compare-mini-map{width:92px;height:68px;left:8px;top:8px}
+  .compare-focus-coach{max-width:76%;font-size:10px;padding:9px 11px}
+  .compare-replay-row{grid-template-columns:auto 1fr 52px}
+  .compare-replay-row label{grid-column:span 1}
+  .compare-telemetry-grid{grid-template-columns:1fr}
+  .compare-telemetry-grid .compare-wide{grid-column:auto}
+}
