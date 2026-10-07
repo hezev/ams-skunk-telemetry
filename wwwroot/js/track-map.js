@@ -197,7 +197,37 @@ window.AMSTrack = {
     return score;
   },
 
-  async resolveRaceStudio(trackName,entry){
+  estimateLapLength(telemetry){
+    const samples=Array.isArray(telemetry)?telemetry:[];
+    if(samples.length<2)return null;
+    let total=0,valid=0;
+    for(let i=1;i<samples.length;i++){
+      const a=samples[i-1],b=samples[i];
+      const ta=Number(a?.t),tb=Number(b?.t);
+      const sa=Number(a?.speed),sb=Number(b?.speed);
+      if(![ta,tb,sa,sb].every(Number.isFinite))continue;
+      const dt=tb-ta;
+      if(dt<=0||dt>.25)continue;
+      total+=(((sa+sb)/2)/3.6)*dt;
+      valid++;
+    }
+    return valid>20&&total>100?total:null;
+  },
+
+  lengthMatchScore(referenceLength,estimatedLength){
+    const ref=Number(referenceLength),est=Number(estimatedLength);
+    if(!Number.isFinite(ref)||ref<=0||!Number.isFinite(est)||est<=0)return 0;
+    const rel=Math.abs(ref-est)/ref;
+    if(rel<=.025)return 360;
+    if(rel<=.05)return 300;
+    if(rel<=.10)return 220;
+    if(rel<=.16)return 120;
+    if(rel<=.25)return 20;
+    if(rel>=.45)return -360;
+    return -120;
+  },
+
+  async resolveRaceStudio(trackName,entry,estimatedLength=null){
     try{
       const manifest=await this.getRaceStudioManifest();
       const ranked=(manifest||[])
@@ -215,7 +245,12 @@ window.AMSTrack = {
 
       const winner=loaded
         .filter(x=>x.data)
-        .map(x=>({data:x.data,score:x.baseScore+this.referenceScore(x.data,trackName,entry)}))
+        .map(x=>({
+          data:x.data,
+          score:x.baseScore
+            +this.referenceScore(x.data,trackName,entry)
+            +this.lengthMatchScore(x.data?.track_length_m,estimatedLength)
+        }))
         .sort((a,b)=>b.score-a.score)[0];
 
       return winner?.score>=160?winner.data:null;
@@ -318,20 +353,27 @@ window.AMSTrack = {
     return true;
   },
 
-  async load(trackName,configHint=""){
+  async load(trackName,configHint="",telemetry=null){
     const status=document.getElementById("trackSource");
     try{
       if(status)status.textContent="A localizar referência…";
       const entry=await this.resolve(trackName,configHint);
       this.activeEntry=entry;
+      const estimatedLength=this.estimateLapLength(telemetry);
 
       // Prefer a GPS reference made for telemetry analysis. Its first GPS
       // point is the start/finish reference and its ordered points form the
       // driving centreline, so LapDistPct maps directly by arc length.
-      const reference=await this.resolveRaceStudio(trackName,entry);
+      const reference=await this.resolveRaceStudio(trackName,entry,estimatedLength);
       if(reference&&this.drawGpsReference(reference)){
         const label=reference?.contact?.Nmg||reference?.short_name||reference?.full_name||trackName;
-        if(status)status.textContent="GPS REFERENCE · "+label;
+        if(status){
+          const len=Number(reference?.track_length_m);
+          const match=Number.isFinite(estimatedLength)&&Number.isFinite(len)
+            ?" · "+Math.round(estimatedLength)+"m / "+Math.round(len)+"m"
+            :"";
+          status.textContent="GPS REFERENCE · "+label+match;
+        }
         return {entry,reference};
       }
 
