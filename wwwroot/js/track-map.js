@@ -843,7 +843,7 @@ window.AMSTrack = {
 
     if(status){
       const quality=Math.max(a.rmse,ref?.rmse||0);
-      status.textContent=(ref?"A + REF":"A")+" · RECONSTRUÍDA YAW/SPEED · FIT "+quality.toFixed(1);
+      status.textContent=(ref?"A + REF":"A")+" · LAPDIST + YAW + GPS · RMS "+quality.toFixed(1)+"°";
     }
   },
 
@@ -928,11 +928,12 @@ window.AMSTrack = {
 
   trajectoryLateralOffset(fit,progress){
     if(!fit)return null;
-    const q=this.trajectoryPoint(fit.points,progress);
-    const c=this.localPoint(progress),t=this.centerTangent(progress);
-    if(!q||!c||!t)return null;
+    const point=this.trajectoryPoint(fit.points,progress);
+    const station=fit.sync?this.mappedProgress(fit.sync,progress):progress;
+    const center=this.localPoint(station),t=this.centerTangent(station);
+    if(!point||!center||!t)return null;
     const nx=-t.y,ny=t.x;
-    return (q.x-c.x)*nx+(q.y-c.y)*ny;
+    return (point.x-center.x)*nx+(point.y-center.y)*ny;
   },
 
   trajectoryInsideOffset(fit,progress,turnSign){
@@ -1085,7 +1086,8 @@ window.AMSTrack = {
     if(!Number.isFinite(metersPerUnit)||metersPerUnit<=0)return fit;
     const halfUnits=halfWidthM/metersPerUnit;
     const points=fit.points.map(pt=>{
-      const center=this.localPoint(pt.p),tan=this.centerTangent(pt.p);
+      const station=Number.isFinite(Number(pt.q))?Number(pt.q):pt.p;
+      const center=this.localPoint(station),tan=this.centerTangent(station);
       if(!center||!tan)return pt;
       const nx=-tan.y,ny=tan.x;
       const lateral=(pt.x-center.x)*nx+(pt.y-center.y)*ny;
