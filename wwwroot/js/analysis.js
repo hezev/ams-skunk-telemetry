@@ -66,6 +66,40 @@ window.AMSAnalysis = {
 
   timeAt(lap,pct){ return this.interpolate(lap,pct,"_time"); },
 
+  progressAtTime(lap,timeSec){
+    const duration=Math.max(.001,Number(lap?.lapTimeSec)||0);
+    const t=Math.max(0,Math.min(duration,Number(timeSec)||0));
+    if(t<=0)return 0;
+    if(t>=duration)return 1;
+
+    const timed=(lap?.samples||[])
+      .filter(s=>Number.isFinite(Number(s?._time))&&Number.isFinite(Number(s?._p)))
+      .sort((a,b)=>Number(a._time)-Number(b._time));
+
+    if(timed.length<2)return this.clamp(t/duration);
+    if(t<=Number(timed[0]._time)){
+      const end=Math.max(.000001,Number(timed[0]._time));
+      return this.clamp(Number(timed[0]._p)*(t/end));
+    }
+    if(t>=Number(timed[timed.length-1]._time)){
+      const a=timed[timed.length-1];
+      const ta=Number(a._time),pa=Number(a._p);
+      const span=Math.max(.000001,duration-ta);
+      return this.clamp(pa+(1-pa)*(t-ta)/span);
+    }
+
+    let lo=0,hi=timed.length-1;
+    while(hi-lo>1){
+      const m=(lo+hi)>>1;
+      if(Number(timed[m]._time)<=t)lo=m;else hi=m;
+    }
+    const a=timed[lo],b=timed[hi];
+    const ta=Number(a._time),tb=Number(b._time);
+    const pa=Number(a._p),pb=Number(b._p);
+    const u=tb>ta?(t-ta)/(tb-ta):0;
+    return this.clamp(pa+(pb-pa)*u);
+  },
+
   segmentStats(lap,start,end){
     const s=this.clamp(start),e=this.clamp(end);
     const samples=(lap?.samples||[]).filter(x=>x._p>=s&&x._p<=e);
