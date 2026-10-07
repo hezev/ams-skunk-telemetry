@@ -5,6 +5,8 @@ window.AMSCharts = {
   compareB: [],
   comparisonProfile: [],
   cursorPos: null,
+  compareCursorA: null,
+  compareCursorB: null,
   zoomStart: 0,
   zoomEnd: 1,
   redrawFrame: null,
@@ -60,7 +62,14 @@ window.AMSCharts = {
   setExternalCursor(pos){
     const p=Number(pos);this.cursorPos=Number.isFinite(p)?Math.max(0,Math.min(1,p)):null;this.scheduleDraw();
   },
-  clearCursor(){this.cursorPos=null;this.scheduleDraw();},
+  setCompareExternalCursors(a,b){
+    const pa=Number(a),pb=Number(b);
+    this.compareCursorA=Number.isFinite(pa)?Math.max(0,Math.min(1,pa)):null;
+    this.compareCursorB=Number.isFinite(pb)?Math.max(0,Math.min(1,pb)):null;
+    if(this.compareCursorA!==null||this.compareCursorB!==null)this.cursorPos=null;
+    this.scheduleDraw();
+  },
+  clearCursor(){this.cursorPos=null;this.compareCursorA=null;this.compareCursorB=null;this.scheduleDraw();},
   scheduleDraw(){
     if(this.redrawFrame)return;
     this.redrawFrame=requestAnimationFrame(()=>{this.redrawFrame=null;this.drawAll();});
@@ -300,7 +309,30 @@ window.AMSCharts = {
     this.drawSeries(ctx,plot,a,lo,hi,"#ff8a00",false,2.1);
     this.drawSeries(ctx,plot,b,lo,hi,"#2f7fd2",false,2.1);
 
-    if(this.cursorPos!==null&&this.cursorPos>=this.zoomStart&&this.cursorPos<=this.zoomEnd){
+    if(this.compareCursorA!==null||this.compareCursorB!==null){
+      const drawReplayCursor=(p,color)=>{
+        if(p===null||p<this.zoomStart||p>this.zoomEnd)return;
+        const x=this.mapX(p,plot);
+        ctx.save();ctx.strokeStyle=color;ctx.globalAlpha=.9;ctx.lineWidth=1.4;
+        ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();ctx.restore();
+      };
+      drawReplayCursor(this.compareCursorA,"#ff8a00");
+      drawReplayCursor(this.compareCursorB,"#2f7fd2");
+
+      const pa=this.compareCursorA,pb=this.compareCursorB;
+      const anchor=pa!==null?pa:pb;
+      if(anchor!==null&&anchor>=this.zoomStart&&anchor<=this.zoomEnd){
+        const av=pa===null?NaN:Number(this.nearest(this.compareA,pa)?.[key]);
+        const bv=pb===null?NaN:Number(this.nearest(this.compareB,pb)?.[key]);
+        const label="A "+(pa===null?"—":(pa*100).toFixed(1)+"%")+" · "+this.fmt(av,spec.unit)+
+          "   REF "+(pb===null?"—":(pb*100).toFixed(1)+"%")+" · "+this.fmt(bv,spec.unit);
+        ctx.font="10px Segoe UI";const tw=Math.min(plot.w-10,ctx.measureText(label).width+14);
+        const x=this.mapX(anchor,plot);
+        let bx=x+8;if(bx+tw>plot.left+plot.w)bx=x-tw-8;
+        ctx.fillStyle="rgba(5,8,12,.94)";ctx.fillRect(bx,plot.top+24,tw,22);
+        ctx.fillStyle="#fff";ctx.textAlign="left";ctx.fillText(label,bx+7,plot.top+39);
+      }
+    }else if(this.cursorPos!==null&&this.cursorPos>=this.zoomStart&&this.cursorPos<=this.zoomEnd){
       const x=this.mapX(this.cursorPos,plot);
       ctx.save();ctx.strokeStyle="#fff";ctx.globalAlpha=.55;ctx.setLineDash([5,5]);
       ctx.beginPath();ctx.moveTo(x,plot.top);ctx.lineTo(x,plot.top+plot.h);ctx.stroke();ctx.restore();
@@ -323,6 +355,7 @@ window.AMSCharts = {
       const local=Math.max(0,Math.min(1,(e.clientX-r.left-left)/(r.width-left-right)));
       this.cursorPos=this.zoomStart+local*(this.zoomEnd-this.zoomStart);
       const isCompare=String(canvas.dataset.trace||"").startsWith("compare");
+      if(isCompare){this.compareCursorA=null;this.compareCursorB=null;}
       if(isCompare&&this.compareCursorCallback)this.compareCursorCallback(this.cursorPos);
       else if(this.cursorCallback)this.cursorCallback(this.cursorPos);
       this.scheduleDraw();
