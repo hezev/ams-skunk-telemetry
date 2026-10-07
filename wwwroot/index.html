@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <title>AMS Skunk Telemetry</title>
-  <link rel="stylesheet" href="css/app.css?v=20261007-9">
-  <link rel="stylesheet" href="css/responsive.css?v=20261007-9">
+  <link rel="stylesheet" href="css/app.css?v=20261007-11">
+  <link rel="stylesheet" href="css/responsive.css?v=20261007-11">
 </head>
 <body>
 
@@ -23,6 +23,7 @@
     <button data-view="sessions">Sessions</button>
     <button data-view="laps">Laps</button>
     <button data-view="compare">Compare</button>
+    <button data-view="engineer">Engineer</button>
     <button data-view="records">Records</button>
     <button data-view="driver">Driver</button>
     <button data-view="team">Team</button>
@@ -343,6 +344,87 @@
       </div>
     </section>
 
+
+    <section id="engineer" class="view">
+      <div class="titlebar">
+        <div>
+          <h1>Virtual Performance Engineer</h1>
+          <p>Análise pós-sessão · consistência, potencial e evidência DRIVER / SETUP</p>
+        </div>
+        <div class="analysis-actions">
+          <label>Session <select id="engineerSessionSelect"></select></label>
+          <button id="engineerAnalyzeBtn" class="action-btn" type="button">Analyse Session</button>
+          <span id="engineerStatus" class="chip">Seleciona uma sessão</span>
+        </div>
+      </div>
+
+      <div class="metrics metrics-4">
+        <article class="metric"><span>Best Lap</span><strong id="engineerBestLap">—</strong></article>
+        <article class="metric"><span>Consistent Pace</span><strong id="engineerPace">—</strong></article>
+        <article class="metric"><span>Achievable Lap</span><strong id="engineerAchievable">—</strong></article>
+        <article class="metric"><span>Consistency</span><strong id="engineerConsistency">—</strong></article>
+      </div>
+
+      <div class="engineer-grid">
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title">Engineer Verdict</div>
+            <div class="chip">EVIDENCE FIRST</div>
+          </div>
+          <div id="engineerVerdict" class="engineer-verdict">Analisa uma sessão para gerar o diagnóstico.</div>
+          <div class="engineer-influence">
+            <div>
+              <span>Driver influence</span><strong id="engineerDriverShare">—</strong>
+              <i><b id="engineerDriverBar"></b></i>
+            </div>
+            <div>
+              <span>Setup influence</span><strong id="engineerSetupShare">—</strong>
+              <i><b id="engineerSetupBar"></b></i>
+            </div>
+          </div>
+          <div class="engineer-facts">
+            <div><span>Absolute theoretical</span><strong id="engineerAbsolute">—</strong></div>
+            <div><span>Driver opportunity</span><strong id="engineerDriverPotential">—</strong></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <div class="card-title">Setup Assessment</div>
+            <div class="chip">PROVISIONAL</div>
+          </div>
+          <div class="engineer-setup-kpi">
+            <div><span>Potential setup gain</span><strong id="engineerSetupPotential">—</strong></div>
+            <div><span>Confidence</span><strong id="engineerSetupConfidence">—</strong></div>
+          </div>
+          <p id="engineerSetupText" class="engineer-note">A estimativa de setup só é apresentada quando existem padrões repetíveis suficientes.</p>
+        </article>
+      </div>
+
+      <article class="card engineer-priority-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Next Stint Priorities</div>
+            <div class="trajectory-subtitle">Máximo três objetivos · primeiro execução, depois setup</div>
+          </div>
+        </div>
+        <div id="engineerPriorities" class="engineer-priorities">Sem análise.</div>
+      </article>
+
+      <article class="card table-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Evidence by Zone</div>
+            <div class="trajectory-subtitle">Variação entre voltas e classificação DRIVER / SETUP / BOTH / INCONCLUSIVE</div>
+          </div>
+        </div>
+        <table class="engineer-table">
+          <thead><tr><th>Zone</th><th>Median loss</th><th>Time σ</th><th>Brake σ</th><th>Throttle σ</th><th>Min speed σ</th><th>Diagnosis</th><th>Confidence</th></tr></thead>
+          <tbody id="engineerEvidenceBody"></tbody>
+        </table>
+      </article>
+    </section>
+
     <section id="records" class="view">
       <div class="titlebar"><div><h1>AMS Records</h1><p>Melhores voltas por simulador, pista e carro</p></div></div>
       <article class="card table-card"><table><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Track</th><th>Lap Time</th></tr></thead><tbody id="recordsBody"></tbody></table></article>
@@ -403,15 +485,16 @@
   </div>
 </div>
 
-<script src="js/config.js?v=20261007-9"></script>
-<script src="js/analysis.js?v=20261007-9"></script>
-<script src="js/engineering-ui.js?v=20261007-9"></script>
-<script src="js/charts.js?v=20261007-9"></script>
-<script src="js/track-map.js?v=20261007-9"></script>
-<script src="js/supabase.js?v=20261007-9"></script>
-<script src="js/auth.js?v=20261007-9"></script>
-<script src="js/realtime.js?v=20261007-9"></script>
-<script src="js/app.js?v=20261007-9"></script>
-<script src="js/layout.js?v=20261007-9"></script>
+<script src="js/config.js?v=20261007-11"></script>
+<script src="js/analysis.js?v=20261007-11"></script>
+<script src="js/engineer.js?v=20261007-11"></script>
+<script src="js/engineering-ui.js?v=20261007-11"></script>
+<script src="js/charts.js?v=20261007-11"></script>
+<script src="js/track-map.js?v=20261007-11"></script>
+<script src="js/supabase.js?v=20261007-11"></script>
+<script src="js/auth.js?v=20261007-11"></script>
+<script src="js/realtime.js?v=20261007-11"></script>
+<script src="js/app.js?v=20261007-11"></script>
+<script src="js/layout.js?v=20261007-11"></script>
 </body>
 </html>
