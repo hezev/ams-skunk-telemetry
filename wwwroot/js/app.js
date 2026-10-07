@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20};
+  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareCursorIndex:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
 
   async function coachFlag(token){
     try{
@@ -447,15 +447,96 @@
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
+  function compareIndexForProgress(samples,progress){
+    const data=samples||[];if(!data.length)return 0;
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    let lo=0,hi=data.length-1;
+    while(hi-lo>1){
+      const m=(lo+hi)>>1;
+      if(Number(data[m]?._p)<=p)lo=m;else hi=m;
+    }
+    return Math.abs(Number(data[hi]?._p)-p)<Math.abs(Number(data[lo]?._p)-p)?hi:lo;
+  }
+
+  function setCompareProgress(progress){
+    if(!state.compareLapA||!state.compareLapB)return;
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    AMSTrack.setFocusedComparePosition(p);
+    AMSCharts.setExternalCursor(p);
+    const seek=q("#compareReplaySeek");if(seek)seek.value=String(Math.round(p*1000));
+    setText("compareReplayPosition",(p*100).toFixed(1)+"%");
+  }
+
+  function stopCompareReplay(){
+    if(state.compareTimer)clearInterval(state.compareTimer);
+    state.compareTimer=null;
+    const b1=q("#compareReplayBtn"),b2=q("#compareReplayToggle");
+    if(b1)b1.textContent="▶ Replay";
+    if(b2)b2.textContent="▶";
+  }
+
+  async function startCompareReplay(){
+    if(!state.compareLapA||!state.compareLapB)await compare();
+    if(!state.compareLapA||!state.compareLapB)return;
+    if(state.compareTimer){stopCompareReplay();return;}
+
+    const samples=state.compareLapA.samples||[];
+    if(!samples.length)return;
+    if(state.compareCursorIndex>=samples.length-1)state.compareCursorIndex=0;
+
+    const b1=q("#compareReplayBtn"),b2=q("#compareReplayToggle");
+    if(b1)b1.textContent="■ Parar";
+    if(b2)b2.textContent="■";
+
+    const duration=Math.max(1,state.compareLapA.lapTimeSec||Number(state.compareDetailA?.lap_time_ms)/1000||1);
+    state.compareTimer=setInterval(()=>{
+      if(state.compareCursorIndex>=samples.length){
+        setCompareProgress(1);
+        stopCompareReplay();
+        return;
+      }
+      const sample=samples[Math.floor(state.compareCursorIndex)];
+      setCompareProgress(Number(sample?._p)||0);
+      const samplesPerTick=samples.length/(duration*20);
+      state.compareCursorIndex+=Math.max(.1,samplesPerTick*state.compareSpeed);
+    },50);
+  }
+
+  function seekCompare(value){
+    if(!state.compareLapA)return;
+    const p=Math.max(0,Math.min(1,Number(value)/1000));
+    state.compareCursorIndex=compareIndexForProgress(state.compareLapA.samples,p);
+    setCompareProgress(p);
+  }
+
   async function compare(){
+    stopCompareReplay();
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
     const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
+
+    state.compareDetailA=a;state.compareDetailB=b;
     setText("compareTimeA",fmtLap(a.lap_time_ms)); setText("compareTimeB",fmtLap(b.lap_time_ms));
-    const diff=Number(b.lap_time_ms)-Number(a.lap_time_ms); setText("compareDiff",(diff>=0?"+":"")+(diff/1000).toFixed(3)+"s");
+    const diff=Number(a.lap_time_ms)-Number(b.lap_time_ms);
+    setText("compareDiff",Number.isFinite(diff)?((diff>=0?"+":"")+(diff/1000).toFixed(3)+"s"):"—");
+
     const compatible=a.simulator===b.simulator&&a.circuit===b.circuit&&a.car===b.car;
     setText("compareCompatibility",compatible?"MATCH":"DIFFERENT");
-    setText("compareNote",compatible?"Mesma combinação":"Pista/carro/simulador diferentes");
-    AMSCharts.setCompare(a.telemetry||[],b.telemetry||[]);
+    setText("compareNote",compatible?"Mesma combinação · A laranja / referência azul":"Pista/carro/simulador diferentes");
+    if(!compatible){
+      state.compareLapA=null;state.compareLapB=null;
+      setText("compareFocusStatus","INCOMPATÍVEL");
+      return;
+    }
+
+    await AMSTrack.load(a.circuit||"");
+    state.compareLapA=AMSAnalysis.prepareLap(a);
+    state.compareLapB=AMSAnalysis.prepareLap(b);
+    state.compareCursorIndex=0;
+
+    AMSCharts.setZoom(0,1);
+    AMSCharts.setCompare(state.compareLapA.samples,state.compareLapB.samples);
+    AMSTrack.renderFocusedCompare(state.compareLapA,state.compareLapB);
+    setCompareProgress(0);
   }
 
   function initWorkspace(){
@@ -490,6 +571,11 @@
   q("#zoomEnd")?.addEventListener("input",e=>setZoomWindow(q("#zoomStart")?.value||0,e.target.value));
   q("#zoomResetBtn")?.addEventListener("click",()=>setZoomWindow(0,100));
   q("#compareBtn")?.addEventListener("click",compare);
+  q("#compareReplayBtn")?.addEventListener("click",startCompareReplay);
+  q("#compareReplayToggle")?.addEventListener("click",startCompareReplay);
+  q("#compareReplaySeek")?.addEventListener("input",e=>seekCompare(e.target.value));
+  q("#compareReplaySpeed")?.addEventListener("change",e=>{state.compareSpeed=Math.max(.25,Number(e.target.value)||1);});
+  q("#compareFocusZoom")?.addEventListener("change",e=>AMSTrack.setFocusedCompareZoom(e.target.value));
   q("#replayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
   q("#telemetryReplayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
   q("#simulateLiveBtn")?.addEventListener("click",()=>{switchView("live");state.replayTimer?stopReplay():startReplay();});
@@ -500,6 +586,11 @@
     const p=Math.max(0,Math.min(1,Number(e.detail?.progress)||0));
     seekReplay(p*1000);
     switchView("telemetry");
+  });
+  AMSCharts.setCompareCursorCallback(p=>{
+    if(p===null||!state.compareLapA)return;
+    state.compareCursorIndex=compareIndexForProgress(state.compareLapA.samples,p);
+    setCompareProgress(p);
   });
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
