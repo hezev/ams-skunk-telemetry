@@ -17,8 +17,11 @@ for(const id of ["telemetryLapSelect","telemetryReferenceSelect","engineeringAna
   if(!index.includes('id="'+id+'"')) throw new Error("Missing index id "+id);
 }
 
-for(const id of ["zoomStart","zoomEnd","miniSectorCount","analysisTrackSvg","trajectoryCompareSvg","trajectoryCompareStatus","trajectoryCoachCurrent","trajectoryCoachBody","compareFocusSvg","compareMiniMapSvg","compareFocusCoach","compareReplaySeek","compareFocusZoom","sectorAnalysisBody","miniSectorBody","drivingEventsBody"]){
+for(const id of ["zoomStart","zoomEnd","miniSectorCount","analysisTrackSvg","trajectoryCompareSvg","trajectoryCompareStatus","trajectoryCoachCurrent","trajectoryCoachBody","sectorAnalysisBody","miniSectorBody","drivingEventsBody"]){
   if(!ui.includes('id="'+id+'"')) throw new Error("Missing engineering UI id "+id);
+}
+for(const id of ["compareFocusSvg","compareMiniMapSvg","compareFocusCoach","compareReplaySeek","compareFocusZoom","compareReplayBtn","compareReplayToggle"]){
+  if(!index.includes('id="'+id+'"')) throw new Error("Missing Lap Compare id "+id);
 }
 
 for(const token of ["prepareLap","comparisonProfile","detectEvents","segmentStats"]){
