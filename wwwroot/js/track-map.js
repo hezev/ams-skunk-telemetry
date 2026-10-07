@@ -784,6 +784,201 @@ window.AMSTrack = {
     }
   },
 
+  centerTangent(progress,eps=.0025){
+    const p0=this.localPoint(Math.max(0,progress-eps));
+    const p1=this.localPoint(Math.min(.999999,progress+eps));
+    if(!p0||!p1)return null;
+    const dx=p1.x-p0.x,dy=p1.y-p0.y,n=Math.hypot(dx,dy)||1;
+    return {x:dx/n,y:dy/n};
+  },
+
+  cornerMetric(progress){
+    const e=.006;
+    const a=this.centerTangent(Math.max(.001,progress-e),.002);
+    const b=this.centerTangent(Math.min(.999,progress+e),.002);
+    if(!a||!b)return {angle:0,sign:0};
+    const cross=a.x*b.y-a.y*b.x;
+    const dot=Math.max(-1,Math.min(1,a.x*b.x+a.y*b.y));
+    const angle=Math.atan2(cross,dot);
+    return {angle,sign:Math.sign(angle)};
+  },
+
+  detectCorners(){
+    if(this.centerline.length<50)return [];
+    const candidates=[];
+    const count=320;
+    for(let i=8;i<count-8;i++){
+      const p=i/count,m=this.cornerMetric(p);
+      const mag=Math.abs(m.angle);
+      if(mag<.012)continue;
+      candidates.push({p,mag,sign:m.sign});
+    }
+    const local=candidates.filter((c,i,a)=>{
+      const prev=a[i-1]?.mag??-Infinity,next=a[i+1]?.mag??-Infinity;
+      return c.mag>=prev&&c.mag>=next;
+    }).sort((a,b)=>b.mag-a.mag);
+
+    const selected=[];
+    const circularDistance=(a,b)=>{const d=Math.abs(a-b);return Math.min(d,1-d);};
+    for(const c of local){
+      if(selected.every(x=>circularDistance(x.p,c.p)>.027)){
+        selected.push(c);
+        if(selected.length>=18)break;
+      }
+    }
+    return selected.sort((a,b)=>a.p-b.p).map((x,i)=>({
+      index:i+1,p:x.p,sign:x.sign,direction:x.sign>0?"Direita":"Esquerda",
+      entry:Math.max(0,x.p-.016),exit:Math.min(1,x.p+.016)
+    }));
+  },
+
+  trajectoryLateralOffset(fit,progress){
+    if(!fit)return null;
+    const q=this.trajectoryPoint(fit.points,progress);
+    const c=this.localPoint(progress),t=this.centerTangent(progress);
+    if(!q||!c||!t)return null;
+    const nx=-t.y,ny=t.x;
+    return (q.x-c.x)*nx+(q.y-c.y)*ny;
+  },
+
+  trajectoryInsideOffset(fit,progress,turnSign){
+    const lateral=this.trajectoryLateralOffset(fit,progress);
+    if(!Number.isFinite(lateral))return null;
+    return -turnSign*lateral;
+  },
+
+  trajectoryApex(fit,corner){
+    if(!fit)return null;
+    let best=null;
+    const start=Math.max(0,corner.p-.022),end=Math.min(1,corner.p+.022);
+    for(let i=0;i<=44;i++){
+      const p=start+(end-start)*i/44;
+      const inside=this.trajectoryInsideOffset(fit,p,corner.sign);
+      if(!Number.isFinite(inside))continue;
+      if(!best||inside>best.inside)best={p,inside};
+    }
+    return best;
+  },
+
+  trajectoryCoachRows(lapA,lapRef){
+    const data=this.trajectoryCompare;
+    if(!data?.a||!data?.ref||!lapA||!lapRef)return [];
+    const mpu=this.viewUnitsToMeters();
+    const lengthM=Number(this.reference?.lengthM);
+    const corners=this.detectCorners();
+
+    return corners.map(corner=>{
+      const entryA=this.trajectoryInsideOffset(data.a,corner.entry,corner.sign);
+      const entryR=this.trajectoryInsideOffset(data.ref,corner.entry,corner.sign);
+      const exitA=this.trajectoryInsideOffset(data.a,corner.exit,corner.sign);
+      const exitR=this.trajectoryInsideOffset(data.ref,corner.exit,corner.sign);
+      const apexA=this.trajectoryApex(data.a,corner);
+      const apexR=this.trajectoryApex(data.ref,corner);
+
+      const entryDiff=Number.isFinite(entryA)&&Number.isFinite(entryR)&&Number.isFinite(mpu)?(entryA-entryR)*mpu:null;
+      const exitDiff=Number.isFinite(exitA)&&Number.isFinite(exitR)&&Number.isFinite(mpu)?(exitA-exitR)*mpu:null;
+      const apexShift=apexA&&apexR&&Number.isFinite(lengthM)?(apexA.p-apexR.p)*lengthM:null;
+
+      const speedA=apexA?AMSAnalysis.interpolate(lapA,apexA.p,"speed"):null;
+      const speedR=apexR?AMSAnalysis.interpolate(lapRef,apexR.p,"speed"):null;
+      const tAe=AMSAnalysis.timeAt(lapA,corner.entry),tAx=AMSAnalysis.timeAt(lapA,corner.exit);
+      const tRe=AMSAnalysis.timeAt(lapRef,corner.entry),tRx=AMSAnalysis.timeAt(lapRef,corner.exit);
+      const zoneDelta=[tAe,tAx,tRe,tRx].every(Number.isFinite)?(tAx-tAe)-(tRx-tRe):null;
+
+      return {
+        ...corner,
+        apexA:apexA?.p??corner.p,apexR:apexR?.p??corner.p,
+        entryDiff,exitDiff,apexShift,
+        speedA,speedR,
+        speedDelta:Number.isFinite(speedA)&&Number.isFinite(speedR)?speedA-speedR:null,
+        zoneDelta
+      };
+    });
+  },
+
+  trajectoryLineText(value,phase){
+    if(!Number.isFinite(value)||Math.abs(value)<.25)return phase+" semelhante à referência";
+    return phase+" "+Math.abs(value).toFixed(1)+" m mais "+(value>0?"interior":"exterior");
+  },
+
+  trajectoryApexText(value){
+    if(!Number.isFinite(value)||Math.abs(value)<2)return "apex semelhante";
+    return "apex "+Math.abs(value).toFixed(0)+" m "+(value>0?"mais tardio":"antecipado");
+  },
+
+  trajectoryCoachMessage(row){
+    if(!row)return "Fora de uma zona de curva analisada.";
+    const parts=[
+      "Curva "+row.index+" "+row.direction.toLowerCase(),
+      this.trajectoryLineText(row.entryDiff,"entrada"),
+      this.trajectoryApexText(row.apexShift),
+      this.trajectoryLineText(row.exitDiff,"saída")
+    ];
+    if(Number.isFinite(row.speedDelta))parts.push("apex "+(row.speedDelta>=0?"+":"")+row.speedDelta.toFixed(1)+" km/h");
+    if(Number.isFinite(row.zoneDelta))parts.push("Δ zona "+(row.zoneDelta>=0?"+":"")+row.zoneDelta.toFixed(3)+"s");
+    return parts.join(" · ");
+  },
+
+  renderTrajectoryCoaching(lapA,lapRef){
+    const body=document.getElementById("trajectoryCoachBody");
+    const current=document.getElementById("trajectoryCoachCurrent");
+    if(!body)return;
+
+    if(!lapRef||!this.trajectoryCompare?.ref){
+      this.trajectoryCoaching=[];
+      body.innerHTML='<tr><td colspan="7">Seleciona uma volta de referência compatível.</td></tr>';
+      if(current)current.textContent="Seleciona uma volta de referência para comparar entrada, apex e saída.";
+      return;
+    }
+
+    const rows=this.trajectoryCoachRows(lapA,lapRef);
+    this.trajectoryCoaching=rows;
+    body.innerHTML="";
+    const fmtLine=v=>Number.isFinite(v)?((v>=0?"+":"")+v.toFixed(1)+" m"):"—";
+    const fmtApex=v=>Number.isFinite(v)?((v>=0?"+":"")+v.toFixed(0)+" m"):"—";
+    const fmtSpeed=(a,r)=>Number.isFinite(a)&&Number.isFinite(r)?a.toFixed(1)+" / "+r.toFixed(1):"—";
+    const fmtDelta=v=>Number.isFinite(v)?((v>=0?"+":"")+v.toFixed(3)+"s"):"—";
+
+    for(const row of rows){
+      const tr=document.createElement("tr");
+      tr.className="trajectory-coach-row";
+      tr.dataset.corner=String(row.index);
+      tr.innerHTML='<td><strong>C'+row.index+'</strong></td>'+
+        '<td>'+row.direction+'</td>'+
+        '<td class="'+(Math.abs(row.entryDiff||0)>.7?"trajectory-diff":"")+'">'+fmtLine(row.entryDiff)+'</td>'+
+        '<td>'+fmtApex(row.apexShift)+'</td>'+
+        '<td class="'+(Math.abs(row.exitDiff||0)>.7?"trajectory-diff":"")+'">'+fmtLine(row.exitDiff)+'</td>'+
+        '<td>'+fmtSpeed(row.speedA,row.speedR)+' km/h</td>'+
+        '<td class="'+(Number(row.zoneDelta)>0?"loss-cell":"gain-cell")+'">'+fmtDelta(row.zoneDelta)+'</td>';
+      tr.title=this.trajectoryCoachMessage(row);
+      tr.addEventListener("click",()=>{
+        this.setTrajectoryPosition(row.apexA);
+        this.setTrajectoryCoachingPosition(row.apexA);
+        document.dispatchEvent(new CustomEvent("ams-trajectory-seek",{detail:{progress:row.apexA}}));
+      });
+      body.appendChild(tr);
+    }
+    if(!rows.length)body.innerHTML='<tr><td colspan="7">Não foi possível detetar zonas de curva.</td></tr>';
+    this.setTrajectoryCoachingPosition(this.progress);
+  },
+
+  setTrajectoryCoachingPosition(progress){
+    const rows=this.trajectoryCoaching||[];
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    let active=null,best=Infinity;
+    for(const row of rows){
+      const d=Math.abs(row.p-p);
+      if(d<best){best=d;active=row;}
+    }
+    if(best>.045)active=null;
+
+    document.querySelectorAll(".trajectory-coach-row").forEach(el=>{
+      el.classList.toggle("active",active&&Number(el.dataset.corner)===active.index);
+    });
+    const current=document.getElementById("trajectoryCoachCurrent");
+    if(current)current.textContent=active?this.trajectoryCoachMessage(active):"Replay fora de uma zona de curva analisada.";
+  },
+
   positionElement(el,progress){
     const svg=document.getElementById("trackMotionSvg"),point=this.localPoint(progress);
     if(!el||!svg||!point)return;
