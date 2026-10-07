@@ -60,6 +60,16 @@
           <div><span>Separação A / Ref</span><strong id="trajectorySeparation">—</strong></div>
           <div><span>Fonte</span><strong>Yaw + Speed + GPS Fit</strong></div>
         </div>
+        <div class="trajectory-coach-current">
+          <span>Trajectory Coach</span>
+          <strong id="trajectoryCoachCurrent">Seleciona uma volta de referência para analisar entrada, apex e saída.</strong>
+        </div>
+        <div class="trajectory-coach-table-wrap">
+          <table class="trajectory-coach-table">
+            <thead><tr><th>Zona</th><th>Direção</th><th>Entrada</th><th>Apex</th><th>Saída</th><th>Speed @ apex</th><th>Δ zona</th></tr></thead>
+            <tbody id="trajectoryCoachBody"></tbody>
+          </table>
+        </div>
       </article>
 
       <article class="card">
