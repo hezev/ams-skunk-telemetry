@@ -17,7 +17,7 @@ for(const id of ["telemetryLapSelect","telemetryReferenceSelect","engineeringAna
   if(!index.includes('id="'+id+'"')) throw new Error("Missing index id "+id);
 }
 
-for(const id of ["zoomStart","zoomEnd","miniSectorCount","analysisTrackSvg","sectorAnalysisBody","miniSectorBody","drivingEventsBody"]){
+for(const id of ["zoomStart","zoomEnd","miniSectorCount","analysisTrackSvg","trajectoryCompareSvg","trajectoryCompareStatus","sectorAnalysisBody","miniSectorBody","drivingEventsBody"]){
   if(!ui.includes('id="'+id+'"')) throw new Error("Missing engineering UI id "+id);
 }
 
@@ -27,7 +27,7 @@ for(const token of ["prepareLap","comparisonProfile","detectEvents","segmentStat
 for(const token of ["setReference","setZoom","timeDelta","cursorCallback"]){
   if(!charts.includes(token)) throw new Error("Missing chart capability "+token);
 }
-for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE"]){
+for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory"]){
   if(!track.includes(token)) throw new Error("Missing map capability "+token);
 }
 for(const token of ["refreshEngineeringAnalysis","renderMiniSectors","renderDrivingEvents","setZoomWindow"]){
