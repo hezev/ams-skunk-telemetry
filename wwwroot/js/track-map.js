@@ -937,6 +937,9 @@ window.AMSTrack = {
       const quality=Math.max(a.rmse,ref?.rmse||0);
       const real=Boolean(a.realGps&&(!ref||ref.realGps));
       status.textContent=(ref?"A + REF":"A")+" · "+(real?"GPS REAL":"ESTIMATED")+" · "+(real?"LAT/LON":"LAPDIST + YAW")+" · RMS "+quality.toFixed(1)+"°";
+      status.dataset.mode=real?"gps":"estimated";
+      const source=document.getElementById("trajectorySource");
+      if(source)source.textContent=real?"iRacing Lat/Lon · GPS real":"Estimativa · LapDistPct + YawNorth";
     }
   },
 
@@ -1225,8 +1228,8 @@ window.AMSTrack = {
     // Keep the reconstructed driving lines inside a realistic track corridor.
     // This prevents inertial-integration drift from visually jumping across
     // nearby sections of circuit while preserving lateral A/REF differences.
-    const ref=this.constrainTrajectoryToTrack(refRaw,4.2);
-    const a=this.constrainTrajectoryToTrack(aRaw,4.2);
+    const ref=refRaw.realGps?refRaw:this.constrainTrajectoryToTrack(refRaw,4.2);
+    const a=aRaw.realGps?aRaw:this.constrainTrajectoryToTrack(aRaw,4.2);
     const data={
       a,ref,lapA,lapRef,
       coaching:this.trajectoryCoachRows(lapA,lapRef,{a,ref}),
@@ -1273,6 +1276,11 @@ window.AMSTrack = {
     if(status){
       const real=Boolean(a.realGps&&ref.realGps);
       status.textContent=(real?"GPS REAL":"ESTIMATED")+" · FOLLOW · A vs REF";
+      status.dataset.mode=real?"gps":"estimated";
+    }
+    const coach=document.getElementById("compareFocusCoach");
+    if(coach&&!a.realGps&&!ref.realGps){
+      coach.dataset.mode="estimated";
     }
     return true;
   },
@@ -1344,7 +1352,9 @@ window.AMSTrack = {
     const coachEl=document.getElementById("compareFocusCoach");
     if(coachEl){
       coachEl.classList.toggle("active",Boolean(coach));
-      coachEl.textContent=coach?this.trajectoryCoachMessage(coach):"Zona de reta · trajectórias sincronizadas";
+      const estimated=!(data.a?.realGps&&data.ref?.realGps);
+      const msg=coach?this.trajectoryCoachMessage(coach):"Zona de reta · trajectórias sincronizadas";
+      coachEl.textContent=(estimated?"ESTIMATIVA · ":"")+msg;
     }
   },
 
