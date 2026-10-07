@@ -2,22 +2,23 @@
   --bg:#06080b; --panel:#0e1217; --panel2:#141a21; --panel3:#0a0e13; --line:#252c35;
   --text:#f4f7fb; --muted:#8c96a4; --red:#ef1824; --green:#31d878;
   --yellow:#ffd329; --blue:#22a8ff;
+  --sidebar-w:198px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
 body{min-height:100vh;background:radial-gradient(circle at 80% 0,#10151c 0,#06080b 35%) fixed}
 button{font:inherit}
-.sidebar{position:fixed;inset:0 auto 0 0;width:240px;background:#080b0f;border-right:1px solid var(--line);padding:22px 14px;z-index:20;display:flex;flex-direction:column}
-.brand{padding:0 12px 24px;border-bottom:1px solid var(--line);margin-bottom:18px}
-.brand-main{font-weight:950;font-size:24px;font-style:italic;letter-spacing:-1px}.brand-main span{color:var(--red)}
-.brand-sub{margin-top:5px;color:var(--muted);font-size:9px;letter-spacing:2px;text-transform:uppercase}
-nav{display:flex;flex-direction:column;gap:3px}
-nav button{border:0;background:transparent;color:#9fa8b5;text-align:left;padding:11px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.65px}
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar-w);background:#080b0f;border-right:1px solid var(--line);padding:18px 10px;z-index:20;display:flex;flex-direction:column}
+.brand{padding:0 10px 18px;border-bottom:1px solid var(--line);margin-bottom:13px}
+.brand-main{font-weight:950;font-size:21px;font-style:italic;letter-spacing:-.8px}.brand-main span{color:var(--red)}
+.brand-sub{margin-top:4px;color:var(--muted);font-size:8px;letter-spacing:1.7px;text-transform:uppercase}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{border:0;background:transparent;color:#9fa8b5;text-align:left;padding:9px 11px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.58px;min-height:36px}
 nav button:hover,nav button.active{background:#171c22;color:#fff}
 nav button.active{box-shadow:inset 3px 0 0 var(--red)}
-.sidebar-foot{margin-top:auto;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;display:flex;align-items:center;gap:8px;padding:12px}
+.sidebar-foot{margin-top:auto;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.85px;display:flex;align-items:center;gap:7px;padding:10px}
 .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(49,216,120,.8)}
-.main{margin-left:240px;min-height:100vh}
+.main{margin-left:var(--sidebar-w);min-height:100vh}
 .topbar{height:64px;position:sticky;top:0;z-index:10;background:rgba(8,11,15,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px}
 .session-strip{display:flex;gap:22px;align-items:center;color:var(--muted);font-size:12px}.session-strip strong{color:#fff}
 .live-badge{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:900;letter-spacing:1.4px}.live-badge i{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}
