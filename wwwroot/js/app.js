@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareCursorIndex:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
+  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
 
   async function coachFlag(token){
     try{
@@ -447,17 +447,6 @@
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
-  function compareIndexForProgress(samples,progress){
-    const data=samples||[];if(!data.length)return 0;
-    const p=Math.max(0,Math.min(1,Number(progress)||0));
-    let lo=0,hi=data.length-1;
-    while(hi-lo>1){
-      const m=(lo+hi)>>1;
-      if(Number(data[m]?._p)<=p)lo=m;else hi=m;
-    }
-    return Math.abs(Number(data[hi]?._p)-p)<Math.abs(Number(data[lo]?._p)-p)?hi:lo;
-  }
-
   function setCompareProgress(progress){
     if(!state.compareLapA||!state.compareLapB)return;
     const p=Math.max(0,Math.min(1,Number(progress)||0));
@@ -480,32 +469,32 @@
     if(!state.compareLapA||!state.compareLapB)return;
     if(state.compareTimer){stopCompareReplay();return;}
 
-    const samples=state.compareLapA.samples||[];
-    if(!samples.length)return;
-    if(state.compareCursorIndex>=samples.length-1)state.compareCursorIndex=0;
+    if(!(state.compareLapA.samples||[]).length)return;
+    if(state.compareProgress>=1)state.compareProgress=0;
 
     const b1=q("#compareReplayBtn"),b2=q("#compareReplayToggle");
     if(b1)b1.textContent="■ Parar";
     if(b2)b2.textContent="■";
 
+    // Replay is driven by one monotonic track-position coordinate, not by
+    // telemetry sample indexes. This prevents irregular sampling from making
+    // one trajectory appear to lag, catch up or jump relative to the other.
     const duration=Math.max(1,state.compareLapA.lapTimeSec||Number(state.compareDetailA?.lap_time_ms)/1000||1);
+    let previous=performance.now();
     state.compareTimer=setInterval(()=>{
-      if(state.compareCursorIndex>=samples.length){
-        setCompareProgress(1);
-        stopCompareReplay();
-        return;
-      }
-      const sample=samples[Math.floor(state.compareCursorIndex)];
-      setCompareProgress(Number(sample?._p)||0);
-      const samplesPerTick=samples.length/(duration*20);
-      state.compareCursorIndex+=Math.max(.1,samplesPerTick*state.compareSpeed);
-    },50);
+      const now=performance.now();
+      const dt=Math.max(0,Math.min(.25,(now-previous)/1000));
+      previous=now;
+      state.compareProgress=Math.min(1,state.compareProgress+(dt/duration)*state.compareSpeed);
+      setCompareProgress(state.compareProgress);
+      if(state.compareProgress>=1)stopCompareReplay();
+    },33);
   }
 
   function seekCompare(value){
     if(!state.compareLapA)return;
     const p=Math.max(0,Math.min(1,Number(value)/1000));
-    state.compareCursorIndex=compareIndexForProgress(state.compareLapA.samples,p);
+    state.compareProgress=p;
     setCompareProgress(p);
   }
 
@@ -531,7 +520,7 @@
     await AMSTrack.load(a.circuit||"","",a.telemetry||[]);
     state.compareLapA=AMSAnalysis.prepareLap(a);
     state.compareLapB=AMSAnalysis.prepareLap(b);
-    state.compareCursorIndex=0;
+    state.compareProgress=0;
 
     AMSCharts.setZoom(0,1);
     AMSCharts.setCompare(state.compareLapA.samples,state.compareLapB.samples);
@@ -589,8 +578,8 @@
   });
   AMSCharts.setCompareCursorCallback(p=>{
     if(p===null||!state.compareLapA)return;
-    state.compareCursorIndex=compareIndexForProgress(state.compareLapA.samples,p);
-    setCompareProgress(p);
+    state.compareProgress=Math.max(0,Math.min(1,Number(p)||0));
+    setCompareProgress(state.compareProgress);
   });
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
