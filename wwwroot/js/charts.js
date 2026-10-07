@@ -322,10 +322,17 @@ window.AMSCharts = {
       const r=canvas.getBoundingClientRect(),left=58,right=14;
       const local=Math.max(0,Math.min(1,(e.clientX-r.left-left)/(r.width-left-right)));
       this.cursorPos=this.zoomStart+local*(this.zoomEnd-this.zoomStart);
-      if(this.cursorCallback)this.cursorCallback(this.cursorPos);
+      const isCompare=String(canvas.dataset.trace||"").startsWith("compare");
+      if(isCompare&&this.compareCursorCallback)this.compareCursorCallback(this.cursorPos);
+      else if(this.cursorCallback)this.cursorCallback(this.cursorPos);
       this.scheduleDraw();
     });
-    canvas.addEventListener("mouseleave",()=>{this.cursorPos=null;if(this.cursorCallback)this.cursorCallback(null);this.scheduleDraw();});
+    canvas.addEventListener("mouseleave",()=>{
+      const isCompare=String(canvas.dataset.trace||"").startsWith("compare");
+      if(isCompare&&this.compareCursorCallback)this.compareCursorCallback(null);
+      else if(this.cursorCallback)this.cursorCallback(null);
+      this.scheduleDraw();
+    });
   },
 
   draw(canvas,type){
