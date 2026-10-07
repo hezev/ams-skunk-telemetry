@@ -773,17 +773,22 @@ window.AMSTrack = {
     });
   },
 
-  reconstructRelativeTrajectory(lap,sync){
+  reconstructRelativeTrajectory(lap){
     const samples=(lap?.samples||[]).filter(s=>
       Number.isFinite(Number(s?._p))&&
       Number.isFinite(Number(s?.yawNorth))
     );
-    if(samples.length<20||!sync?.length||!Number.isFinite(Number(this.reference?.lengthM)))return null;
+    if(samples.length<20||!Number.isFinite(Number(this.reference?.lengthM)))return null;
 
     const lengthM=Number(this.reference.lengthM);
     const rows=samples.map(s=>{
       const p=Math.max(0,Math.min(1,Number(s._p)));
-      const q=this.mappedProgress(sync,p);
+
+      // CRITICAL: LapDistPct is the longitudinal station for comparison.
+      // Never warp p toward a yaw/nearest-point fit from another lap.
+      // A and REF must remain independent so their true lateral difference
+      // is not hidden by a dynamic spatial re-alignment.
+      const q=p;
       const ty=this.trackYawAt(q);
       const err=Number.isFinite(ty)?this.wrapAngle(Number(s.yawNorth)-ty):0;
       return {p,q,err};
@@ -799,12 +804,14 @@ window.AMSTrack = {
       raw.push(lateral);
     }
 
-    // Close the lap, then remove only the low-frequency integration drift.
+    // Legacy laps without Lat/Lon still need drift removal because yaw
+    // integration cannot recover an absolute lateral origin. This correction
+    // is performed independently per lap and never references the other lap.
     const end=raw[raw.length-1]||0;
     const closed=raw.map((v,i)=>v-end*rows[i].p);
     const radius=Math.max(6,Math.round(rows.length*.05));
     const trend=this.smoothCircularValues(closed,radius);
-    const lateralM=closed.map((v,i)=>Math.max(-4.2,Math.min(4.2,v-trend[i])));
+    const lateralM=closed.map((v,i)=>v-trend[i]);
 
     const metersPerUnit=this.viewUnitsToMeters();
     if(!Number.isFinite(metersPerUnit)||metersPerUnit<=0)return null;
@@ -820,22 +827,22 @@ window.AMSTrack = {
     const headingRms=Math.sqrt(rows.reduce((sum,r)=>sum+r.err*r.err,0)/rows.length)*180/Math.PI;
     return {
       points,
-      sync,
+      sync:rows.map(r=>({p:r.p,q:r.q})),
       rmse:headingRms,
       headingRmsDeg:headingRms,
       maxLateralM:Math.max(...lateralM.map(Math.abs)),
-      source:"LapDistPct + yawNorth + GPS centerline"
+      source:"LapDistPct fixed station + yawNorth + GPS centerline",
+      fixedStation:true
     };
   },
 
   // Compatibility wrapper retained for diagnostics/smoke tests.
   integrateTrajectory(lap){
-    const sync=this.buildTrackSync(lap);
-    const reconstructed=sync?this.reconstructRelativeTrajectory(lap,sync):null;
+    const reconstructed=this.reconstructRelativeTrajectory(lap);
     return reconstructed?.points||[];
   },
 
-  reconstructTrajectory(lap,sharedSync=null){
+  reconstructTrajectory(lap){
     if(!lap||!this.centerline.length)return null;
 
     // Exact mode for new recordings: use the car's real geographic position.
@@ -843,12 +850,11 @@ window.AMSTrack = {
       return this.reconstructGpsTrajectory(lap);
     }
 
-    // Fallback for legacy laps without Lat/Lon. This can reconstruct changes
-    // in lateral line, but absolute left/right track position is unknowable.
+    // Fallback for legacy laps without Lat/Lon. Each lap is reconstructed
+    // independently on the fixed LapDistPct station; no A<->REF sync warp.
     if(Number.isFinite(Number(this.reference?.lengthM))){
-      const sync=sharedSync?.sync||sharedSync||this.buildTrackSync(lap);
-      const fit=sync?this.reconstructRelativeTrajectory(lap,sync):null;
-      if(fit)fit.source="ESTIMATED · LapDistPct + yawNorth";
+      const fit=this.reconstructRelativeTrajectory(lap);
+      if(fit)fit.source="ESTIMATED · fixed LapDistPct + yawNorth";
       return fit;
     }
 
@@ -875,6 +881,19 @@ window.AMSTrack = {
     return points.map((p,i)=>(i?"L":"M")+p.x.toFixed(2)+" "+p.y.toFixed(2)).join(" ");
   },
 
+  trajectoryPathUntil(points,progress){
+    if(!points?.length)return "";
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    const out=[];
+    for(const pt of points){
+      if(Number(pt.p)<p)out.push(pt);
+      else break;
+    }
+    const end=this.trajectoryPoint(points,p);
+    if(end)out.push(end);
+    return this.svgPath(out);
+  },
+
   viewUnitsToMeters(){
     if(!this.centerline.length||!Number.isFinite(Number(this.reference?.lengthM)))return null;
     let len=0;
@@ -892,10 +911,10 @@ window.AMSTrack = {
       return;
     }
 
-    // Fit the reference once and apply exactly the same transform to Lap A.
-    // This preserves genuine lateral trajectory differences between laps.
+    // Reconstruct each lap independently. The reference is never used to
+    // reposition, stretch or phase-warp Lap A.
     const ref=lapRef?this.reconstructTrajectory(lapRef):null;
-    const a=this.reconstructTrajectory(lapA,ref?.sync||null);
+    const a=this.reconstructTrajectory(lapA);
     if(!a){
       this.trajectoryCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
@@ -918,20 +937,9 @@ window.AMSTrack = {
       html+='<path class="trajectory-line trajectory-ref ghost" d="'+pathR+'"></path>';
       html+='<path id="trajectoryProgressRef" class="trajectory-line trajectory-ref progress" d="'+pathR+'"></path>';
     }
-    html+='<circle id="trajectoryMarkerA" class="trajectory-marker marker-a" cx="'+start.x+'" cy="'+start.y+'" r="9"></circle>';
-    if(ref)html+='<circle id="trajectoryMarkerRef" class="trajectory-marker marker-ref" cx="'+start.x+'" cy="'+start.y+'" r="9"></circle>';
     svg.innerHTML=html;
 
-    requestAnimationFrame(()=>{
-      for(const id of ["trajectoryProgressA","trajectoryProgressRef"]){
-        const p=document.getElementById(id);if(!p)continue;
-        const len=p.getTotalLength?.()||0;
-        p.dataset.pathLength=String(len);
-        p.style.strokeDasharray=len+" "+len;
-        p.style.strokeDashoffset=String(len);
-      }
-      this.setTrajectoryPosition(this.progress);
-    });
+    requestAnimationFrame(()=>this.setTrajectoryPosition(this.progress));
 
     if(status){
       const quality=Math.max(a.rmse,ref?.rmse||0);
@@ -950,15 +958,9 @@ window.AMSTrack = {
 
     const update=(name,fit)=>{
       if(!fit)return;
-      const marker=document.getElementById("trajectoryMarker"+name);
       const path=document.getElementById("trajectoryProgress"+(name==="Ref"?"Ref":"A"));
       const pt=this.trajectoryPoint(fit.points,p);
-      if(marker&&pt){marker.setAttribute("cx",pt.x.toFixed(2));marker.setAttribute("cy",pt.y.toFixed(2));}
-      if(path){
-        const len=Number(path.dataset.pathLength)||path.getTotalLength?.()||0;
-        path.style.strokeDasharray=len+" "+len;
-        path.style.strokeDashoffset=String(len*(1-p));
-      }
+      if(path)path.setAttribute("d",this.trajectoryPathUntil(fit.points,p));
       return pt;
     };
 
@@ -1218,18 +1220,17 @@ window.AMSTrack = {
     }
 
     const refRaw=this.reconstructTrajectory(lapRef);
-    const aRaw=this.reconstructTrajectory(lapA,refRaw?.sync||null);
+    const aRaw=this.reconstructTrajectory(lapA);
     if(!aRaw||!refRaw){
       this.focusedCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
       return false;
     }
 
-    // Keep the reconstructed driving lines inside a realistic track corridor.
-    // This prevents inertial-integration drift from visually jumping across
-    // nearby sections of circuit while preserving lateral A/REF differences.
-    const ref=refRaw.realGps?refRaw:this.constrainTrajectoryToTrack(refRaw,4.2);
-    const a=aRaw.realGps?aRaw:this.constrainTrajectoryToTrack(aRaw,4.2);
+    // Never clip one line toward the centre/reference in comparison view.
+    // Preserve the reconstructed coordinates exactly as produced for each lap.
+    const ref=refRaw;
+    const a=aRaw;
     const data={
       a,ref,lapA,lapRef,
       coaching:this.trajectoryCoachRows(lapA,lapRef,{a,ref}),
@@ -1248,30 +1249,17 @@ window.AMSTrack = {
       '<polyline class="compare-focus-track-road" style="stroke-width:'+sw.road.toFixed(2)+'" points="'+base+'"></polyline>'+
       '<path class="compare-focus-line trajectory-a ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathA+'"></path>'+
       '<path class="compare-focus-line trajectory-ref ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathR+'"></path>'+
-      '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" style="stroke-width:'+sw.line.toFixed(2)+'" d="'+pathA+'"></path>'+
-      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" style="stroke-width:'+sw.line.toFixed(2)+'" d="'+pathR+'"></path>'+
-      '<circle id="compareFocusMarkerA" class="compare-focus-marker marker-a" r="'+sw.marker.toFixed(2)+'"></circle>'+
-      '<circle id="compareFocusMarkerRef" class="compare-focus-marker marker-ref" r="'+sw.marker.toFixed(2)+'"></circle>';
+      '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" style="stroke-width:'+sw.line.toFixed(2)+'" d=""></path>'+
+      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" style="stroke-width:'+sw.line.toFixed(2)+'" d=""></path>';
 
     mini.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
     mini.setAttribute("preserveAspectRatio","xMidYMid meet");
     mini.innerHTML=
       '<polyline class="compare-mini-track" points="'+base+'"></polyline>'+
       '<path class="compare-mini-line trajectory-a" d="'+pathA+'"></path>'+
-      '<path class="compare-mini-line trajectory-ref" d="'+pathR+'"></path>'+
-      '<circle id="compareMiniMarkerA" class="compare-mini-marker marker-a" r="9"></circle>'+
-      '<circle id="compareMiniMarkerRef" class="compare-mini-marker marker-ref" r="9"></circle>';
+      '<path class="compare-mini-line trajectory-ref" d="'+pathR+'"></path>';
 
-    requestAnimationFrame(()=>{
-      for(const id of ["compareFocusProgressA","compareFocusProgressRef"]){
-        const path=document.getElementById(id);if(!path)continue;
-        const len=path.getTotalLength?.()||0;
-        path.dataset.pathLength=String(len);
-        path.style.strokeDasharray=len+" "+len;
-        path.style.strokeDashoffset=String(len);
-      }
-      this.setFocusedComparePosition(0);
-    });
+    requestAnimationFrame(()=>this.setFocusedComparePosition(0));
 
     if(status){
       const real=Boolean(a.realGps&&ref.realGps);
@@ -1317,22 +1305,14 @@ window.AMSTrack = {
     const vw=full.w/zoom,vh=full.h/zoom;
     svg.setAttribute("viewBox",(center.x-vw/2)+" "+(center.y-vh/2)+" "+vw+" "+vh);
 
-    const update=(markerId,pathId,miniId,pt)=>{
-      if(!pt)return;
-      const marker=document.getElementById(markerId);
-      const mini=document.getElementById(miniId);
-      if(marker){marker.setAttribute("cx",pt.x.toFixed(2));marker.setAttribute("cy",pt.y.toFixed(2));}
-      if(mini){mini.setAttribute("cx",pt.x.toFixed(2));mini.setAttribute("cy",pt.y.toFixed(2));}
+    const update=(pathId,fit)=>{
+      if(!fit)return;
       const path=document.getElementById(pathId);
-      if(path){
-        const len=Number(path.dataset.pathLength)||path.getTotalLength?.()||0;
-        path.style.strokeDasharray=len+" "+len;
-        path.style.strokeDashoffset=String(len*(1-p));
-      }
+      if(path)path.setAttribute("d",this.trajectoryPathUntil(fit.points,p));
     };
 
-    update("compareFocusMarkerA","compareFocusProgressA","compareMiniMarkerA",pa);
-    update("compareFocusMarkerRef","compareFocusProgressRef","compareMiniMarkerRef",pr);
+    update("compareFocusProgressA",data.a);
+    update("compareFocusProgressRef",data.ref);
 
     const metersPerUnit=this.viewUnitsToMeters();
     const separation=pa&&pr&&Number.isFinite(metersPerUnit)?this.distance(pa,pr)*metersPerUnit:null;
