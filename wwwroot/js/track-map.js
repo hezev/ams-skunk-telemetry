@@ -8,6 +8,8 @@ window.AMSTrack = {
   centerline:[],
   reference:null,
   trajectoryCompare:null,
+  focusedCompare:null,
+  focusedCompareZoom:4,
 
   normalize(value){
     return String(value||"")
@@ -860,8 +862,8 @@ window.AMSTrack = {
     return best;
   },
 
-  trajectoryCoachRows(lapA,lapRef){
-    const data=this.trajectoryCompare;
+  trajectoryCoachRows(lapA,lapRef,dataOverride=null){
+    const data=dataOverride||this.trajectoryCompare;
     if(!data?.a||!data?.ref||!lapA||!lapRef)return [];
     const mpu=this.viewUnitsToMeters();
     const lengthM=Number(this.reference?.lengthM);
@@ -977,6 +979,147 @@ window.AMSTrack = {
     });
     const current=document.getElementById("trajectoryCoachCurrent");
     if(current)current.textContent=active?this.trajectoryCoachMessage(active):"Replay fora de uma zona de curva analisada.";
+  },
+
+  parseViewBox(){
+    const parts=this.analysisViewBox().trim().split(/\s+/).map(Number);
+    if(parts.length===4&&parts.every(Number.isFinite))return {x:parts[0],y:parts[1],w:parts[2],h:parts[3]};
+    return {x:0,y:0,w:1000,h:600};
+  },
+
+  renderFocusedCompare(lapA,lapRef){
+    const svg=document.getElementById("compareFocusSvg");
+    const mini=document.getElementById("compareMiniMapSvg");
+    const status=document.getElementById("compareFocusStatus");
+    if(!svg||!mini||!this.centerline.length||!lapA||!lapRef){
+      this.focusedCompare=null;
+      if(status)status.textContent="SEM COMPARAÇÃO";
+      return false;
+    }
+
+    const ref=this.reconstructTrajectory(lapRef);
+    const a=this.reconstructTrajectory(lapA,ref||null);
+    if(!a||!ref){
+      this.focusedCompare=null;
+      if(status)status.textContent="DADOS INSUFICIENTES";
+      return false;
+    }
+
+    const data={
+      a,ref,lapA,lapRef,
+      coaching:this.trajectoryCoachRows(lapA,lapRef,{a,ref}),
+      progress:0
+    };
+    this.focusedCompare=data;
+
+    const full=this.parseViewBox();
+    const base=this.centerline.filter((_,i)=>i%2===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+    const pathA=this.svgPath(a.points),pathR=this.svgPath(ref.points);
+
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    svg.innerHTML=
+      '<polyline class="compare-focus-track-edge" points="'+base+'"></polyline>'+
+      '<polyline class="compare-focus-track-road" points="'+base+'"></polyline>'+
+      '<path class="compare-focus-line trajectory-a ghost" d="'+pathA+'"></path>'+
+      '<path class="compare-focus-line trajectory-ref ghost" d="'+pathR+'"></path>'+
+      '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" d="'+pathA+'"></path>'+
+      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" d="'+pathR+'"></path>'+
+      '<circle id="compareFocusMarkerA" class="compare-focus-marker marker-a" r="8"></circle>'+
+      '<circle id="compareFocusMarkerRef" class="compare-focus-marker marker-ref" r="8"></circle>';
+
+    mini.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
+    mini.setAttribute("preserveAspectRatio","xMidYMid meet");
+    mini.innerHTML=
+      '<polyline class="compare-mini-track" points="'+base+'"></polyline>'+
+      '<path class="compare-mini-line trajectory-a" d="'+pathA+'"></path>'+
+      '<path class="compare-mini-line trajectory-ref" d="'+pathR+'"></path>'+
+      '<circle id="compareMiniMarkerA" class="compare-mini-marker marker-a" r="9"></circle>'+
+      '<circle id="compareMiniMarkerRef" class="compare-mini-marker marker-ref" r="9"></circle>';
+
+    requestAnimationFrame(()=>{
+      for(const id of ["compareFocusProgressA","compareFocusProgressRef"]){
+        const path=document.getElementById(id);if(!path)continue;
+        const len=path.getTotalLength?.()||0;
+        path.dataset.pathLength=String(len);
+        path.style.strokeDasharray=len+" "+len;
+        path.style.strokeDashoffset=String(len);
+      }
+      this.setFocusedComparePosition(0);
+    });
+
+    if(status)status.textContent="FOLLOW · A vs REF";
+    return true;
+  },
+
+  setFocusedCompareZoom(value){
+    const z=Number(value);
+    if(Number.isFinite(z)&&z>=1.5&&z<=12)this.focusedCompareZoom=z;
+    if(this.focusedCompare)this.setFocusedComparePosition(this.focusedCompare.progress||0);
+  },
+
+  nearestFocusedCoach(progress){
+    const rows=this.focusedCompare?.coaching||[];
+    let best=null,distance=Infinity;
+    for(const row of rows){
+      const d=Math.abs(Number(row.p)-progress);
+      if(d<distance){distance=d;best=row;}
+    }
+    return distance<=.055?best:null;
+  },
+
+  setFocusedComparePosition(progress){
+    const data=this.focusedCompare,svg=document.getElementById("compareFocusSvg");
+    if(!data||!svg)return;
+
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    data.progress=p;
+    const pa=this.trajectoryPoint(data.a.points,p);
+    const pr=this.trajectoryPoint(data.ref.points,p);
+    const center=pa&&pr?{x:(pa.x+pr.x)/2,y:(pa.y+pr.y)/2}:pa||pr||this.localPoint(p);
+    if(!center)return;
+
+    const full=this.parseViewBox();
+    const zoom=this.focusedCompareZoom||4;
+    const vw=full.w/zoom,vh=full.h/zoom;
+    svg.setAttribute("viewBox",(center.x-vw/2)+" "+(center.y-vh/2)+" "+vw+" "+vh);
+
+    const update=(markerId,pathId,miniId,pt)=>{
+      if(!pt)return;
+      const marker=document.getElementById(markerId);
+      const mini=document.getElementById(miniId);
+      if(marker){marker.setAttribute("cx",pt.x.toFixed(2));marker.setAttribute("cy",pt.y.toFixed(2));}
+      if(mini){mini.setAttribute("cx",pt.x.toFixed(2));mini.setAttribute("cy",pt.y.toFixed(2));}
+      const path=document.getElementById(pathId);
+      if(path){
+        const len=Number(path.dataset.pathLength)||path.getTotalLength?.()||0;
+        path.style.strokeDasharray=len+" "+len;
+        path.style.strokeDashoffset=String(len*(1-p));
+      }
+    };
+
+    update("compareFocusMarkerA","compareFocusProgressA","compareMiniMarkerA",pa);
+    update("compareFocusMarkerRef","compareFocusProgressRef","compareMiniMarkerRef",pr);
+
+    const metersPerUnit=this.viewUnitsToMeters();
+    const separation=pa&&pr&&Number.isFinite(metersPerUnit)?this.distance(pa,pr)*metersPerUnit:null;
+    const ta=AMSAnalysis.timeAt(data.lapA,p),tr=AMSAnalysis.timeAt(data.lapRef,p);
+    const delta=Number.isFinite(ta)&&Number.isFinite(tr)?ta-tr:null;
+
+    const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
+    set("compareFocusPosition",(p*100).toFixed(1)+"%");
+    set("compareReplayPosition",(p*100).toFixed(1)+"%");
+    set("compareFocusSeparation",Number.isFinite(separation)?separation.toFixed(2)+" m":"—");
+    set("compareFocusDelta",Number.isFinite(delta)?((delta>=0?"+":"")+delta.toFixed(3)+"s"):"—");
+
+    const seek=document.getElementById("compareReplaySeek");
+    if(seek)seek.value=String(Math.round(p*1000));
+
+    const coach=this.nearestFocusedCoach(p);
+    const coachEl=document.getElementById("compareFocusCoach");
+    if(coachEl){
+      coachEl.classList.toggle("active",Boolean(coach));
+      coachEl.textContent=coach?this.trajectoryCoachMessage(coach):"Zona de reta · trajectórias sincronizadas";
+    }
   },
 
   positionElement(el,progress){
