@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <title>AMS Skunk Telemetry</title>
-  <link rel="stylesheet" href="css/app.css?v=20261007-2">
-  <link rel="stylesheet" href="css/responsive.css?v=20261007-2">
+  <link rel="stylesheet" href="css/app.css?v=20261007-3">
+  <link rel="stylesheet" href="css/responsive.css?v=20261007-3">
 </head>
 <body>
 
@@ -261,20 +261,85 @@
 
     <section id="compare" class="view">
       <div class="titlebar">
-        <div><h1>Lap Comparison</h1><p>Comparação real de duas voltas gravadas</p></div>
+        <div><h1>Lap Comparison</h1><p>Comparação sincronizada de trajectória e telemetria por posição de pista</p></div>
         <div class="analysis-actions">
-          <label>A <select id="compareLapA"></select></label>
-          <label>B <select id="compareLapB"></select></label>
+          <label>Lap A <select id="compareLapA"></select></label>
+          <label>Reference <select id="compareLapB"></select></label>
           <button id="compareBtn" class="action-btn" type="button">Comparar</button>
+          <button id="compareReplayBtn" class="action-btn" type="button">▶ Replay</button>
         </div>
       </div>
+
       <div class="metrics metrics-4">
         <article class="metric"><span>Lap A</span><strong id="compareTimeA">—</strong></article>
-        <article class="metric"><span>Lap B</span><strong id="compareTimeB">—</strong></article>
+        <article class="metric"><span>Reference</span><strong id="compareTimeB">—</strong></article>
         <article class="metric"><span>Difference</span><strong id="compareDiff">—</strong></article>
         <article class="metric"><span>Compatibility</span><strong id="compareCompatibility">—</strong></article>
       </div>
-      <article class="card"><div class="card-head"><div class="card-title">Speed Overlay</div><div id="compareNote" class="chip">Seleciona duas voltas</div></div><div class="chart-wrap big"><canvas class="trace" data-trace="compare"></canvas></div></article>
+
+      <article class="card compare-focus-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Track Focus · Trajectory Compare</div>
+            <div class="trajectory-subtitle">Vista ampliada acompanha automaticamente o ponto atual</div>
+          </div>
+          <div class="trajectory-toolbar">
+            <span class="trajectory-legend"><i class="a"></i> Lap A</span>
+            <span class="trajectory-legend"><i class="ref"></i> Reference</span>
+            <span id="compareFocusStatus" class="chip">Seleciona duas voltas</span>
+          </div>
+        </div>
+
+        <div id="compareFocusStage" class="compare-focus-stage">
+          <svg id="compareFocusSvg" aria-label="Vista ampliada da trajectória"></svg>
+          <div class="compare-mini-map">
+            <svg id="compareMiniMapSvg" aria-label="Mapa geral da pista"></svg>
+          </div>
+          <div class="compare-focus-hud">
+            <div><span>Position</span><strong id="compareFocusPosition">0.0%</strong></div>
+            <div><span>Separation</span><strong id="compareFocusSeparation">—</strong></div>
+            <div><span>Δ Time</span><strong id="compareFocusDelta">—</strong></div>
+          </div>
+          <div id="compareFocusCoach" class="compare-focus-coach">A análise da zona atual aparece aqui durante o replay.</div>
+        </div>
+
+        <div class="compare-replay-row">
+          <button id="compareReplayToggle" class="action-btn" type="button">▶</button>
+          <input id="compareReplaySeek" type="range" min="0" max="1000" value="0">
+          <span id="compareReplayPosition">0.0%</span>
+          <label>Speed
+            <select id="compareReplaySpeed">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </label>
+          <label>Zoom
+            <select id="compareFocusZoom">
+              <option value="2.5">2.5×</option>
+              <option value="4" selected>4×</option>
+              <option value="6">6×</option>
+              <option value="8">8×</option>
+            </select>
+          </label>
+        </div>
+      </article>
+
+      <div class="compare-telemetry-grid">
+        <article class="card">
+          <div class="card-head"><div class="card-title">Throttle</div><div class="chip">A / REF</div></div>
+          <div class="chart-wrap big"><canvas class="trace" data-trace="compareThrottle"></canvas></div>
+        </article>
+        <article class="card">
+          <div class="card-head"><div class="card-title">Brake</div><div class="chip">A / REF</div></div>
+          <div class="chart-wrap big"><canvas class="trace" data-trace="compareBrake"></canvas></div>
+        </article>
+        <article class="card compare-wide">
+          <div class="card-head"><div class="card-title">Speed Overlay</div><div id="compareNote" class="chip">Seleciona duas voltas</div></div>
+          <div class="chart-wrap big"><canvas class="trace" data-trace="compare"></canvas></div>
+        </article>
+      </div>
     </section>
 
     <section id="records" class="view">
@@ -337,15 +402,15 @@
   </div>
 </div>
 
-<script src="js/config.js?v=20261007-2"></script>
-<script src="js/analysis.js?v=20261007-2"></script>
-<script src="js/engineering-ui.js?v=20261007-2"></script>
-<script src="js/charts.js?v=20261007-2"></script>
-<script src="js/track-map.js?v=20261007-2"></script>
-<script src="js/supabase.js?v=20261007-2"></script>
-<script src="js/auth.js?v=20261007-2"></script>
-<script src="js/realtime.js?v=20261007-2"></script>
-<script src="js/app.js?v=20261007-2"></script>
-<script src="js/layout.js?v=20261007-2"></script>
+<script src="js/config.js?v=20261007-3"></script>
+<script src="js/analysis.js?v=20261007-3"></script>
+<script src="js/engineering-ui.js?v=20261007-3"></script>
+<script src="js/charts.js?v=20261007-3"></script>
+<script src="js/track-map.js?v=20261007-3"></script>
+<script src="js/supabase.js?v=20261007-3"></script>
+<script src="js/auth.js?v=20261007-3"></script>
+<script src="js/realtime.js?v=20261007-3"></script>
+<script src="js/app.js?v=20261007-3"></script>
+<script src="js/layout.js?v=20261007-3"></script>
 </body>
 </html>
