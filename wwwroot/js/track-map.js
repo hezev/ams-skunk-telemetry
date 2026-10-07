@@ -588,129 +588,179 @@ window.AMSTrack = {
     cursor.setAttribute("cy",pt.y.toFixed(2));
   },
 
-  integrateTrajectory(lap){
+  wrapAngle(angle){
+    let a=Number(angle)||0;
+    while(a>Math.PI)a-=Math.PI*2;
+    while(a<-Math.PI)a+=Math.PI*2;
+    return a;
+  },
+
+  trackYawAt(progress){
+    const t=this.centerTangent(progress,.0012);
+    if(!t)return null;
+    // yawNorth convention: 0 = north/up, +PI/2 = east/right.
+    return Math.atan2(t.x,-t.y);
+  },
+
+  buildTrackSync(lap){
     const samples=(lap?.samples||[]).filter(s=>
-      Number.isFinite(Number(s?._p)) &&
-      Number.isFinite(Number(s?.speed)) &&
+      Number.isFinite(Number(s?._p))&&Number.isFinite(Number(s?.yawNorth))
+    );
+    if(samples.length<20||!this.centerline.length)return null;
+
+    const stride=Math.max(1,Math.floor(samples.length/450));
+    const control=[];
+    let prevQ=0;
+
+    for(let i=0;i<samples.length;i+=stride){
+      const s=samples[i],p=Math.max(0,Math.min(1,Number(s._p)));
+      const window=.010;
+      const lo=Math.max(i?prevQ+.000001:0,p-window,0);
+      const hi=Math.min(1,p+window);
+      let bestQ=Math.max(lo,Math.min(hi,p)),best=Infinity;
+
+      for(let k=0;k<=48;k++){
+        const q=lo+(hi-lo)*k/48;
+        const ty=this.trackYawAt(q);
+        if(!Number.isFinite(ty))continue;
+        const err=this.wrapAngle(Number(s.yawNorth)-ty);
+        const cost=err*err+50*(q-p)*(q-p);
+        if(cost<best){best=cost;bestQ=q;}
+      }
+      prevQ=bestQ;
+      control.push({p,q:bestQ});
+    }
+
+    const lastSample=samples[samples.length-1];
+    if(control[control.length-1]?.p<Number(lastSample._p)-.001){
+      control.push({p:Number(lastSample._p),q:Math.max(prevQ,Math.min(1,Number(lastSample._p)))});
+    }
+
+    const endQ=control[control.length-1]?.q||1;
+    control.forEach(x=>{
+      x.q=Math.max(0,Math.min(1,x.q+x.p*(1-endQ)));
+    });
+
+    // Light smoothing of the p->q warp while preserving monotonicity.
+    const smoothed=control.map((x,i)=>{
+      let sum=0,w=0;
+      for(let d=-2;d<=2;d++){
+        const j=Math.max(0,Math.min(control.length-1,i+d));
+        const ww=3-Math.abs(d);
+        sum+=control[j].q*ww;w+=ww;
+      }
+      return {...x,q:sum/w};
+    });
+    for(let i=1;i<smoothed.length;i++){
+      smoothed[i].q=Math.max(smoothed[i].q,smoothed[i-1].q+.000001);
+    }
+    const end=smoothed[smoothed.length-1]?.q||1;
+    smoothed.forEach(x=>x.q=Math.max(0,Math.min(1,x.q+x.p*(1-end))));
+    return smoothed;
+  },
+
+  mappedProgress(sync,p){
+    if(!sync?.length)return Math.max(0,Math.min(1,Number(p)||0));
+    const x=Math.max(0,Math.min(1,Number(p)||0));
+    if(x<=sync[0].p)return sync[0].q;
+    if(x>=sync[sync.length-1].p)return sync[sync.length-1].q;
+    let lo=0,hi=sync.length-1;
+    while(hi-lo>1){
+      const m=(lo+hi)>>1;
+      if(sync[m].p<=x)lo=m;else hi=m;
+    }
+    const a=sync[lo],b=sync[hi],span=b.p-a.p||1,t=(x-a.p)/span;
+    return a.q+(b.q-a.q)*t;
+  },
+
+  smoothCircularValues(values,radius){
+    if(!values.length)return [];
+    return values.map((_,i)=>{
+      let sum=0,w=0;
+      for(let d=-radius;d<=radius;d++){
+        let j=i+d;
+        while(j<0)j+=values.length;
+        while(j>=values.length)j-=values.length;
+        const ww=radius+1-Math.abs(d);
+        sum+=values[j]*ww;w+=ww;
+      }
+      return sum/w;
+    });
+  },
+
+  reconstructRelativeTrajectory(lap,sync){
+    const samples=(lap?.samples||[]).filter(s=>
+      Number.isFinite(Number(s?._p))&&
       Number.isFinite(Number(s?.yawNorth))
     );
-    if(samples.length<20)return [];
+    if(samples.length<20||!sync?.length||!Number.isFinite(Number(this.reference?.lengthM)))return null;
 
-    const out=[{p:samples[0]._p,x:0,y:0}];
-    let x=0,y=0;
-
-    for(let i=1;i<samples.length;i++){
-      const a=samples[i-1],b=samples[i];
-      const ta=Number.isFinite(Number(a._rawTime))?Number(a._rawTime):Number(a._time);
-      const tb=Number.isFinite(Number(b._rawTime))?Number(b._rawTime):Number(b._time);
-      let dt=tb-ta;
-      if(!Number.isFinite(dt)||dt<=0||dt>.25)dt=1/60;
-
-      const speed=((Number(a.speed)+Number(b.speed))/2)/3.6;
-      const ya=Number(a.yawNorth),yb=Number(b.yawNorth);
-      let vx=Math.sin(ya)+Math.sin(yb);
-      let vy=-Math.cos(ya)-Math.cos(yb);
-      const n=Math.hypot(vx,vy)||1;
-      vx/=n;vy/=n;
-
-      const ds=Math.max(0,speed*dt);
-      x+=vx*ds;y+=vy*ds;
-      out.push({p:b._p,x,y});
-    }
-
-    // Remove accumulated inertial integration drift so the lap closes at S/F.
-    const end=out[out.length-1];
-    return out.map(pt=>({
-      p:pt.p,
-      x:pt.x-end.x*pt.p,
-      y:pt.y-end.y*pt.p
-    }));
-  },
-
-  fitTrajectory(points,reflectY=false){
-    if(!points.length||!this.centerline.length)return null;
-    const src=[],dst=[];
-    const stride=Math.max(1,Math.floor(points.length/700));
-
-    for(let i=0;i<points.length;i+=stride){
-      const p=points[i],r=this.localPoint(p.p);
-      if(!r)continue;
-      src.push({x:p.x,y:reflectY?-p.y:p.y});
-      dst.push(r);
-    }
-    if(src.length<10)return null;
-
-    const cs=src.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0});
-    const cd=dst.reduce((a,p)=>({x:a.x+p.x,y:a.y+p.y}),{x:0,y:0});
-    cs.x/=src.length;cs.y/=src.length;cd.x/=dst.length;cd.y/=dst.length;
-
-    let denom=0,sumA=0,sumB=0;
-    for(let i=0;i<src.length;i++){
-      const x=src[i].x-cs.x,y=src[i].y-cs.y;
-      const X=dst[i].x-cd.x,Y=dst[i].y-cd.y;
-      denom+=x*x+y*y;
-      sumA+=x*X+y*Y;
-      sumB+=x*Y-y*X;
-    }
-    if(denom<=0)return null;
-
-    const a=sumA/denom,b=sumB/denom;
-    const tx=cd.x-a*cs.x+b*cs.y;
-    const ty=cd.y-b*cs.x-a*cs.y;
-    const transform=p=>{
-      const yy=reflectY?-p.y:p.y;
-      return {p:p.p,x:a*p.x-b*yy+tx,y:b*p.x+a*yy+ty};
-    };
-
-    let err=0;
-    for(let i=0;i<src.length;i++){
-      const raw=points[Math.min(points.length-1,i*stride)];
-      const q=transform(raw),r=this.localPoint(raw.p);
-      err+=r?(q.x-r.x)**2+(q.y-r.y)**2:0;
-    }
-    return {
-      points:points.map(transform),
-      rmse:Math.sqrt(err/src.length),
-      scale:Math.hypot(a,b),
-      reflected:reflectY,
-      a,b,tx,ty
-    };
-  },
-
-  applyTrajectoryFit(raw,fit){
-    if(!raw?.length||!fit)return null;
-    const transformed=raw.map(p=>{
-      const yy=fit.reflected?-p.y:p.y;
-      return {p:p.p,x:fit.a*p.x-fit.b*yy+fit.tx,y:fit.b*p.x+fit.a*yy+fit.ty};
+    const lengthM=Number(this.reference.lengthM);
+    const rows=samples.map(s=>{
+      const p=Math.max(0,Math.min(1,Number(s._p)));
+      const q=this.mappedProgress(sync,p);
+      const ty=this.trackYawAt(q);
+      const err=Number.isFinite(ty)?this.wrapAngle(Number(s.yawNorth)-ty):0;
+      return {p,q,err};
     });
-    let err=0,count=0;
-    for(let i=0;i<transformed.length;i+=Math.max(1,Math.floor(transformed.length/700))){
-      const q=transformed[i],r=this.localPoint(q.p);
-      if(!r)continue;
-      err+=(q.x-r.x)**2+(q.y-r.y)**2;count++;
+
+    let lateral=0;
+    const raw=[0];
+    for(let i=1;i<rows.length;i++){
+      const a=rows[i-1],b=rows[i];
+      const ds=Math.max(0,(b.q-a.q)*lengthM);
+      const e=(a.err+b.err)/2;
+      lateral+=Math.tan(Math.max(-.32,Math.min(.32,e)))*ds;
+      raw.push(lateral);
     }
-    return {...fit,points:transformed,rmse:count?Math.sqrt(err/count):fit.rmse};
+
+    // Close the lap, then remove only the low-frequency integration drift.
+    const end=raw[raw.length-1]||0;
+    const closed=raw.map((v,i)=>v-end*rows[i].p);
+    const radius=Math.max(6,Math.round(rows.length*.05));
+    const trend=this.smoothCircularValues(closed,radius);
+    const lateralM=closed.map((v,i)=>Math.max(-4.2,Math.min(4.2,v-trend[i])));
+
+    const metersPerUnit=this.viewUnitsToMeters();
+    if(!Number.isFinite(metersPerUnit)||metersPerUnit<=0)return null;
+
+    const points=rows.map((r,i)=>{
+      const center=this.localPoint(r.q),tan=this.centerTangent(r.q,.0012);
+      if(!center||!tan)return null;
+      const nx=-tan.y,ny=tan.x;
+      const offset=lateralM[i]/metersPerUnit;
+      return {p:r.p,q:r.q,x:center.x+nx*offset,y:center.y+ny*offset,lateralM:lateralM[i]};
+    }).filter(Boolean);
+
+    const headingRms=Math.sqrt(rows.reduce((sum,r)=>sum+r.err*r.err,0)/rows.length)*180/Math.PI;
+    return {
+      points,
+      sync,
+      rmse:headingRms,
+      headingRmsDeg:headingRms,
+      maxLateralM:Math.max(...lateralM.map(Math.abs)),
+      source:"LapDistPct + yawNorth + GPS centerline"
+    };
   },
 
-  reconstructTrajectory(lap,sharedFit=null){
-    const raw=this.integrateTrajectory(lap);
-    if(raw.length<20)return null;
-    let fit;
-    if(sharedFit){
-      fit=this.applyTrajectoryFit(raw,sharedFit);
-    }else{
-      const normal=this.fitTrajectory(raw,false);
-      const reflected=this.fitTrajectory(raw,true);
-      fit=!normal?reflected:!reflected?normal:(normal.rmse<=reflected.rmse?normal:reflected);
-    }
-    if(!fit)return null;
+  // Compatibility wrapper retained for diagnostics/smoke tests.
+  integrateTrajectory(lap){
+    const sync=this.buildTrackSync(lap);
+    const reconstructed=sync?this.reconstructRelativeTrajectory(lap,sync):null;
+    return reconstructed?.points||[];
+  },
 
-    const maxPoints=950;
-    const step=Math.max(1,Math.floor(fit.points.length/maxPoints));
-    const points=fit.points.filter((_,i)=>i%step===0);
-    const last=fit.points[fit.points.length-1];
-    if(points[points.length-1]!==last)points.push(last);
-    return {...fit,points};
+  reconstructTrajectory(lap,sharedSync=null){
+    if(!lap||!this.centerline.length)return null;
+
+    // GPS-reference mode: longitudinal station is never free-running.
+    // The same iRacing->GPS mapping is shared between A and REF.
+    if(Number.isFinite(Number(this.reference?.lengthM))){
+      const sync=sharedSync?.sync||sharedSync||this.buildTrackSync(lap);
+      return sync?this.reconstructRelativeTrajectory(lap,sync):null;
+    }
+
+    return null;
   },
 
   trajectoryPoint(points,progress){
@@ -753,7 +803,7 @@ window.AMSTrack = {
     // Fit the reference once and apply exactly the same transform to Lap A.
     // This preserves genuine lateral trajectory differences between laps.
     const ref=lapRef?this.reconstructTrajectory(lapRef):null;
-    const a=this.reconstructTrajectory(lapA,ref||null);
+    const a=this.reconstructTrajectory(lapA,ref?.sync||null);
     if(!a){
       this.trajectoryCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
@@ -1070,7 +1120,7 @@ window.AMSTrack = {
     }
 
     const refRaw=this.reconstructTrajectory(lapRef);
-    const aRaw=this.reconstructTrajectory(lapA,refRaw||null);
+    const aRaw=this.reconstructTrajectory(lapA,refRaw?.sync||null);
     if(!aRaw||!refRaw){
       this.focusedCompare=null;
       if(status)status.textContent="DADOS INSUFICIENTES";
