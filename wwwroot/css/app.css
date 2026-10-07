@@ -542,3 +542,42 @@ th,td{padding:5px 5px}
   .compare-telemetry-grid{grid-template-columns:1fr}
   .compare-telemetry-grid .compare-wide{grid-column:auto}
 }
+
+/* Lap Compare geometry refinement */
+.compare-focus-track-edge{stroke-width:18}
+.compare-focus-track-road{stroke-width:13}
+.compare-focus-line.ghost{stroke-width:1.4;opacity:.30}
+.compare-focus-line.progress{stroke-width:2.4}
+.compare-focus-marker{stroke-width:1.5}
+
+.compare-mini-track{stroke-width:10}
+.compare-mini-line{stroke-width:3.5}
+.compare-mini-marker{stroke-width:2}
+
+.compare-focus-coach{
+  position:static;
+  left:auto;
+  top:auto;
+  transform:none;
+  max-width:none;
+  width:100%;
+  box-sizing:border-box;
+  margin-top:3px;
+  padding:8px 10px;
+  background:#0a0f14;
+  color:#dfe5ec;
+  border-radius:3px;
+  font-size:10px;
+  font-weight:700;
+  line-height:1.35;
+  text-align:left;
+  pointer-events:auto;
+  opacity:1;
+  min-height:34px;
+  display:flex;
+  align-items:center;
+}
+.compare-focus-coach.active{
+  opacity:1;
+  box-shadow:inset 3px 0 0 #ff8a00;
+}
