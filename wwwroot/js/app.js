@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
+  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
 
   async function coachFlag(token){
     try{
@@ -137,6 +137,16 @@
     if(compatible.length)e.value=compatible[0].id;
   }
 
+  function fillEngineerSessionSelector(){
+    const e=q("#engineerSessionSelect");if(!e)return;
+    const sessions=groupSessions(state.laps).filter(s=>s.laps.length>=2);
+    const current=e.value;
+    e.innerHTML=sessions.map(s=>`<option value="${s.id}">${s.last?s.last.toLocaleDateString("pt-PT"):"—"} · ${s.track||"—"} · ${s.car||"—"} · ${s.laps.length} laps</option>`).join("");
+    if(current&&sessions.some(s=>String(s.id)===String(current)))e.value=current;
+    else if(sessions[0])e.value=sessions[0].id;
+    setText("engineerStatus",sessions.length?"Pronto para analisar":"São necessárias pelo menos duas voltas na mesma sessão");
+  }
+
   function fillSelectors(){
     const options=state.laps.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
     for(const id of ["telemetryLapSelect","compareLapA","compareLapB"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
@@ -145,6 +155,7 @@
     if(a&&state.laps[0])a.value=state.laps[0].id;
     if(b&&state.laps[1])b.value=state.laps[1].id;
     fillReferenceSelector();
+    fillEngineerSessionSelector();
   }
 
   async function detail(id){
@@ -160,6 +171,45 @@
     }
     if(d)state.cache.set(id,d);
     return d;
+  }
+
+  async function analyzeEngineerSession(){
+    const select=q("#engineerSessionSelect");
+    const session=groupSessions(state.laps).find(s=>String(s.id)===String(select?.value));
+    if(!session){setText("engineerStatus","Sessão não encontrada");return;}
+
+    const btn=q("#engineerAnalyzeBtn");
+    if(btn){btn.disabled=true;btn.textContent="A ANALISAR…";}
+    setText("engineerStatus","A carregar voltas e evidência…");
+
+    try{
+      const candidates=[...session.laps]
+        .filter(l=>Number.isFinite(Number(l.lap_time_ms))&&Number(l.lap_time_ms)>0)
+        .sort((a,b)=>new Date(a.completed_at||0)-new Date(b.completed_at||0))
+        .slice(-20);
+      const details=(await Promise.all(candidates.map(l=>detail(l.id)))).filter(Boolean);
+      if(details.length<2){
+        AMSEngineer.render({ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."});
+        return;
+      }
+
+      await AMSTrack.load(session.track||"","",details[0]?.telemetry||[]);
+      const report=AMSEngineer.analyze(details,{
+        minisectors:20,
+        trackLengthM:Number(AMSTrack.reference?.lengthM)||null,
+        session
+      });
+      state.engineerReport=report;
+      AMSEngineer.render(report);
+      setText("simName",session.sim||"—");
+      setText("trackName",session.track||"—");
+      setText("carName",session.car||"—");
+    }catch(err){
+      console.warn("AMS engineer:",err);
+      AMSEngineer.render({ok:false,reason:"Erro na análise: "+String(err.message||err)});
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent="Analyse Session";}
+    }
   }
 
   function updateWorkspace(){
@@ -587,6 +637,8 @@
     }
   }
 
+  q("#engineerAnalyzeBtn")?.addEventListener("click",analyzeEngineerSession);
+  q("#engineerSessionSelect")?.addEventListener("change",()=>setText("engineerStatus","Pronto para analisar"));
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
   q("#telemetryReferenceSelect")?.addEventListener("change",()=>refreshEngineeringAnalysis());
   q("#miniSectorCount")?.addEventListener("change",e=>{state.miniCount=Math.max(5,Number(e.target.value)||20);refreshEngineeringAnalysis();});
