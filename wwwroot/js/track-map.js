@@ -1276,7 +1276,14 @@ window.AMSTrack = {
   setFocusedCompareZoom(value){
     const z=Number(value);
     if(Number.isFinite(z)&&z>=1.5&&z<=12)this.focusedCompareZoom=z;
-    if(this.focusedCompare)this.setFocusedComparePosition(this.focusedCompare.progress||0);
+    if(this.focusedCompare){
+      const d=this.focusedCompare;
+      if(d.mode==="time"){
+        this.setFocusedComparePositions(d.progressA||0,d.progressRef||0,{mode:"time",elapsedSec:d.replayTime||0});
+      }else{
+        this.setFocusedComparePosition(d.progress||0);
+      }
+    }
   },
 
   nearestFocusedCoach(progress){
@@ -1289,53 +1296,94 @@ window.AMSTrack = {
     return distance<=.055?best:null;
   },
 
-  setFocusedComparePosition(progress){
+  setFocusedComparePositions(progressA,progressRef,options={}){
     const data=this.focusedCompare,svg=document.getElementById("compareFocusSvg");
-    if(!data||!svg)return;
+    if(!data||!svg)return null;
 
-    const p=Math.max(0,Math.min(1,Number(progress)||0));
-    data.progress=p;
-    const pa=this.trajectoryPoint(data.a.points,p);
-    const pr=this.trajectoryPoint(data.ref.points,p);
-    const center=pa&&pr?{x:(pa.x+pr.x)/2,y:(pa.y+pr.y)/2}:pa||pr||this.localPoint(p);
-    if(!center)return;
+    const pA=Math.max(0,Math.min(1,Number(progressA)||0));
+    const pR=Math.max(0,Math.min(1,Number(progressRef)||0));
+    const mode=options.mode==="time"?"time":"position";
+    data.progress=mode==="position"?pA:data.progress;
+    data.progressA=pA;
+    data.progressRef=pR;
+    data.mode=mode;
+    data.replayTime=Number(options.elapsedSec)||0;
+
+    const pa=this.trajectoryPoint(data.a.points,pA);
+    const pr=this.trajectoryPoint(data.ref.points,pR);
+    const fallbackP=(pA+pR)/2;
+    const center=pa&&pr?{x:(pa.x+pr.x)/2,y:(pa.y+pr.y)/2}:pa||pr||this.localPoint(fallbackP);
+    if(!center)return null;
 
     const full=this.parseViewBox();
     const zoom=this.focusedCompareZoom||4;
     const vw=full.w/zoom,vh=full.h/zoom;
     svg.setAttribute("viewBox",(center.x-vw/2)+" "+(center.y-vh/2)+" "+vw+" "+vh);
 
-    const update=(pathId,fit)=>{
+    const update=(pathId,fit,p)=>{
       if(!fit)return;
       const path=document.getElementById(pathId);
       if(path)path.setAttribute("d",this.trajectoryPathUntil(fit.points,p));
     };
 
-    update("compareFocusProgressA",data.a);
-    update("compareFocusProgressRef",data.ref);
+    update("compareFocusProgressA",data.a,pA);
+    update("compareFocusProgressRef",data.ref,pR);
 
     const metersPerUnit=this.viewUnitsToMeters();
-    const separation=pa&&pr&&Number.isFinite(metersPerUnit)?this.distance(pa,pr)*metersPerUnit:null;
-    const ta=AMSAnalysis.timeAt(data.lapA,p),tr=AMSAnalysis.timeAt(data.lapRef,p);
+    let separation=null;
+    if(mode==="time"&&Number.isFinite(Number(this.reference?.lengthM))){
+      separation=Math.abs(pA-pR)*Number(this.reference.lengthM);
+    }else if(pa&&pr&&Number.isFinite(metersPerUnit)){
+      separation=this.distance(pa,pr)*metersPerUnit;
+    }
+
+    // Delta is always evaluated at Lap A's current station. In time replay
+    // this is the real gain/loss accumulated when A reaches that position.
+    const ta=AMSAnalysis.timeAt(data.lapA,pA);
+    const tr=AMSAnalysis.timeAt(data.lapRef,pA);
     const delta=Number.isFinite(ta)&&Number.isFinite(tr)?ta-tr:null;
 
     const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value;};
-    set("compareFocusPosition",(p*100).toFixed(1)+"%");
-    set("compareReplayPosition",(p*100).toFixed(1)+"%");
-    set("compareFocusSeparation",Number.isFinite(separation)?separation.toFixed(2)+" m":"—");
+    if(mode==="time"&&Math.abs(pA-pR)>.00005){
+      set("compareFocusPosition","A "+(pA*100).toFixed(1)+"% · R "+(pR*100).toFixed(1)+"%");
+    }else{
+      set("compareFocusPosition",(pA*100).toFixed(1)+"%");
+    }
+    set("compareFocusSeparation",Number.isFinite(separation)?separation.toFixed(1)+" m":"—");
     set("compareFocusDelta",Number.isFinite(delta)?((delta>=0?"+":"")+delta.toFixed(3)+"s"):"—");
 
-    const seek=document.getElementById("compareReplaySeek");
-    if(seek)seek.value=String(Math.round(p*1000));
-
-    const coach=this.nearestFocusedCoach(p);
+    const coach=this.nearestFocusedCoach(pA);
     const coachEl=document.getElementById("compareFocusCoach");
     if(coachEl){
       coachEl.classList.toggle("active",Boolean(coach));
       const estimated=!(data.a?.realGps&&data.ref?.realGps);
-      const msg=coach?this.trajectoryCoachMessage(coach):"Zona de reta · trajectórias sincronizadas";
+      const msg=coach?this.trajectoryCoachMessage(coach):(mode==="time"?"Replay temporal · ganho/perda real entre voltas":"Zona de reta · comparação por posição");
       coachEl.textContent=(estimated?"ESTIMATIVA · ":"")+msg;
     }
+
+    const status=document.getElementById("compareFocusStatus");
+    if(status){
+      const real=Boolean(data.a?.realGps&&data.ref?.realGps);
+      status.textContent=(real?"GPS REAL":"ESTIMATED")+" · "+(mode==="time"?"TIME DELTA":"POSITION")+" · A vs REF";
+      status.dataset.mode=real?"gps":"estimated";
+    }
+
+    return {pA,pRef:pR,delta,separation,elapsedSec:data.replayTime};
+  },
+
+  setFocusedComparePosition(progress){
+    const p=Math.max(0,Math.min(1,Number(progress)||0));
+    return this.setFocusedComparePositions(p,p,{mode:"position"});
+  },
+
+  setFocusedCompareReplayTime(elapsedSec){
+    const data=this.focusedCompare;
+    if(!data)return null;
+    const duration=Math.max(Number(data.lapA?.lapTimeSec)||0,Number(data.lapRef?.lapTimeSec)||0,.001);
+    const t=Math.max(0,Math.min(duration,Number(elapsedSec)||0));
+    const pA=AMSAnalysis.progressAtTime(data.lapA,t);
+    const pR=AMSAnalysis.progressAtTime(data.lapRef,t);
+    return this.setFocusedComparePositions(pA,pR,{mode:"time",elapsedSec:t});
   },
 
   positionElement(el,progress){
