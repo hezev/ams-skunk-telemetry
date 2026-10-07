@@ -10,6 +10,7 @@ window.AMSTrack = {
   trajectoryCompare:null,
   focusedCompare:null,
   focusedCompareZoom:4,
+  gpsProjection:null,
 
   normalize(value){
     return String(value||"")
@@ -287,20 +288,16 @@ window.AMSTrack = {
     return out;
   },
 
-  projectGps(gps){
+  makeGpsProjection(gps){
     const valid=(gps||[])
       .map(p=>({lat:Number(p?.lat),lon:Number(p?.lon)}))
       .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
-    if(valid.length<3)return [];
+    if(valid.length<3)return null;
 
     const lat0=valid.reduce((a,p)=>a+p.lat,0)/valid.length;
     const lon0=valid.reduce((a,p)=>a+p.lon,0)/valid.length;
     const cos=Math.cos(lat0*Math.PI/180);
-
-    const raw=valid.map(p=>({
-      x:(p.lon-lon0)*cos,
-      y:-(p.lat-lat0)
-    }));
+    const raw=valid.map(p=>({x:(p.lon-lon0)*cos,y:-(p.lat-lat0)}));
 
     let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
     raw.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
@@ -310,10 +307,23 @@ window.AMSTrack = {
     const usedW=width*scale,usedH=height*scale;
     const ox=(viewW-usedW)/2,oy=(viewH-usedH)/2;
 
-    return raw.map(p=>({
-      x:ox+(p.x-minX)*scale,
-      y:oy+(p.y-minY)*scale
-    }));
+    return {
+      lat0,lon0,cos,minX,minY,scale,ox,oy,
+      project:(lat,lon)=>{
+        const x=(Number(lon)-lon0)*cos;
+        const y=-(Number(lat)-lat0);
+        return {x:ox+(x-minX)*scale,y:oy+(y-minY)*scale};
+      }
+    };
+  },
+
+  projectGps(gps){
+    const projection=this.makeGpsProjection(gps);
+    if(!projection)return [];
+    return (gps||[])
+      .map(p=>({lat:Number(p?.lat),lon:Number(p?.lon)}))
+      .filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon))
+      .map(p=>projection.project(p.lat,p.lon));
   },
 
   drawGpsReference(data){
@@ -321,7 +331,10 @@ window.AMSTrack = {
     const stack=document.getElementById("trackVectorStack");
     if(!host||!stack)return false;
 
-    const projected=this.projectGps(data?.gps_points);
+    this.gpsProjection=this.makeGpsProjection(data?.gps_points);
+    const projected=this.gpsProjection
+      ?(data?.gps_points||[]).map(p=>this.gpsProjection.project(Number(p?.lat),Number(p?.lon))).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))
+      :[];
     if(projected.length<3)return false;
 
     this.centerline=this.resampleClosed(projected,2400);
@@ -588,6 +601,78 @@ window.AMSTrack = {
     cursor.setAttribute("cy",pt.y.toFixed(2));
   },
 
+  gpsSampleLatLon(sample){
+    const lat=Number(sample?.lat ?? sample?.Lat ?? sample?.latitude ?? sample?.Latitude);
+    const lon=Number(sample?.lon ?? sample?.Lon ?? sample?.longitude ?? sample?.Longitude);
+    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
+  },
+
+  hasRealGps(lap){
+    const samples=lap?.samples||[];
+    if(!samples.length||!this.gpsProjection)return false;
+    let count=0;
+    for(const s of samples){
+      if(this.gpsSampleLatLon(s)&&++count>=20)return true;
+    }
+    return false;
+  },
+
+  nearestCenterlineStation(point,expectedP=0){
+    if(!point||!this.centerline.length)return null;
+    const n=this.centerline.length;
+    const expected=Math.max(0,Math.min(n-1,Math.round(expectedP*n)));
+    const radius=Math.max(80,Math.round(n*.04));
+    let bestIndex=expected,best=Infinity;
+    for(let d=-radius;d<=radius;d++){
+      let i=(expected+d)%n;if(i<0)i+=n;
+      const q=this.centerline[i];
+      const dist=(q.x-point.x)**2+(q.y-point.y)**2;
+      if(dist<best){best=dist;bestIndex=i;}
+    }
+    return {index:bestIndex,q:bestIndex/n,distance:Math.sqrt(best)};
+  },
+
+  reconstructGpsTrajectory(lap){
+    if(!this.gpsProjection||!this.centerline.length)return null;
+    const samples=(lap?.samples||[]).filter(s=>Number.isFinite(Number(s?._p))&&this.gpsSampleLatLon(s));
+    if(samples.length<20)return null;
+
+    const metersPerUnit=this.viewUnitsToMeters();
+    const maxPoints=1400,step=Math.max(1,Math.floor(samples.length/maxPoints));
+    const points=[];
+
+    for(let i=0;i<samples.length;i+=step){
+      const s=samples[i],geo=this.gpsSampleLatLon(s);
+      const pt=this.gpsProjection.project(geo.lat,geo.lon);
+      const nearest=this.nearestCenterlineStation(pt,Number(s._p));
+      const station=nearest?.q??Number(s._p);
+      const center=this.localPoint(station),tan=this.centerTangent(station,.0012);
+      let lateralM=null;
+      if(center&&tan&&Number.isFinite(metersPerUnit)){
+        const nx=-tan.y,ny=tan.x;
+        lateralM=((pt.x-center.x)*nx+(pt.y-center.y)*ny)*metersPerUnit;
+      }
+      points.push({p:Number(s._p),q:station,x:pt.x,y:pt.y,lateralM});
+    }
+
+    const last=samples[samples.length-1];
+    if(points[points.length-1]?.p<Number(last._p)-.0001){
+      const geo=this.gpsSampleLatLon(last),pt=this.gpsProjection.project(geo.lat,geo.lon);
+      const nearest=this.nearestCenterlineStation(pt,Number(last._p));
+      points.push({p:Number(last._p),q:nearest?.q??Number(last._p),x:pt.x,y:pt.y,lateralM:null});
+    }
+
+    return {
+      points,
+      sync:points.map(p=>({p:p.p,q:p.q})),
+      rmse:0,
+      headingRmsDeg:0,
+      maxLateralM:Math.max(0,...points.map(p=>Math.abs(Number(p.lateralM)||0))),
+      source:"GPS REAL · iRacing Lat/Lon",
+      realGps:true
+    };
+  },
+
   wrapAngle(angle){
     let a=Number(angle)||0;
     while(a>Math.PI)a-=Math.PI*2;
@@ -753,11 +838,18 @@ window.AMSTrack = {
   reconstructTrajectory(lap,sharedSync=null){
     if(!lap||!this.centerline.length)return null;
 
-    // GPS-reference mode: longitudinal station is never free-running.
-    // The same iRacing->GPS mapping is shared between A and REF.
+    // Exact mode for new recordings: use the car's real geographic position.
+    if(this.hasRealGps(lap)){
+      return this.reconstructGpsTrajectory(lap);
+    }
+
+    // Fallback for legacy laps without Lat/Lon. This can reconstruct changes
+    // in lateral line, but absolute left/right track position is unknowable.
     if(Number.isFinite(Number(this.reference?.lengthM))){
       const sync=sharedSync?.sync||sharedSync||this.buildTrackSync(lap);
-      return sync?this.reconstructRelativeTrajectory(lap,sync):null;
+      const fit=sync?this.reconstructRelativeTrajectory(lap,sync):null;
+      if(fit)fit.source="ESTIMATED · LapDistPct + yawNorth";
+      return fit;
     }
 
     return null;
@@ -843,7 +935,8 @@ window.AMSTrack = {
 
     if(status){
       const quality=Math.max(a.rmse,ref?.rmse||0);
-      status.textContent=(ref?"A + REF":"A")+" · LAPDIST + YAW + GPS · RMS "+quality.toFixed(1)+"°";
+      const real=Boolean(a.realGps&&(!ref||ref.realGps));
+      status.textContent=(ref?"A + REF":"A")+" · "+(real?"GPS REAL":"ESTIMATED")+" · "+(real?"LAT/LON":"LAPDIST + YAW")+" · RMS "+quality.toFixed(1)+"°";
     }
   },
 
@@ -1177,7 +1270,10 @@ window.AMSTrack = {
       this.setFocusedComparePosition(0);
     });
 
-    if(status)status.textContent="FOLLOW · A vs REF";
+    if(status){
+      const real=Boolean(a.realGps&&ref.realGps);
+      status.textContent=(real?"GPS REAL":"ESTIMATED")+" · FOLLOW · A vs REF";
+    }
     return true;
   },
 
