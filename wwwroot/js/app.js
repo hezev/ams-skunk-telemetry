@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
+  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null};
 
   async function coachFlag(token){
     try{
@@ -447,13 +447,47 @@
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
 
+  function compareDuration(){
+    if(!state.compareLapA||!state.compareLapB)return 1;
+    return Math.max(
+      Number(state.compareLapA.lapTimeSec)||0,
+      Number(state.compareLapB.lapTimeSec)||0,
+      1
+    );
+  }
+
   function setCompareProgress(progress){
     if(!state.compareLapA||!state.compareLapB)return;
     const p=Math.max(0,Math.min(1,Number(progress)||0));
+    state.compareProgress=p;
+    const t=AMSAnalysis.timeAt(state.compareLapA,p);
+    if(Number.isFinite(t))state.compareReplayTime=t;
     AMSTrack.setFocusedComparePosition(p);
+    AMSCharts.setCompareExternalCursors(null,null);
     AMSCharts.setExternalCursor(p);
-    const seek=q("#compareReplaySeek");if(seek)seek.value=String(Math.round(p*1000));
-    setText("compareReplayPosition",(p*100).toFixed(1)+"%");
+
+    const duration=compareDuration();
+    const seek=q("#compareReplaySeek");
+    if(seek)seek.value=String(Math.round(Math.max(0,Math.min(1,state.compareReplayTime/duration))*1000));
+    setText("compareReplayPosition",state.compareReplayTime.toFixed(1)+"s");
+  }
+
+  function setCompareReplayTime(timeSec){
+    if(!state.compareLapA||!state.compareLapB)return null;
+    const duration=compareDuration();
+    const t=Math.max(0,Math.min(duration,Number(timeSec)||0));
+    state.compareReplayTime=t;
+
+    const result=AMSTrack.setFocusedCompareReplayTime(t);
+    if(result){
+      state.compareProgress=result.pA;
+      AMSCharts.setCompareExternalCursors(result.pA,result.pRef);
+    }
+
+    const seek=q("#compareReplaySeek");
+    if(seek)seek.value=String(Math.round((t/duration)*1000));
+    setText("compareReplayPosition",t.toFixed(1)+"s");
+    return result;
   }
 
   function stopCompareReplay(){
@@ -469,33 +503,32 @@
     if(!state.compareLapA||!state.compareLapB)return;
     if(state.compareTimer){stopCompareReplay();return;}
 
-    if(!(state.compareLapA.samples||[]).length)return;
-    if(state.compareProgress>=1)state.compareProgress=0;
+    if(!(state.compareLapA.samples||[]).length||!(state.compareLapB.samples||[]).length)return;
+    const duration=compareDuration();
+    if(state.compareReplayTime>=duration-.001)state.compareReplayTime=0;
 
     const b1=q("#compareReplayBtn"),b2=q("#compareReplayToggle");
     if(b1)b1.textContent="■ Parar";
     if(b2)b2.textContent="■";
 
-    // Replay is driven by one monotonic track-position coordinate, not by
-    // telemetry sample indexes. This prevents irregular sampling from making
-    // one trajectory appear to lag, catch up or jump relative to the other.
-    const duration=Math.max(1,state.compareLapA.lapTimeSec||Number(state.compareDetailA?.lap_time_ms)/1000||1);
+    // True delta replay: both laps share the same elapsed-time clock.
+    // Each lap resolves its own track position p(t), so the faster lap moves
+    // visibly ahead instead of being forced to the same LapDistPct.
     let previous=performance.now();
     state.compareTimer=setInterval(()=>{
       const now=performance.now();
       const dt=Math.max(0,Math.min(.25,(now-previous)/1000));
       previous=now;
-      state.compareProgress=Math.min(1,state.compareProgress+(dt/duration)*state.compareSpeed);
-      setCompareProgress(state.compareProgress);
-      if(state.compareProgress>=1)stopCompareReplay();
+      state.compareReplayTime=Math.min(duration,state.compareReplayTime+dt*state.compareSpeed);
+      setCompareReplayTime(state.compareReplayTime);
+      if(state.compareReplayTime>=duration)stopCompareReplay();
     },33);
   }
 
   function seekCompare(value){
-    if(!state.compareLapA)return;
-    const p=Math.max(0,Math.min(1,Number(value)/1000));
-    state.compareProgress=p;
-    setCompareProgress(p);
+    if(!state.compareLapA||!state.compareLapB)return;
+    const ratio=Math.max(0,Math.min(1,Number(value)/1000));
+    setCompareReplayTime(ratio*compareDuration());
   }
 
   async function compare(){
@@ -521,11 +554,12 @@
     state.compareLapA=AMSAnalysis.prepareLap(a);
     state.compareLapB=AMSAnalysis.prepareLap(b);
     state.compareProgress=0;
+    state.compareReplayTime=0;
 
     AMSCharts.setZoom(0,1);
     AMSCharts.setCompare(state.compareLapA.samples,state.compareLapB.samples);
     AMSTrack.renderFocusedCompare(state.compareLapA,state.compareLapB);
-    setCompareProgress(0);
+    setCompareReplayTime(0);
   }
 
   function initWorkspace(){
@@ -578,8 +612,8 @@
   });
   AMSCharts.setCompareCursorCallback(p=>{
     if(p===null||!state.compareLapA)return;
-    state.compareProgress=Math.max(0,Math.min(1,Number(p)||0));
-    setCompareProgress(state.compareProgress);
+    if(state.compareTimer)stopCompareReplay();
+    setCompareProgress(Math.max(0,Math.min(1,Number(p)||0)));
   });
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
