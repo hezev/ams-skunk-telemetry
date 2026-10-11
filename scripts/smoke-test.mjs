@@ -58,7 +58,7 @@ const same=FP.compare(fp,transformed);
 const other=FP.compare(fp,wrong);
 if(!same||same.score<.8) throw new Error("Fingerprint invariant match too weak");
 if(!other||same.score<=other.score+.08) throw new Error("Fingerprint cannot separate layouts");
-for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory","renderTrajectoryCoaching","setTrajectoryCoachingPosition","detectCorners","renderFocusedCompare","setFocusedComparePosition","setFocusedCompareZoom","estimateLapLength","lengthMatchScore","buildTrackSync","mappedProgress","reconstructRelativeTrajectory","gpsSampleLatLon","hasRealGps","reconstructGpsTrajectory","resolveByFingerprint","artworkFingerprintCenterline","fingerprintCandidates"]){
+for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory","renderTrajectoryCoaching","setTrajectoryCoachingPosition","detectCorners","renderFocusedCompare","setFocusedComparePosition","setFocusedCompareZoom","estimateLapLength","lengthMatchScore","buildTrackSync","mappedProgress","reconstructRelativeTrajectory","gpsSampleLatLon","hasRealGps","reconstructGpsTrajectory","resolveByFingerprint","artworkFingerprintCenterline","fingerprintCandidates","hasMultipleConfigurations","distinctiveLayoutTokens","TrackID is authoritative"]){
   if(!track.includes(token)) throw new Error("Missing map capability "+token);
 }
 for(const token of ["refreshEngineeringAnalysis","renderMiniSectors","renderDrivingEvents","setZoomWindow","ams-trajectory-seek","startCompareReplay","setCompareProgress","seekCompare"]){
