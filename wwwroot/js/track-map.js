@@ -89,6 +89,62 @@ window.AMSTrack = {
     return [n,...extra];
   },
 
+  telemetryMetadata(telemetry){
+    const samples=Array.isArray(telemetry)?telemetry:[];
+    for(let i=0;i<Math.min(samples.length,40);i++){
+      const meta=samples[i]?._capture?.metadata;
+      if(meta&&typeof meta==="object")return meta;
+    }
+    return null;
+  },
+
+  telemetryTrackIdentity(trackName,configHint,telemetry){
+    const meta=this.telemetryMetadata(telemetry)||{};
+    const trackId=String(meta.TrackID??meta.trackID??meta.trackId??"").trim();
+    const displayName=String(meta.TrackDisplayName||trackName||meta.TrackName||"").trim();
+    const hint=[configHint,meta.TrackConfigName,meta.TrackName]
+      .map(v=>String(v||"").trim()).filter(Boolean).join(" ");
+    return {trackId,trackName:displayName||String(trackName||""),configHint:hint,metadata:meta};
+  },
+
+  entryTrackId(entry){
+    const match=String(entry?.config||"").match(/^(\d+)-/);
+    return match?match[1]:"";
+  },
+
+  layoutKind(value){
+    const n=this.normalize(value);
+    if(!n)return "";
+    if(/\b(motogp|moto|bike)\b/.test(n))return "bike";
+    if(/\broad\b|\broad course\b|\bgrand prix\b|\bgp\b/.test(n))return "road";
+    if(/\boval\b/.test(n))return "oval";
+    return "";
+  },
+
+  hasMultipleLayoutKinds(entry){
+    if(!entry?.family||!Array.isArray(this.index))return false;
+    const kinds=new Set(
+      this.index
+        .filter(x=>x?.family===entry.family)
+        .map(x=>this.layoutKind(x?.config||""))
+        .filter(Boolean)
+    );
+    return kinds.size>1;
+  },
+
+  raceStudioLayoutCompatible(data,entry,configHint=""){
+    const requested=this.layoutKind([entry?.config,configHint].filter(Boolean).join(" "));
+    if(!requested)return true;
+    const candidate=this.layoutKind([
+      data?.full_name,data?.name,data?.short_name
+    ].filter(Boolean).join(" "));
+    if(candidate)return candidate===requested;
+    // A generic RaceStudio venue is unsafe when iRacing exposes several
+    // layout families (e.g. Indianapolis road/oval). Prefer the exact
+    // iRacing artwork rather than silently drawing the wrong configuration.
+    return !this.hasMultipleLayoutKinds(entry);
+  },
+
   significantWords(value){
     const stop=new Set(["circuit","racing","raceway","track","international","autodromo","autodrome","motor","motorsport","speedway"]);
     return this.normalize(value).split(" ").filter(w=>w.length>2&&!stop.has(w));
@@ -138,9 +194,16 @@ window.AMSTrack = {
     return score;
   },
 
-  async resolve(trackName,configHint=""){
+  async resolve(trackName,configHint="",trackId=""){
     const index=await this.getIndex();
     if(!index.length)return null;
+
+    const wantedId=String(trackId||"").trim();
+    if(wantedId){
+      const exact=index.find(entry=>this.entryTrackId(entry)===wantedId);
+      if(exact)return exact;
+    }
+
     return index
       .map(entry=>({entry,score:this.score(entry,trackName,configHint)}))
       .sort((a,b)=>b.score-a.score)[0]?.entry||null;
@@ -228,7 +291,7 @@ window.AMSTrack = {
     return -120;
   },
 
-  async resolveRaceStudio(trackName,entry,estimatedLength=null){
+  async resolveRaceStudio(trackName,entry,estimatedLength=null,configHint=""){
     try{
       const manifest=await this.getRaceStudioManifest();
       const ranked=(manifest||[])
@@ -245,7 +308,7 @@ window.AMSTrack = {
       })));
 
       const winner=loaded
-        .filter(x=>x.data)
+        .filter(x=>x.data&&this.raceStudioLayoutCompatible(x.data,entry,configHint))
         .map(x=>({
           data:x.data,
           score:x.baseScore
@@ -370,14 +433,15 @@ window.AMSTrack = {
     const status=document.getElementById("trackSource");
     try{
       if(status)status.textContent="A localizar referência…";
-      const entry=await this.resolve(trackName,configHint);
+      const identity=this.telemetryTrackIdentity(trackName,configHint,telemetry);
+      const entry=await this.resolve(identity.trackName,identity.configHint,identity.trackId);
       this.activeEntry=entry;
       const estimatedLength=this.estimateLapLength(telemetry);
 
-      // Prefer a GPS reference made for telemetry analysis. Its first GPS
-      // point is the start/finish reference and its ordered points form the
-      // driving centreline, so LapDistPct maps directly by arc length.
-      const reference=await this.resolveRaceStudio(trackName,entry,estimatedLength);
+      // Prefer a GPS reference only when it is compatible with the exact
+      // iRacing layout. Multi-layout venues must never fall back to a generic
+      // venue outline (e.g. Indianapolis road accidentally using the oval).
+      const reference=await this.resolveRaceStudio(identity.trackName,entry,estimatedLength,identity.configHint);
       if(reference&&this.drawGpsReference(reference)){
         const label=reference?.contact?.Nmg||reference?.short_name||reference?.full_name||trackName;
         if(status){
@@ -417,7 +481,11 @@ window.AMSTrack = {
       }
       await this.prepareArtworkFallback(base+"/active.svg");
       this.reference={source:"iRacing artwork",name:[entry?.family,entry?.config].filter(Boolean).join(" · ")};
-      if(status)status.textContent=this.reference.name||trackName;
+      if(status){
+        const layout=identity.metadata?.TrackConfigName||this.configHint(entry);
+        const id=identity.trackId||this.entryTrackId(entry);
+        status.textContent=["iRacing",id,layout].filter(Boolean).join(" · ")||this.reference.name||trackName;
+      }
       return {entry,reference:null};
     }catch(err){
       this.centerline=[];
