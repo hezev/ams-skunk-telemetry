@@ -355,7 +355,7 @@ window.AMSTrack = {
   fingerprintStorageKey(identity,fingerprint){
     const family=this.normalize(identity?.trackName||"unknown").slice(0,80);
     const hint=this.normalize(identity?.configHint||"").slice(0,80);
-    return "ams_track_fingerprint_v1:"+family+":"+hint+":"+fingerprint.cacheKey;
+    return "ams_track_fingerprint_v2:"+family+":"+hint+":"+fingerprint.cacheKey;
   },
 
   async resolveByFingerprint(identity,telemetry,seedEntry){
