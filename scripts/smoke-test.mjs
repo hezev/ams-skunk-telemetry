@@ -34,6 +34,30 @@ for(const token of ["setReference","setZoom","timeDelta","cursorCallback"]){
 for(const token of ["telemetryFingerprint","signatureFromPoints","compare","hashSignature"]){
   if(!fingerprint.includes(token)) throw new Error("Missing fingerprint capability "+token);
 }
+
+globalThis.window={};
+new Function(fingerprint)();
+const FP=globalThis.window.AMSTrackFingerprint;
+if(!FP) throw new Error("Track Fingerprint Engine did not initialize");
+const base=Array.from({length:220},(_,i)=>{
+  const a=Math.PI*2*i/220;
+  const r=1+.18*Math.sin(a*3)+.08*Math.sin(a*7);
+  return {x:Math.cos(a)*r*1.7,y:Math.sin(a)*r};
+});
+const transformed=base.map(({x,y})=>{
+  const a=.83,c=Math.cos(a),sn=Math.sin(a);
+  return {x:(x*c-y*sn)*2.4+37,y:(x*sn+y*c)*2.4-12};
+});
+const wrong=Array.from({length:220},(_,i)=>{
+  const a=Math.PI*2*i/220;
+  return {x:Math.cos(a)*1.8,y:Math.sin(a)};
+});
+const sig=FP.signatureFromPoints(base);
+const fp={source:"GPS",points:sig.points,headings:sig.headings,cacheKey:"smoke"};
+const same=FP.compare(fp,transformed);
+const other=FP.compare(fp,wrong);
+if(!same||same.score<.8) throw new Error("Fingerprint invariant match too weak");
+if(!other||same.score<=other.score+.08) throw new Error("Fingerprint cannot separate layouts");
 for(const token of ["renderAnalysisMap","setAnalysisPosition","GPS REFERENCE","renderTrajectoryCompare","setTrajectoryPosition","integrateTrajectory","renderTrajectoryCoaching","setTrajectoryCoachingPosition","detectCorners","renderFocusedCompare","setFocusedComparePosition","setFocusedCompareZoom","estimateLapLength","lengthMatchScore","buildTrackSync","mappedProgress","reconstructRelativeTrajectory","gpsSampleLatLon","hasRealGps","reconstructGpsTrajectory","resolveByFingerprint","artworkFingerprintCenterline","fingerprintCandidates"]){
   if(!track.includes(token)) throw new Error("Missing map capability "+token);
 }
