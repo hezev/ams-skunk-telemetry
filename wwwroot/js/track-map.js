@@ -134,17 +134,50 @@ window.AMSTrack = {
     return kinds.size>1;
   },
 
-  raceStudioLayoutCompatible(data,entry,configHint=""){
+  hasMultipleConfigurations(entry){
+    if(!entry?.family||!Array.isArray(this.index))return false;
+    return this.index.filter(x=>x?.family===entry.family).length>1;
+  },
+
+  distinctiveLayoutTokens(entry,configHint=""){
+    const familyWords=new Set(this.normalize(entry?.family||"").split(" ").filter(Boolean));
+    const generic=new Set(["road","course","circuit","track","layout","international","grand","prix","gp","oval","speedway"]);
+    const raw=this.normalize([entry?.config,configHint].filter(Boolean).join(" "));
+    return raw.split(" ").filter(word=>
+      word.length>2 &&
+      !/^\d+$/.test(word) &&
+      !familyWords.has(word) &&
+      !generic.has(word)
+    );
+  },
+
+  raceStudioLayoutCompatible(data,entry,configHint="",estimatedLength=null){
     const requested=this.layoutKind([entry?.config,configHint].filter(Boolean).join(" "));
-    if(!requested)return true;
-    const candidate=this.layoutKind([
+    const hay=this.normalize([
       data?.full_name,data?.name,data?.short_name
     ].filter(Boolean).join(" "));
-    if(candidate)return candidate===requested;
-    // A generic RaceStudio venue is unsafe when iRacing exposes several
-    // layout families (e.g. Indianapolis road/oval). Prefer the exact
-    // iRacing artwork rather than silently drawing the wrong configuration.
-    return !this.hasMultipleLayoutKinds(entry);
+    const candidate=this.layoutKind(hay);
+
+    if(requested&&candidate&&candidate!==requested)return false;
+
+    // When iRacing already supplied an exact TrackID at a venue with several
+    // configurations, a generic venue GPS reference is not allowed to replace
+    // that exact layout. Oulton Park is the classic case: RaceStudio exposes
+    // the 4.28 km full circuit while TrackID 181 is the 2.65 km Fosters layout.
+    if(this.entryTrackId(entry)&&this.hasMultipleConfigurations(entry)){
+      const tokens=this.distinctiveLayoutTokens(entry,configHint);
+      const tokenMatch=tokens.some(token=>hay.includes(token));
+      const refLen=Number(data?.track_length_m),est=Number(estimatedLength);
+      const closeLength=Number.isFinite(refLen)&&refLen>0&&Number.isFinite(est)&&est>0
+        ?Math.abs(refLen-est)/est<=.06
+        :false;
+
+      if(tokens.length&&!tokenMatch&&!closeLength)return false;
+      if(!tokens.length&&!candidate&&this.hasMultipleLayoutKinds(entry))return false;
+    }
+
+    if(requested&&!candidate&&this.hasMultipleLayoutKinds(entry))return false;
+    return true;
   },
 
   significantWords(value){
@@ -322,7 +355,7 @@ window.AMSTrack = {
   fingerprintStorageKey(identity,fingerprint){
     const family=this.normalize(identity?.trackName||"unknown").slice(0,80);
     const hint=this.normalize(identity?.configHint||"").slice(0,80);
-    return "ams_track_fingerprint_v1:"+family+":"+hint+":"+fingerprint.cacheKey;
+    return "ams_track_fingerprint_v2:"+family+":"+hint+":"+fingerprint.cacheKey;
   },
 
   async resolveByFingerprint(identity,telemetry,seedEntry){
@@ -376,9 +409,11 @@ window.AMSTrack = {
     let conflict=false;
 
     if(exact){
+      // TrackID is authoritative. Geometry is a verifier, not an override.
+      // If the fingerprint strongly disagrees we expose a conflict, but keep
+      // the exact iRacing layout so a heuristic cannot silently swap variants.
       selected=exact;
       if(best.entry!==exact.entry&&best.score>=.88&&best.score-exact.score>=.20){
-        selected=best;
         conflict=true;
       }
     }else{
@@ -508,7 +543,7 @@ window.AMSTrack = {
       })));
 
       const winner=loaded
-        .filter(x=>x.data&&this.raceStudioLayoutCompatible(x.data,entry,configHint))
+        .filter(x=>x.data&&this.raceStudioLayoutCompatible(x.data,entry,configHint,estimatedLength))
         .map(x=>({
           data:x.data,
           score:x.baseScore
