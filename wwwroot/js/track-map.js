@@ -313,12 +313,16 @@ window.AMSTrack = {
   rawSampleProgress(sample,index,total){
     const percentKeys=["position","trackPositionPct","track_position_pct"];
     for(const key of percentKeys){
-      const value=Number(sample?.[key]);
+      const raw=sample?.[key];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const value=Number(raw);
       if(Number.isFinite(value))return Math.max(0,Math.min(1,value/100));
     }
     const normalizedKeys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
     for(const key of normalizedKeys){
-      const value=Number(sample?.[key]);
+      const raw=sample?.[key];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const value=Number(raw);
       if(Number.isFinite(value)){
         return Math.max(0,Math.min(1,value>1&&value<=100?value/100:value));
       }
