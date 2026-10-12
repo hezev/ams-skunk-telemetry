@@ -41,7 +41,7 @@ mount('engineer','Engineer Evidence & Development','O veredito usa a análise de
  ['Best lap','engineerBestLap'],['Consistent pace','engineerPace'],['Achievable lap','engineerAchievable'],['Consistency','engineerConsistency']
 ]);
 mount('compare','Lap Delta & Trajectory Workstation','As curvas de telemetria e trajetória originais permanecem sincronizadas pelo motor AMS; não é criada geometria artificial.',[
- ['Lap A','compareLapASelect'],['Reference','compareLapBSelect'],['Selected lap','selectedLapTime']
+ ['Best lap','bestLap'],['Last lap','lastLap'],['Reference status','lapStateChip']
 ]);
 const style=document.createElement('style');style.textContent=
  '.ams-enhancement-grid{animation:ams-enter .28s ease-out}@keyframes ams-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}';
