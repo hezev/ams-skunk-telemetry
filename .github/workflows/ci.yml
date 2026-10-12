@@ -21,3 +21,6 @@ jobs:
         run: dotnet build --configuration Release
       - name: Engineering telemetry smoke test
         run: node scripts/smoke-test.mjs
+
+      - name: Track map progress regression test
+        run: node scripts/test-track-progress.mjs
