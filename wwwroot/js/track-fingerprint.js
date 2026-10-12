@@ -12,12 +12,16 @@
   function progressOf(sample,index,total){
     const keys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
     for(const k of keys){
-      const v=Number(sample?.[k]);
+      const raw=sample?.[k];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const v=Number(raw);
       if(Number.isFinite(v))return clamp(v>1&&v<=100?v/100:v);
     }
     const percentKeys=["position","trackPositionPct","track_position_pct"];
     for(const k of percentKeys){
-      const v=Number(sample?.[k]);
+      const raw=sample?.[k];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const v=Number(raw);
       if(Number.isFinite(v))return clamp(v/100);
     }
     return total>1?index/(total-1):0;
