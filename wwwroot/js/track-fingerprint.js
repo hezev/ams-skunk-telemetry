@@ -30,7 +30,10 @@
   function latLon(sample){
     const lat=Number(sample?.lat ?? sample?.Lat ?? sample?.latitude ?? sample?.Latitude);
     const lon=Number(sample?.lon ?? sample?.Lon ?? sample?.longitude ?? sample?.Longitude);
-    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
+    const rawLat=sample?.lat ?? sample?.Lat ?? sample?.latitude ?? sample?.Latitude;
+    const rawLon=sample?.lon ?? sample?.Lon ?? sample?.longitude ?? sample?.Longitude;
+    if(rawLat===null||rawLat===undefined||rawLat===""||rawLon===null||rawLon===undefined||rawLon==="")return null;
+    return Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180?{lat,lon}:null;
   }
 
   function projectGps(rows){
