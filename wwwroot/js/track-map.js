@@ -617,6 +617,7 @@ window.AMSTrack = {
       '<polyline class="gps-track-line" points="'+points+'"></polyline>'+
       '<line class="gps-start-line" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"></line>';
 
+    this.renderDashboardCompareMap();
     requestAnimationFrame(()=>this.setPosition(this.progress));
     return true;
   },
@@ -688,6 +689,8 @@ window.AMSTrack = {
           :"";
         status.textContent=["iRacing",id,layout,heading].filter(Boolean).join(" · ")||this.reference.name||trackName;
       }
+      this.renderDashboardCompareMap();
+      requestAnimationFrame(()=>this.setPosition(this.progress));
       return {entry,reference:null};
     }catch(err){
       this.centerline=[];
@@ -809,6 +812,35 @@ window.AMSTrack = {
     const contours=this.splitContours(this.sampleCompoundPath(best,5000)).sort((x,y)=>y.length-x.length);
     this.centerline=this.buildArtworkCenterline(contours[0]||[],contours[1]||[]);
     requestAnimationFrame(()=>this.setPosition(this.progress));
+  },
+
+  renderDashboardCompareMap(){
+    const host=document.getElementById("trackMotionSvg");
+    const stack=document.getElementById("trackVectorStack");
+    if(!host||!stack||!this.centerline.length)return false;
+
+    // Race Control now uses exactly the same calibrated centerline geometry
+    // as Lap Compare. Do not mix the original iRacing artwork layers with a
+    // separately-derived moving point.
+    stack.querySelectorAll("img.track-layer").forEach(img=>img.remove());
+    host.classList.remove("gps-reference");
+    host.classList.add("dashboard-compare-map");
+    host.setAttribute("preserveAspectRatio","xMidYMid meet");
+
+    const base=this.centerline
+      .filter((_,i)=>i%2===0)
+      .map(p=>p.x.toFixed(2)+","+p.y.toFixed(2))
+      .join(" ");
+    const point=this.localPoint(this.progress)||this.centerline[0];
+
+    host.innerHTML=
+      '<polyline class="compare-focus-track-edge" points="'+base+'"></polyline>'+
+      '<polyline class="compare-focus-track-road" points="'+base+'"></polyline>'+
+      '<circle id="dashboardMapCursor" class="dashboard-map-cursor" cx="'+point.x.toFixed(2)+'" cy="'+point.y.toFixed(2)+'" r="9"></circle>';
+
+    const legacy=document.getElementById("carDot");
+    if(legacy)legacy.style.display="none";
+    return true;
   },
 
   localPoint(progress){
@@ -1681,6 +1713,13 @@ window.AMSTrack = {
 
   setPosition(progress){
     this.progress=((Number(progress)%1)+1)%1;
+    const point=this.localPoint(this.progress);
+    const svgCursor=document.getElementById("dashboardMapCursor");
+    if(svgCursor&&point){
+      svgCursor.setAttribute("cx",point.x.toFixed(2));
+      svgCursor.setAttribute("cy",point.y.toFixed(2));
+      return;
+    }
     this.positionElement(document.getElementById("carDot"),this.progress);
   },
 
