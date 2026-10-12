@@ -610,6 +610,10 @@
     AMSCharts.setCompare(state.compareLapA.samples,state.compareLapB.samples);
     AMSTrack.renderFocusedCompare(state.compareLapA,state.compareLapB);
     setCompareReplayTime(0);
+    document.dispatchEvent(new CustomEvent("ams-compare-data",{
+      detail:{lapA:state.compareLapA,lapB:state.compareLapB,
+        circuit:a.circuit||"",car:a.car||""}
+    }));
   }
 
   function initWorkspace(){
