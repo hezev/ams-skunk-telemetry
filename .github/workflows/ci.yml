@@ -27,3 +27,4 @@ jobs:
           node --check wwwroot/js/ams-concepts.js
           node --check wwwroot/js/ams-mockup-v2.js
           node --check wwwroot/js/ams-race-intelligence.js
+          node --check wwwroot/js/ams-mini-sector-explorer.js
