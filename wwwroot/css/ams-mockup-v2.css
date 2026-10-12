@@ -1,0 +1,57 @@
+/* Mockup fidelity iteration v2: command-center composition, consistent engineering typography */
+:root{--sidebar-w:208px;--red:#f04452;--blue:#399ae9;--yellow:#d9af61;--panel:#11151c;--panel2:#191e27;--line:#333943;--muted:#a2afbe}
+body{font-family:Inter,"Segoe UI",Arial,sans-serif;background:#090b10!important}
+.sidebar{width:var(--sidebar-w);padding:17px 11px;background:linear-gradient(180deg,#141720,#090b10 83%)!important;border-right:1px solid #35313b!important}
+.main{margin-left:var(--sidebar-w)}
+.brand{padding:12px 10px 19px}.brand-main{font-size:23px;letter-spacing:.6px}.brand-sub{letter-spacing:2px;text-transform:uppercase;font-size:9px;color:#b5b5bf}
+#mainNav{display:flex;flex-direction:column;gap:3px}#mainNav button{font-weight:650;min-height:38px;letter-spacing:.15px;border-radius:7px}
+#mainNav button.active{background:linear-gradient(90deg,#6d2434,#241821 90%)!important;color:#fff;border-left:3px solid #ff4c59!important}
+.topbar{min-height:65px!important;background:#12151d!important;border-bottom:1px solid #353a46!important}
+.session-strip{gap:15px!important}.session-strip>span,.session-strip>strong{max-width:260px}
+.content{max-width:1700px;margin:auto;padding:22px 26px 38px}
+.titlebar{border-bottom:1px solid #373c49;padding-bottom:17px;margin-bottom:18px;align-items:center}
+.titlebar h1{font-size:clamp(20px,2vw,28px);letter-spacing:.5px;line-height:1.15;text-transform:uppercase}
+.titlebar p{font-size:11px;letter-spacing:.45px;color:#aab5c5}
+.view .metrics,.ams-compare-strip{margin-bottom:16px!important}
+.metric{border:1px solid #363b48;background:linear-gradient(145deg,#1b1e27,#10131a);min-height:98px;padding:16px 18px;position:relative;overflow:hidden}
+.metric:after{content:"";position:absolute;left:0;top:0;right:0;height:2px;background:linear-gradient(90deg,#e74652 0,transparent 75%)}
+.metric span{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#aeb9c7}
+.metric strong{font-size:clamp(20px,2.5vw,30px);font-variant-numeric:tabular-nums;color:#f8f9fa}
+.metric strong.red{color:#f04b58!important}.metric strong.blue{color:#68aff2!important}.metric strong.yellow{color:#e4b868!important}
+.card{border-radius:10px;border:1px solid #363d4b;background:linear-gradient(155deg,#171b25,#10131a 85%);box-shadow:0 9px 20px rgba(0,0,0,.12)}
+.card-head{border-bottom:1px solid #323847;padding-bottom:12px;margin-bottom:12px}
+.card-title{font-size:12px;letter-spacing:.75px;text-transform:uppercase;font-weight:750}
+.chip{font-size:10px;letter-spacing:.3px}
+.track-stage{background:radial-gradient(ellipse at 50% 50%,#222b37,#0b1018 70%);border:1px solid #303c4b;min-height:330px}
+.gauges>div{background:#111923;border:1px solid #313b4b}
+#dashboard .layout-main{grid-template-columns:minmax(0,1.6fr) minmax(335px,1fr);gap:14px}
+#dashboard .dashboard-lower{gap:14px}
+#compare .card,#engineer .card{border-color:#3c4150}
+#compare .track-stage,#telemetry .track-stage{background:#0a101a}
+.ams-kpis>div{background:linear-gradient(130deg,#1c2029,#11151d);min-height:77px;border-color:#363c49;padding:14px}
+.ams-kpis strong{font-size:17px;line-height:1.35}.ams-kpis span{font-size:10px;letter-spacing:.6px}
+.ams-concept-card{border-color:#384252;border-radius:10px;padding:17px;background:#151923}
+.ams-concept-card h3{border-bottom:1px solid #303847;padding-bottom:12px}
+.ams-primary{background:linear-gradient(100deg,#b82537,#ed3f52);border-color:#ef5967}
+.ams-secondary{background:#182236;border-color:#3b6494}
+.ams-overlay-tile{box-shadow:0 10px 20px #0009;background:#101723f2;border-color:#536077}
+.ams-visual-tabs{gap:9px}
+.ams-enhancement-grid{display:grid;grid-template-columns:1.65fr 1fr;gap:14px;margin:12px 0 18px}
+.ams-enhancement-card{background:linear-gradient(140deg,#181d26,#10141b);border:1px solid #39404d;border-radius:10px;padding:17px;min-width:0}
+.ams-enhancement-card h3{margin:0 0 12px;padding-bottom:10px;border-bottom:1px solid #343a46;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.ams-enhancement-data{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.ams-enhancement-data>div{padding:12px;background:#10151e;border:1px solid #313845;border-radius:7px;min-width:0}
+.ams-enhancement-data span{display:block;color:#a4b0bf;text-transform:uppercase;font-size:9px;letter-spacing:.8px}
+.ams-enhancement-data strong{display:block;margin-top:8px;font-size:20px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.ams-monitor-status{display:flex;gap:8px;align-items:center;margin:9px 0;font-size:11px;color:#c8d0df}
+.ams-monitor-status:before{content:"";background:#e3b267;width:7px;height:7px;border-radius:50%}
+.ams-monitors-note{color:#899bae;font-size:11px;line-height:1.55;margin:12px 0 0}
+.ams-band{padding:8px 11px;background:#181b22;border-left:3px solid #d3a35a;border-radius:4px;color:#e4c58b;font-size:11px}
+#setup-lab .ams-premium-grid{grid-template-columns:minmax(255px,1.1fr) minmax(350px,1.6fr) minmax(235px,1fr)}
+#overlay-builder .ams-premium-grid{grid-template-columns:minmax(200px,.8fr) minmax(450px,2.2fr) minmax(220px,1fr)}
+#overlay-builder .ams-preview{min-height:480px;background:radial-gradient(ellipse at 70% 65%,#2b3340,#0a0e15 60%);}
+#overlay-builder .ams-overlay-tile{min-width:132px;padding:12px}
+@media(max-width:1350px){#setup-lab .ams-premium-grid,#overlay-builder .ams-premium-grid{grid-template-columns:1fr 1fr}#setup-lab .ams-premium-grid>*:last-child,#overlay-builder .ams-premium-grid>*:last-child{grid-column:1/-1}}
+@media(max-width:1050px){.ams-enhancement-grid{grid-template-columns:1fr}#dashboard .layout-main{grid-template-columns:1fr}.content{padding:16px}}
+@media(max-width:800px){.main{margin-left:0}.sidebar{width:var(--sidebar-w)}#setup-lab .ams-premium-grid,#overlay-builder .ams-premium-grid{grid-template-columns:1fr}#setup-lab .ams-premium-grid>*:last-child,#overlay-builder .ams-premium-grid>*:last-child{grid-column:auto}.ams-enhancement-data{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:540px){.ams-enhancement-data{grid-template-columns:1fr 1fr}.ams-enhancement-data strong{font-size:17px}.content{padding:13px}}
