@@ -1,0 +1,19 @@
+/* Race-control/event intelligence additions */
+.ams-work-card{margin:15px 0 20px;padding:17px;background:linear-gradient(150deg,#171b25,#10141d);border:1px solid #394352;border-radius:10px;min-width:0}
+.ams-work-card>h3{font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:#f4f5f9;border-bottom:1px solid #313945;padding-bottom:12px;margin:0 0 12px}
+.ams-event-feed{max-height:220px;overflow-y:auto;display:grid;gap:5px;margin-bottom:9px}
+.ams-event-row{display:grid;grid-template-columns:80px minmax(0,1fr) 70px;gap:9px;padding:9px 11px;background:#101721;border:1px solid #303947;border-radius:6px;align-items:center}
+.ams-event-row time{font-size:11px;color:#b4a3af;font-variant-numeric:tabular-nums}
+.ams-event-row strong{display:block;font-size:12px;color:#e8edf4}.ams-event-row span{display:block;color:#aeb9c9;font-size:11px;margin-top:3px}
+.ams-event-type{font-size:9px;letter-spacing:.65px;text-align:center;border:1px solid #3c6295;color:#9ec9f1;background:#1a2b3f;border-radius:3px;padding:5px 3px}
+.ams-event-type.attention{border-color:#953948;color:#ffc2c9;background:#371d27}
+.ams-event-hint{color:#a6b7ca;font-size:11px;line-height:1.55;margin:6px 0 12px}
+.ams-corner-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px}
+.ams-corner-btn{padding:9px 2px;background:#18212e;border:1px solid #405069;border-radius:6px;color:#cdd8e8;cursor:pointer;font-size:10px;font-weight:700}
+.ams-corner-btn:hover,.ams-corner-btn.selected{background:#602737;border-color:#f15b68;color:#fff}
+.ams-corner-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:8px;margin-top:13px}
+.ams-corner-status>div{padding:13px;background:#101824;border:1px solid #364355;border-radius:7px;min-width:0}
+.ams-corner-status span{color:#adbacc;font-size:10px;letter-spacing:.6px;text-transform:uppercase;display:block}
+.ams-corner-status strong{color:#f7f8fb;font-size:15px;line-height:1.4;display:block;margin-top:6px;overflow-wrap:anywhere;white-space:normal}
+@media(max-width:950px){.ams-corner-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:480px){.ams-event-row{grid-template-columns:65px 1fr}.ams-event-type{display:none}}
