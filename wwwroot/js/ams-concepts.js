@@ -36,7 +36,7 @@
   const engineer=$('#engineer .titlebar');
   if(engineer){
     const title=$('#engineer h1');if(title)title.textContent='Session Intelligence & AI Engineer';
-    const bar=document.createElement('div');bar.className='ams-compare-strip';bar.innerHTML=kpis([['Engineer's Verdict','Baseado em evidência','ams-red'],['Lap Consistency','Análise da sessão','ams-blue'],['Development','Recomendações','ams-gold'],['AI Engineer','Assistente contextual','']]);
+    const bar=document.createElement('div');bar.className='ams-compare-strip';bar.innerHTML=kpis([['Engineer Verdict','Baseado em evidência','ams-red'],['Lap Consistency','Análise da sessão','ams-blue'],['Development','Recomendações','ams-gold'],['AI Engineer','Assistente contextual','']]);
     engineer.after(bar);
   }
   // Strategy: illustrative UI only. Estimated values are intentionally not fabricated.
