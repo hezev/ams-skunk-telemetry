@@ -1,0 +1,60 @@
+/* AMS Motorsport: dark/red/blue/gold, five approved concept layouts. */
+:root{--bg:#070809;--panel:#10141a;--panel2:#171c24;--panel3:#0c1016;--line:#303640;--text:#f2f4f8;--muted:#abb4c2;--red:#ef303c;--blue:#358fe6;--yellow:#dcb05e;--green:#39c998}
+body{background:radial-gradient(ellipse at 70% -15%,#1d2028,#08090d 58%) fixed;color:var(--text)}
+.sidebar{background:linear-gradient(180deg,#14161d,#08090c 75%);border-right-color:#383b44}
+.brand-main span{color:var(--red)}nav button.active{background:linear-gradient(90deg,rgba(239,48,60,.23),rgba(80,24,32,.14));border-color:#602a36;box-shadow:inset 3px 0 0 var(--red)}
+nav button:hover{background:#231a24;border-color:#5b3540}
+.topbar{background:rgba(13,14,19,.95);border-bottom-color:#3a333d}
+.metric,.card,.live-summary article{background:linear-gradient(142deg,#191c24,#101319);border-color:#383b46}
+.metric:before{background:linear-gradient(90deg,var(--red),transparent 74%)}
+.card-title{color:#f5f1f5}
+.track-stage{background:radial-gradient(ellipse,#212831,#0c1017 75%);border-color:#373e4b}
+.action-btn,.login-btn,.login-secondary,.layout-edit-btn{background:#211821;border-color:#633541;color:#f8e7e9}
+.action-btn:hover,.login-btn:hover{background:#4a1c29;border-color:#f05260}
+.login-submit{background:linear-gradient(100deg,#cb2333,#f34c54);color:#fff}
+.chip{background:#161a22;border-color:#46414a;color:#c6cfdd}
+.blue{color:var(--blue)!important}.red{color:var(--red)!important}.yellow{color:var(--yellow)!important}
+input[type=range]{accent-color:var(--red)}
+th{background:#1b1d26;color:#ccd0dc}
+tbody tr.focus-row{background:#291c26;box-shadow:inset 3px 0 0 var(--red)}
+.ams-concept-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+.ams-concept-heading p{margin:0;color:#a8b4c5;font-size:11px}
+.ams-premium-grid{display:grid;grid-template-columns:minmax(230px,1fr) minmax(280px,1.5fr) minmax(230px,1fr);gap:12px;margin:12px 0}
+.ams-premium-grid>*{min-width:0}
+.ams-concept-card{background:linear-gradient(155deg,#1a1e27,#101218);border:1px solid #383d4b;border-radius:10px;padding:14px;min-width:0}
+.ams-concept-card h3{margin:0 0 11px;font-size:12px;text-transform:uppercase;letter-spacing:1.05px;color:#eef0f7}
+.ams-concept-card small,.ams-muted{color:#aab4c3;font-size:11px}
+.ams-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.ams-kpis>div{background:#131720;border:1px solid #343a48;padding:12px;border-radius:8px}
+.ams-kpis span{display:block;font-size:9px;color:#adb9c8;letter-spacing:.7px;text-transform:uppercase}
+.ams-kpis strong{display:block;font-size:19px;margin-top:5px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ams-red{color:#ff5361!important}.ams-blue{color:#64b3ff!important}.ams-gold{color:#e6be71!important}
+.ams-premium-list{display:grid;gap:7px}
+.ams-premium-list>div,.ams-saved-row{display:flex;justify-content:space-between;gap:8px;padding:9px;background:#151922;border:1px solid #2d3441;border-radius:7px;font-size:11px;align-items:center}
+.ams-line{height:1px;background:#343744;margin:12px 0}
+.ams-control{width:100%;padding:8px;background:#11151e;border:1px solid #454753;border-radius:6px;color:#fff}
+.ams-label{font-size:9px;color:#aeb9c9;letter-spacing:.8px;text-transform:uppercase;display:block;margin:9px 0 4px}
+.ams-primary{background:#d62b3b;border:1px solid #fd5b65;color:#fff;padding:9px 12px;border-radius:7px;cursor:pointer;font-weight:750}
+.ams-secondary{background:#1b2535;border:1px solid #38649b;color:#c8e3ff;padding:9px 12px;border-radius:7px;cursor:pointer}
+.ams-primary:focus-visible,.ams-secondary:focus-visible{outline:2px solid #ffd18c;outline-offset:2px}
+.ams-setup-row{display:grid;grid-template-columns:minmax(105px,1fr) minmax(100px,1.2fr) 48px;gap:7px;align-items:center;margin-bottom:9px;font-size:11px}
+.ams-setup-row input[type=range]{width:100%}
+.ams-setup-row output{color:#e7b76c;text-align:right;font-variant-numeric:tabular-nums}
+.ams-preview{min-height:340px;position:relative;border:1px dashed #48515e;border-radius:9px;background:linear-gradient(145deg,#171e26,#090d12);overflow:hidden}
+.ams-preview:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#30394a 1px,transparent 1px),linear-gradient(90deg,#30394a 1px,transparent 1px);background-size:25px 25px;opacity:.27;pointer-events:none}
+.ams-overlay-tile{position:absolute;z-index:1;background:rgba(13,18,27,.96);border:1px solid #3d5267;border-radius:7px;padding:9px 11px;min-width:115px;cursor:grab;color:#f6f7fc;font-size:11px;touch-action:none;user-select:none}
+.ams-overlay-tile.selected{border-color:#ff5665;box-shadow:0 0 0 1px #fa5962}
+.ams-overlay-tile b{display:block;color:#edb968;font-size:9px;text-transform:uppercase;margin-bottom:4px}
+.ams-overlay-tile em{font-style:normal;color:#9cc8f0}
+.ams-timeline{display:flex;align-items:center;gap:3px;overflow:auto;margin-top:10px}
+.ams-timeline>span{height:11px;flex:1;min-width:12px;border-radius:2px;background:#394454}
+.ams-timeline>span.flag{background:#ce3546}.ams-timeline>span.gain{background:#367fd0}.ams-timeline>span.best{background:#dcb05e}
+.ams-concept-note{color:#debb78;font-size:10px;margin-top:9px;line-height:1.5}
+.ams-compare-strip{margin-bottom:12px}.ams-compare-strip .ams-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.ams-visual-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.ams-tab{background:#20212a;color:#bcc6d4;border:1px solid #3b4150;border-radius:5px;padding:7px;font-size:10px;cursor:pointer}.ams-tab.active{color:#fff;border-color:#f04a5b;background:#54202d}
+.ams-plot{width:100%;height:120px;background:#0b1119;border:1px solid #343e4d;border-radius:7px}
+.ams-plot svg{width:100%;height:100%}
+@media(max-width:1200px){.ams-premium-grid{grid-template-columns:1fr 1fr}.ams-premium-grid>*:last-child{grid-column:1/-1}}
+@media(max-width:800px){.ams-premium-grid,.ams-kpis,.ams-compare-strip .ams-kpis{grid-template-columns:1fr 1fr}.ams-premium-grid>*:last-child{grid-column:auto}.ams-preview{min-height:300px}}
+@media(max-width:540px){.ams-premium-grid,.ams-kpis,.ams-compare-strip .ams-kpis{grid-template-columns:1fr}.ams-concept-heading{display:block}.ams-setup-row{grid-template-columns:1fr 1fr 48px}}
