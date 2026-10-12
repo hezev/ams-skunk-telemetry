@@ -12,12 +12,16 @@
   function progressOf(sample,index,total){
     const keys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
     for(const k of keys){
-      const v=Number(sample?.[k]);
+      const raw=sample?.[k];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const v=Number(raw);
       if(Number.isFinite(v))return clamp(v>1&&v<=100?v/100:v);
     }
     const percentKeys=["position","trackPositionPct","track_position_pct"];
     for(const k of percentKeys){
-      const v=Number(sample?.[k]);
+      const raw=sample?.[k];
+      if(raw===null||raw===undefined||raw==="")continue;
+      const v=Number(raw);
       if(Number.isFinite(v))return clamp(v/100);
     }
     return total>1?index/(total-1):0;
@@ -26,7 +30,10 @@
   function latLon(sample){
     const lat=Number(sample?.lat ?? sample?.Lat ?? sample?.latitude ?? sample?.Latitude);
     const lon=Number(sample?.lon ?? sample?.Lon ?? sample?.longitude ?? sample?.Longitude);
-    return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
+    const rawLat=sample?.lat ?? sample?.Lat ?? sample?.latitude ?? sample?.Latitude;
+    const rawLon=sample?.lon ?? sample?.Lon ?? sample?.longitude ?? sample?.Longitude;
+    if(rawLat===null||rawLat===undefined||rawLat===""||rawLon===null||rawLon===undefined||rawLon==="")return null;
+    return Number.isFinite(lat)&&Number.isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180?{lat,lon}:null;
   }
 
   function projectGps(rows){
