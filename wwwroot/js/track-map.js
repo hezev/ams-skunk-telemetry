@@ -11,6 +11,8 @@ window.AMSTrack = {
   focusedCompare:null,
   focusedCompareZoom:4,
   gpsProjection:null,
+  yawOffset:0,
+  artworkCalibration:null,
 
   normalize(value){
     return String(value||"")
@@ -293,6 +295,179 @@ window.AMSTrack = {
     return valid>20&&total>100?total:null;
   },
 
+  metadataTrackLengthM(metadata,estimatedLength=null){
+    const raw=String(metadata?.TrackLength||metadata?.trackLength||"").trim().toLowerCase();
+    const match=raw.match(/(-?\d+(?:[.,]\d+)?)/);
+    if(match){
+      const value=Number(match[1].replace(",","."));
+      if(Number.isFinite(value)&&value>0){
+        if(/\bkm\b/.test(raw))return value*1000;
+        if(/\bmi\b|mile/.test(raw))return value*1609.344;
+        return value;
+      }
+    }
+    const est=Number(estimatedLength);
+    return Number.isFinite(est)&&est>0?est:null;
+  },
+
+  rawSampleProgress(sample,index,total){
+    const percentKeys=["position","trackPositionPct","track_position_pct"];
+    for(const key of percentKeys){
+      const value=Number(sample?.[key]);
+      if(Number.isFinite(value))return Math.max(0,Math.min(1,value/100));
+    }
+    const normalizedKeys=["lapDistPct","LapDistPct","lap_dist_pct","trackPosition","track_position","lapPct","lap_pct"];
+    for(const key of normalizedKeys){
+      const value=Number(sample?.[key]);
+      if(Number.isFinite(value)){
+        return Math.max(0,Math.min(1,value>1&&value<=100?value/100:value));
+      }
+    }
+    return total>1?index/(total-1):0;
+  },
+
+  rotateClosed(points,startIndex){
+    if(!points?.length)return [];
+    const n=points.length,i=((Math.round(startIndex)%n)+n)%n;
+    return [...points.slice(i),...points.slice(0,i)];
+  },
+
+  reverseClosedKeepStart(points){
+    if(!points?.length)return [];
+    if(points.length<2)return [...points];
+    return [points[0],...points.slice(1).reverse()];
+  },
+
+  centerlineYaw(points,progress,eps=.0015){
+    if(!points?.length)return null;
+    const sample=p=>{
+      const x=((Number(p)%1)+1)%1*points.length;
+      const i=Math.floor(x)%points.length,j=(i+1)%points.length,t=x-Math.floor(x);
+      return {x:points[i].x+(points[j].x-points[i].x)*t,y:points[i].y+(points[j].y-points[i].y)*t};
+    };
+    const a=sample(progress-eps),b=sample(progress+eps);
+    const dx=b.x-a.x,dy=b.y-a.y;
+    if(Math.hypot(dx,dy)<1e-9)return null;
+    return Math.atan2(dx,-dy);
+  },
+
+  circularFitOffset(points,telemetry){
+    const samples=Array.isArray(telemetry)?telemetry:[];
+    if(!points?.length||samples.length<20)return null;
+    const rows=[];
+    const stride=Math.max(1,Math.floor(samples.length/180));
+    for(let i=0;i<samples.length;i+=stride){
+      const yaw=Number(samples[i]?.yawNorth);
+      const speed=Number(samples[i]?.speed);
+      if(!Number.isFinite(yaw)||!Number.isFinite(speed)||speed<35)continue;
+      const p=this.rawSampleProgress(samples[i],i,samples.length);
+      const trackYaw=this.centerlineYaw(points,p);
+      if(!Number.isFinite(trackYaw))continue;
+      rows.push({p,yaw,trackYaw});
+    }
+    if(rows.length<12)return null;
+
+    let sx=0,sy=0;
+    for(const row of rows){
+      const d=this.wrapAngle(row.yaw-row.trackYaw);
+      sx+=Math.cos(d);sy+=Math.sin(d);
+    }
+    const offset=Math.atan2(sy,sx);
+    let err=0;
+    for(const row of rows){
+      const d=this.wrapAngle(row.yaw-(row.trackYaw+offset));
+      err+=d*d;
+    }
+    const rms=Math.sqrt(err/rows.length);
+    return {offset,rms,rows:rows.length};
+  },
+
+  async artworkStartFinishPoint(base){
+    try{
+      const res=await fetch(base+"/start-finish.svg",{cache:"force-cache"});
+      if(!res.ok)return null;
+      const doc=new DOMParser().parseFromString(await res.text(),"image/svg+xml");
+      const src=doc.documentElement;
+      if(!src||src.nodeName.toLowerCase()==="parsererror")return null;
+
+      const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+      svg.setAttribute("aria-hidden","true");
+      svg.style.position="absolute";
+      svg.style.left="-10000px";
+      svg.style.top="-10000px";
+      svg.style.width="1920px";
+      svg.style.height="1080px";
+      svg.style.opacity="0";
+      svg.style.pointerEvents="none";
+      const vb=src.getAttribute("viewBox");
+      if(vb)svg.setAttribute("viewBox",vb);
+      svg.innerHTML=src.innerHTML;
+      document.body.appendChild(svg);
+
+      try{
+        const items=[...svg.querySelectorAll("path,line,rect,polyline,polygon")];
+        let best=null,bestScore=-Infinity;
+        for(const el of items){
+          let box=null;
+          try{box=el.getBBox();}catch{}
+          if(!box||!(box.width>0)||!(box.height>0))continue;
+          const long=Math.max(box.width,box.height),short=Math.max(.5,Math.min(box.width,box.height));
+          if(long<8)continue;
+          const aspect=long/short;
+          // Start/finish line graphics are typically narrow and elongated.
+          const score=aspect*8+Math.min(40,long/5)-Math.min(30,(box.width*box.height)/1800);
+          if(score>bestScore){
+            bestScore=score;
+            best={x:box.x+box.width/2,y:box.y+box.height/2,box,score};
+          }
+        }
+        return best?{x:best.x,y:best.y}:null;
+      }finally{
+        svg.remove();
+      }
+    }catch(err){
+      console.warn("AMS start/finish calibration:",err);
+      return null;
+    }
+  },
+
+  async calibrateArtworkCenterline(base,telemetry){
+    if(!this.centerline.length)return null;
+    let points=[...this.centerline];
+    const start=await this.artworkStartFinishPoint(base);
+
+    let startIndex=0;
+    if(start){
+      let best=Infinity;
+      for(let i=0;i<points.length;i++){
+        const d=(points[i].x-start.x)**2+(points[i].y-start.y)**2;
+        if(d<best){best=d;startIndex=i;}
+      }
+      points=this.rotateClosed(points,startIndex);
+    }
+
+    const forward=this.circularFitOffset(points,telemetry);
+    const reversedPoints=this.reverseClosedKeepStart(points);
+    const reverse=this.circularFitOffset(reversedPoints,telemetry);
+
+    let reversed=false,fit=forward;
+    if(reverse&&(!forward||reverse.rms+0.03<forward.rms)){
+      points=reversedPoints;
+      fit=reverse;
+      reversed=true;
+    }
+
+    this.centerline=points;
+    this.yawOffset=Number.isFinite(Number(fit?.offset))?Number(fit.offset):0;
+    this.artworkCalibration={
+      startIndex,
+      reversed,
+      headingRmsDeg:Number.isFinite(Number(fit?.rms))?fit.rms*180/Math.PI:null,
+      sampleCount:Number(fit?.rows)||0
+    };
+    return this.artworkCalibration;
+  },
+
   lengthMatchScore(referenceLength,estimatedLength){
     const ref=Number(referenceLength),est=Number(estimatedLength);
     if(!Number.isFinite(ref)||ref<=0||!Number.isFinite(est)||est<=0)return 0;
@@ -410,6 +585,8 @@ window.AMSTrack = {
     if(!host||!stack)return false;
 
     this.gpsProjection=this.makeGpsProjection(data?.gps_points);
+    this.yawOffset=0;
+    this.artworkCalibration=null;
     const projected=this.gpsProjection
       ?(data?.gps_points||[]).map(p=>this.gpsProjection.project(Number(p?.lat),Number(p?.lon))).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y))
       :[];
@@ -495,11 +672,21 @@ window.AMSTrack = {
         stack.appendChild(img);
       }
       await this.prepareArtworkFallback(base+"/active.svg");
-      this.reference={source:"iRacing artwork",name:[entry?.family,entry?.config].filter(Boolean).join(" · ")};
+      await this.calibrateArtworkCenterline(base,telemetry);
+      const exactLength=this.metadataTrackLengthM(identity.metadata,estimatedLength);
+      this.reference={
+        source:"iRacing artwork",
+        name:[entry?.family,entry?.config].filter(Boolean).join(" · "),
+        lengthM:exactLength
+      };
       if(status){
         const layout=identity.metadata?.TrackConfigName||this.configHint(entry);
         const id=identity.trackId||this.entryTrackId(entry);
-        status.textContent=["iRacing",id,layout].filter(Boolean).join(" · ")||this.reference.name||trackName;
+        const cal=this.artworkCalibration;
+        const heading=Number.isFinite(Number(cal?.headingRmsDeg))
+          ?"ALIGN "+cal.headingRmsDeg.toFixed(1)+"°"+(cal.reversed?" · DIR FIX":"")
+          :"";
+        status.textContent=["iRacing",id,layout,heading].filter(Boolean).join(" · ")||this.reference.name||trackName;
       }
       return {entry,reference:null};
     }catch(err){
@@ -767,7 +954,9 @@ window.AMSTrack = {
     const t=this.centerTangent(progress,.0012);
     if(!t)return null;
     // yawNorth convention: 0 = north/up, +PI/2 = east/right.
-    return Math.atan2(t.x,-t.y);
+    // SVG artwork is not guaranteed to be north-aligned, so apply the
+    // constant heading offset estimated from the lap telemetry.
+    return this.wrapAngle(Math.atan2(t.x,-t.y)+(Number(this.yawOffset)||0));
   },
 
   buildTrackSync(lap){
@@ -1302,11 +1491,22 @@ window.AMSTrack = {
       return false;
     }
 
+    const full=this.parseViewBox();
+    const base=this.centerline.filter((_,i)=>i%2===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
+    svg.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    svg.innerHTML=
+      '<polyline class="compare-focus-track-edge" points="'+base+'"></polyline>'+
+      '<polyline class="compare-focus-track-road" points="'+base+'"></polyline>';
+    mini.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
+    mini.setAttribute("preserveAspectRatio","xMidYMid meet");
+    mini.innerHTML='<polyline class="compare-mini-track" points="'+base+'"></polyline>';
+
     const refRaw=this.reconstructTrajectory(lapRef);
     const aRaw=this.reconstructTrajectory(lapA);
     if(!aRaw||!refRaw){
       this.focusedCompare=null;
-      if(status)status.textContent="DADOS INSUFICIENTES";
+      if(status)status.textContent="MAPA OK · TRAJECTÓRIA INSUFICIENTE";
       return false;
     }
 
@@ -1321,8 +1521,6 @@ window.AMSTrack = {
     };
     this.focusedCompare=data;
 
-    const full=this.parseViewBox();
-    const base=this.centerline.filter((_,i)=>i%2===0).map(p=>p.x.toFixed(2)+","+p.y.toFixed(2)).join(" ");
     const pathA=this.svgPath(a.points),pathR=this.svgPath(ref.points);
     const sw=this.focusedStrokeWidths();
 
