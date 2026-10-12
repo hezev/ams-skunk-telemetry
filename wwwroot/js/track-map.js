@@ -11,8 +11,6 @@ window.AMSTrack = {
   focusedCompare:null,
   focusedCompareZoom:4,
   gpsProjection:null,
-  fingerprintMatch:null,
-  fingerprintCenterlineCache:new Map(),
 
   normalize(value){
     return String(value||"")
@@ -139,41 +137,23 @@ window.AMSTrack = {
     return this.index.filter(x=>x?.family===entry.family).length>1;
   },
 
-  distinctiveLayoutTokens(entry,configHint=""){
-    const familyWords=new Set(this.normalize(entry?.family||"").split(" ").filter(Boolean));
-    const generic=new Set(["road","course","circuit","track","layout","international","grand","prix","gp","oval","speedway"]);
-    const raw=this.normalize([entry?.config,configHint].filter(Boolean).join(" "));
-    return raw.split(" ").filter(word=>
-      word.length>2 &&
-      !/^\d+$/.test(word) &&
-      !familyWords.has(word) &&
-      !generic.has(word)
-    );
-  },
-
   raceStudioLayoutCompatible(data,entry,configHint="",estimatedLength=null){
     const requested=this.layoutKind([entry?.config,configHint].filter(Boolean).join(" "));
-    const hay=this.normalize([
+    const candidate=this.layoutKind([
       data?.full_name,data?.name,data?.short_name
     ].filter(Boolean).join(" "));
-    const candidate=this.layoutKind(hay);
 
     if(requested&&candidate&&candidate!==requested)return false;
 
-    // When iRacing already supplied an exact TrackID at a venue with several
-    // configurations, a generic venue GPS reference is not allowed to replace
-    // that exact layout. Oulton Park is the classic case: RaceStudio exposes
-    // the 4.28 km full circuit while TrackID 181 is the 2.65 km Fosters layout.
+    // Keep the old, proven rendering/trajectory engine. Only reject a generic
+    // RaceStudio reference when it is clearly a different layout from the
+    // exact iRacing TrackID selected above.
     if(this.entryTrackId(entry)&&this.hasMultipleConfigurations(entry)){
-      const tokens=this.distinctiveLayoutTokens(entry,configHint);
-      const tokenMatch=tokens.some(token=>hay.includes(token));
-      const refLen=Number(data?.track_length_m),est=Number(estimatedLength);
-      const closeLength=Number.isFinite(refLen)&&refLen>0&&Number.isFinite(est)&&est>0
-        ?Math.abs(refLen-est)/est<=.06
-        :false;
-
-      if(tokens.length&&!tokenMatch&&!closeLength)return false;
-      if(!tokens.length&&!candidate&&this.hasMultipleLayoutKinds(entry))return false;
+      const refLen=Number(data?.track_length_m),estLen=Number(estimatedLength);
+      if(Number.isFinite(refLen)&&refLen>0&&Number.isFinite(estLen)&&estLen>0){
+        const rel=Math.abs(refLen-estLen)/estLen;
+        if(rel>.12)return false;
+      }
     }
 
     if(requested&&!candidate&&this.hasMultipleLayoutKinds(entry))return false;
@@ -248,206 +228,6 @@ window.AMSTrack = {
     if(entry?.cdnBase)return entry.cdnBase;
     if(entry?.localPath)return AMS_CONFIG.trackRawBase+"/"+this.encodePath(entry.localPath);
     return "";
-  },
-
-  fingerprintCandidates(identity,seedEntry){
-    const all=Array.isArray(this.index)?this.index:[];
-    if(!all.length)return seedEntry?[seedEntry]:[];
-
-    let pool=seedEntry?.family
-      ?all.filter(entry=>entry?.family===seedEntry.family)
-      :all;
-
-    const requestedKind=this.layoutKind(identity?.configHint||"");
-    if(requestedKind){
-      const sameKind=pool.filter(entry=>{
-        const kind=this.layoutKind(entry?.config||"");
-        return !kind||kind===requestedKind;
-      });
-      if(sameKind.length)pool=sameKind;
-    }
-
-    const scored=pool.map(entry=>({
-      entry,
-      score:this.score(entry,identity?.trackName||"",identity?.configHint||""),
-      id:Number(this.entryTrackId(entry))||0
-    })).sort((a,b)=>b.score-a.score||b.id-a.id);
-
-    const picked=[];
-    const seen=new Set();
-    const add=entry=>{
-      if(!entry)return;
-      const key=entry.localPath||entry.cdnBase;
-      if(!key||seen.has(key))return;
-      seen.add(key);picked.push(entry);
-    };
-
-    const exactId=String(identity?.trackId||"");
-    if(exactId)add(pool.find(entry=>this.entryTrackId(entry)===exactId));
-    add(seedEntry);
-
-    if(requestedKind){
-      scored.slice(0,10).forEach(x=>add(x.entry));
-    }else{
-      const kinds=["road","oval","bike",""];
-      for(const kind of kinds){
-        scored
-          .filter(x=>(this.layoutKind(x.entry?.config||"")||"")===kind)
-          .slice(0,4)
-          .forEach(x=>add(x.entry));
-      }
-      scored.slice(0,12).forEach(x=>add(x.entry));
-    }
-    return picked.slice(0,14);
-  },
-
-  async artworkFingerprintCenterline(entry){
-    const base=this.baseUrl(entry);
-    if(!base)return [];
-    if(this.fingerprintCenterlineCache.has(base))return this.fingerprintCenterlineCache.get(base);
-
-    const task=(async()=>{
-      const res=await fetch(base+"/active.svg",{cache:"force-cache"});
-      if(!res.ok)return [];
-      const doc=new DOMParser().parseFromString(await res.text(),"image/svg+xml");
-      const src=doc.documentElement;
-      if(!src||src.nodeName.toLowerCase()==="parsererror")return [];
-
-      const host=document.createElementNS("http://www.w3.org/2000/svg","svg");
-      host.setAttribute("aria-hidden","true");
-      host.style.position="absolute";
-      host.style.left="-10000px";
-      host.style.top="-10000px";
-      host.style.width="1920px";
-      host.style.height="1080px";
-      host.style.opacity="0";
-      host.style.pointerEvents="none";
-      const viewBox=src.getAttribute("viewBox");
-      if(viewBox)host.setAttribute("viewBox",viewBox);
-      host.innerHTML=src.innerHTML;
-      document.body.appendChild(host);
-
-      try{
-        const paths=[...host.querySelectorAll("path")];
-        let best=null,bestLen=0;
-        for(const path of paths){
-          try{
-            const len=path.getTotalLength();
-            if(len>bestLen){best=path;bestLen=len;}
-          }catch{}
-        }
-        if(!best)return [];
-        const contours=this.splitContours(this.sampleCompoundPath(best,5000))
-          .sort((a,b)=>b.length-a.length);
-        const center=this.buildArtworkCenterline(contours[0]||[],contours[1]||[],700);
-        return this.resampleClosed(center,192);
-      }finally{
-        host.remove();
-      }
-    })();
-
-    this.fingerprintCenterlineCache.set(base,task);
-    const points=await task;
-    this.fingerprintCenterlineCache.set(base,points);
-    return points;
-  },
-
-  fingerprintStorageKey(identity,fingerprint){
-    const family=this.normalize(identity?.trackName||"unknown").slice(0,80);
-    const hint=this.normalize(identity?.configHint||"").slice(0,80);
-    return "ams_track_fingerprint_v2:"+family+":"+hint+":"+fingerprint.cacheKey;
-  },
-
-  async resolveByFingerprint(identity,telemetry,seedEntry){
-    const engine=window.AMSTrackFingerprint;
-    if(!engine?.telemetryFingerprint||!engine?.compare)return null;
-
-    const fingerprint=engine.telemetryFingerprint(telemetry);
-    if(!fingerprint)return null;
-
-    const cacheKey=this.fingerprintStorageKey(identity,fingerprint);
-    try{
-      const cached=JSON.parse(sessionStorage.getItem(cacheKey)||"null");
-      if(cached?.path){
-        const entry=(this.index||[]).find(x=>(x.localPath||x.cdnBase)===cached.path);
-        if(entry)return {
-          entry,
-          source:cached.source||fingerprint.source,
-          score:Number(cached.score)||0,
-          margin:Number(cached.margin)||0,
-          cached:true,
-          conflict:Boolean(cached.conflict),
-          ranked:[]
-        };
-      }
-    }catch{}
-
-    const candidates=this.fingerprintCandidates(identity,seedEntry);
-    if(!candidates.length)return null;
-
-    const results=(await Promise.all(candidates.map(async entry=>{
-      try{
-        const points=await this.artworkFingerprintCenterline(entry);
-        const match=engine.compare(fingerprint,points);
-        return match?{entry,...match}:null;
-      }catch(err){
-        console.warn("AMS fingerprint candidate:",entry?.config,err);
-        return null;
-      }
-    }))).filter(Boolean).sort((a,b)=>b.score-a.score);
-
-    if(!results.length)return null;
-
-    const best=results[0],second=results[1];
-    const margin=best.score-(second?.score||0);
-    const exactId=String(identity?.trackId||"");
-    const exact=exactId
-      ?results.find(x=>this.entryTrackId(x.entry)===exactId)
-      :null;
-
-    let selected=seedEntry?results.find(x=>x.entry===seedEntry)||null:null;
-    let conflict=false;
-
-    if(exact){
-      // TrackID is authoritative. Geometry is a verifier, not an override.
-      // If the fingerprint strongly disagrees we expose a conflict, but keep
-      // the exact iRacing layout so a heuristic cannot silently swap variants.
-      selected=exact;
-      if(best.entry!==exact.entry&&best.score>=.88&&best.score-exact.score>=.20){
-        conflict=true;
-      }
-    }else{
-      const threshold=fingerprint.source==="GPS"?.66:.60;
-      if(best.score>=threshold&&(margin>=.025||best.score>=.86))selected=best;
-    }
-    if(!selected)selected=best;
-
-    const result={
-      entry:selected.entry,
-      source:fingerprint.source,
-      score:selected.score,
-      margin,
-      cached:false,
-      conflict,
-      best,
-      ranked:results.slice(0,5).map(x=>({
-        config:x.entry?.config||"",
-        trackId:this.entryTrackId(x.entry),
-        score:x.score,
-        confidence:x.confidence
-      }))
-    };
-
-    try{
-      sessionStorage.setItem(cacheKey,JSON.stringify({
-        path:result.entry.localPath||result.entry.cdnBase,
-        source:result.source,
-        score:result.score,
-        margin:result.margin,
-        conflict:result.conflict
-      }));
-    }catch{}
-    return result;
   },
 
   configHint(entry){
@@ -669,12 +449,9 @@ window.AMSTrack = {
     try{
       if(status)status.textContent="A localizar referência…";
       const identity=this.telemetryTrackIdentity(trackName,configHint,telemetry);
-      const seedEntry=await this.resolve(identity.trackName,identity.configHint,identity.trackId);
-      const estimatedLength=this.estimateLapLength(telemetry);
-      const fingerprintMatch=await this.resolveByFingerprint(identity,telemetry,seedEntry);
-      const entry=fingerprintMatch?.entry||seedEntry;
-      this.fingerprintMatch=fingerprintMatch;
+      const entry=await this.resolve(identity.trackName,identity.configHint,identity.trackId);
       this.activeEntry=entry;
+      const estimatedLength=this.estimateLapLength(telemetry);
 
       // Prefer a GPS reference only when it is compatible with the exact
       // iRacing layout. Multi-layout venues must never fall back to a generic
@@ -687,11 +464,7 @@ window.AMSTrack = {
           const match=Number.isFinite(estimatedLength)&&Number.isFinite(len)
             ?" · "+Math.round(estimatedLength)+"m / "+Math.round(len)+"m"
             :"";
-          const fp=fingerprintMatch?.score
-            ?" · "+fingerprintMatch.source+" MATCH "+Math.round(fingerprintMatch.score*100)+"%"
-            :"";
-          const conflict=fingerprintMatch?.conflict?" · METADATA/GEOMETRY CONFLICT":"";
-          status.textContent="GPS REFERENCE · "+label+match+fp+conflict;
+          status.textContent="GPS REFERENCE · "+label+match;
         }
         return {entry,reference};
       }
@@ -726,11 +499,7 @@ window.AMSTrack = {
       if(status){
         const layout=identity.metadata?.TrackConfigName||this.configHint(entry);
         const id=identity.trackId||this.entryTrackId(entry);
-        const fp=fingerprintMatch?.score
-          ?fingerprintMatch.source+" MATCH "+Math.round(fingerprintMatch.score*100)+"%"
-          :"";
-        const conflict=fingerprintMatch?.conflict?"METADATA/GEOMETRY CONFLICT":"";
-        status.textContent=["iRacing",id,layout,fp,conflict].filter(Boolean).join(" · ")||this.reference.name||trackName;
+        status.textContent=["iRacing",id,layout].filter(Boolean).join(" · ")||this.reference.name||trackName;
       }
       return {entry,reference:null};
     }catch(err){
