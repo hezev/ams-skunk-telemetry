@@ -21,3 +21,6 @@ jobs:
         run: dotnet build --configuration Release
       - name: Engineering telemetry smoke test
         run: node scripts/smoke-test.mjs
+
+      - name: Validate concept module JavaScript
+        run: node --check wwwroot/js/ams-concepts.js
