@@ -1,0 +1,6 @@
+/* v23: remove duplicate title-side red stripe; preserve the existing border-left accent.
+   Some legacy styles add a :before stripe alongside the titlebar border. */
+.main .content>.view>.titlebar::before{
+  content:none!important;
+  display:none!important;
+}
