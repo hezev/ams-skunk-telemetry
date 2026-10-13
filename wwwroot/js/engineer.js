@@ -241,6 +241,8 @@ window.AMSEngineer = {
       if(!report.priorities.length)priorityHost.textContent="Sem oportunidades dominantes detetadas neste stint.";
     }
 
+    window.AMSEngineerMockupPanels?.render(report);
+
     const body=document.getElementById("engineerEvidenceBody");
     if(body){
       body.innerHTML="";
