@@ -1,5 +1,6 @@
 /* Compare hierarchy: large map first, thin telemetry strips below */
-#compare{display:flex;flex-direction:column}
+#compare.view:not(.active){display:none!important}
+#compare.view.active{display:flex;flex-direction:column}
 #compare>.titlebar{order:0}
 #compare>.compare-focus-card{order:1;margin:2px 0 3px!important}
 #compare>.metrics{order:2;margin:2px 0!important}
