@@ -20,7 +20,7 @@ document.addEventListener('ams-compare-data',e=>{
  }
  const valid=corners.filter(c=>Number.isFinite(c.p)&&Number.isFinite(c.entry)&&Number.isFinite(c.exit)&&c.exit>c.entry);
  if(!valid.length){state.textContent='Não foi possível localizar curvas nesta configuração.';return;}
- state.textContent=(circuit||'Circuito')+' · '+valid.length+' curvas estimadas pela geometria do mapa carregado. Os números são sequenciais e não correspondem necessariamente à numeração oficial da pista.';
+ state.textContent=(circuit||'Circuito')+' · '+valid.length+(valid.every(c=>c.official)?' curvas numeradas a partir do turns.svg da configuração iRacing. Posições aproximadas ao eixo da pista.':' curvas estimadas pela geometria. Numeração não oficial.');
  valid.forEach(c=>{
   const a=analysis.segmentStats(lapA,c.entry,c.exit),b=analysis.segmentStats(lapB,c.entry,c.exit);
   const delta=Number.isFinite(a.time)&&Number.isFinite(b.time)?a.time-b.time:null;
