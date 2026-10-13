@@ -1,0 +1,29 @@
+/* Records + Setup Lab: final visual consistency after Dashboard, Engineer, Telemetry, Compare.
+   CSS only: records queries, setup values, saved catalog, JSON import/export unchanged. */
+#records,#setup-lab{--finish-edge:#354657;--finish-head:#182330;--finish-red:#ef4656;--finish-blue:#4ba5ef}
+#records>.titlebar,#setup-lab>.titlebar{background:linear-gradient(90deg,#1a111a,#111a24 65%,#0d121a)!important;border-left:3px solid var(--finish-red)!important;padding:8px 11px!important;margin-bottom:3px!important}
+#records>.titlebar h1,#setup-lab>.titlebar h1{font-size:clamp(17px,1.65vw,23px)!important;letter-spacing:1px!important;font-weight:800!important;text-transform:uppercase!important}
+#records>.titlebar p,#setup-lab>.titlebar p{font-size:10px!important;line-height:1.4!important;margin-top:3px!important}
+#records .ams-record-info{background:#151f2b!important;color:#e2c88a!important;border-left:3px solid #d5b46e!important;margin:3px 0!important;padding:7px 10px!important}
+#records .ams-record-filters{background:#101923!important;padding:7px!important;border:1px solid var(--finish-edge)!important;margin:3px 0!important}
+#records .ams-record-filters input,#records .ams-record-filters select{background:#090f17!important;border:1px solid #44566b!important;color:#e6eef7!important;min-height:31px!important}
+#records .table-card{border-top:2px solid var(--finish-red)!important}
+#records .ams-record-rankings>.card:first-child{border-top:2px solid var(--finish-red)!important}
+#records .ams-record-rankings>.card:nth-child(2){border-top:2px solid var(--finish-blue)!important}
+#records .ams-record-table-wrap table{font-variant-numeric:tabular-nums!important}
+#records .ams-record-table-wrap th{background:#1d2937!important;color:#e9d09a!important;text-transform:uppercase!important;font-size:10px!important;letter-spacing:.55px!important}
+#records .ams-record-table-wrap td{color:#dce7f2!important;font-size:11px!important}
+#records .ams-record-table-wrap tbody tr:nth-child(2n){background:#101822!important}
+#setup-lab .ams-premium-grid{gap:3px!important;align-items:start!important}
+#setup-lab .ams-premium-grid>.ams-concept-card{padding:7px!important;background:#0c141e!important;border-color:var(--finish-edge)!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:first-child{border-top:2px solid var(--finish-red)!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){border-top:2px solid var(--finish-blue)!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(3){border-top:2px solid #c5a363!important}
+#setup-lab .ams-concept-card>h3{background:var(--finish-head)!important;text-transform:uppercase!important;letter-spacing:.7px!important;font-size:10px!important;padding:6px 8px!important}
+#setup-lab .ams-setup-row{background:#0f1924!important;border-bottom:1px solid #344657!important}
+#setup-lab .ams-setup-row:nth-child(2n){background:#121e2b!important}
+#setup-lab .ams-setup-row input[type=range]{accent-color:var(--finish-red)!important}
+#setup-lab .ams-setup-row output{font-variant-numeric:tabular-nums!important;color:#d8e7f7!important}
+#setup-lab #setupCatalog{scrollbar-width:thin!important}
+#setup-lab button:focus-visible,#records input:focus-visible,#records select:focus-visible{outline:2px solid #e2bb75!important;outline-offset:1px!important}
+@media(max-width:700px){#records>.titlebar,#setup-lab>.titlebar{padding:7px!important}#setup-lab .ams-premium-grid>.ams-concept-card{padding:5px!important}}
