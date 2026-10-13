@@ -242,7 +242,10 @@
         .slice(-20);
       const details=(await Promise.all(candidates.map(l=>detail(l.id)))).filter(Boolean);
       if(details.length<2){
-        AMSEngineer.render({ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."});
+        const report={ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."};
+        state.engineerReport=null;
+        AMSEngineer.render(report);
+        document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
         return;
       }
 
@@ -260,7 +263,10 @@
       setText("carName",session.car||"—");
     }catch(err){
       console.warn("AMS engineer:",err);
-      AMSEngineer.render({ok:false,reason:"Erro na análise: "+String(err.message||err)});
+      const report={ok:false,reason:"Erro na análise: "+String(err.message||err)};
+      state.engineerReport=null;
+      AMSEngineer.render(report);
+      document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
     }finally{
       if(btn){btn.disabled=false;btn.textContent="Analyse Session";}
     }
