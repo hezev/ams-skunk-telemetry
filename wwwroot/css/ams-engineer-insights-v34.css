@@ -1,0 +1,17 @@
+/* Engineer mockup v34 — real evidence cards after the map/AI workstation */
+#engineer .engineer-performance-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:5px 0 8px}
+#engineer .engineer-performance-grid>.card{min-width:0;border:1px solid #354657!important;background:#0b1520!important;margin:0!important}
+#engineer .engineer-performance-grid>.card:nth-child(1){border-top:2px solid #2eaa7d!important}
+#engineer .engineer-performance-grid>.card:nth-child(2){border-top:2px solid #e55762!important}
+#engineer .engineer-performance-grid>.card:nth-child(3){border-top:2px solid #d6a74c!important}
+#engineer .engineer-performance-grid>.card:nth-child(4){border-top:2px solid #398fd0!important}
+#engineer .engineer-finding-list{padding:7px;min-height:115px;font-size:11px;color:#b2c4d5}
+#engineer .engineer-finding-row{padding:6px 4px;border-bottom:1px solid #293d4d;display:flex;flex-direction:column;gap:3px}
+#engineer .engineer-finding-row strong{font-size:11px;color:#e7f2ff}
+#engineer .engineer-finding-row span{color:#9fb5c8;line-height:1.35}
+#engineer .engineer-scorecard{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px}
+#engineer .engineer-scorecard>div{background:#101f2d;border:1px solid #2c465a;padding:8px 6px;display:flex;flex-direction:column;gap:5px}
+#engineer .engineer-scorecard span{font-size:9px;color:#a4b7ca;letter-spacing:.4px;text-transform:uppercase}
+#engineer .engineer-scorecard strong{font-size:19px;color:#eef6fd;font-variant-numeric:tabular-nums}
+@media(max-width:1250px){#engineer .engineer-performance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){#engineer .engineer-performance-grid{grid-template-columns:1fr}}
