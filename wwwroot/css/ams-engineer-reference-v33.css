@@ -1,0 +1,24 @@
+/* v33: three-column approved Engineer mockup using genuine existing components. */
+#engineer .engineer-mockup-layout{display:grid;grid-template-columns:minmax(0,1.33fr) minmax(300px,.92fr) minmax(320px,.97fr);gap:6px;align-items:start;margin-bottom:7px}
+#engineer .engineer-mockup-layout>div{min-width:0;display:flex;flex-direction:column;gap:6px}
+#engineer .engineer-mockup-layout article{margin:0!important;min-width:0!important}
+#engineer .engineer-mockup-insights-column .engineer-grid{display:flex!important;flex-direction:column!important;gap:6px!important;margin:0!important}
+#engineer .engineer-mockup-insights-column .engineer-grid>.card{width:100%!important}
+#engineer .engineer-track-card{border-top:2px solid #359bd3!important;overflow:hidden}
+#engineer .engineer-map-stage{position:relative;height:clamp(330px,33vw,475px);background:radial-gradient(ellipse at center,#142435,#070d14 73%);border:1px solid #2b4153;margin:5px;display:flex;align-items:center;justify-content:center}
+#engineer #engineerTrackSvg{width:100%;height:100%;display:block}
+#engineer #engineerTrackSvg .engineer-line{fill:none;stroke:#a9c0d3;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#engineer #engineerTrackSvg .engineer-under{fill:none;stroke:#142f41;stroke-width:14;stroke-linecap:round;stroke-linejoin:round}
+#engineer #engineerTrackSvg .engineer-turn{fill:#0b1b28;stroke:#65aada;stroke-width:2}
+#engineer #engineerTrackSvg .engineer-turn-num{fill:#edf6ff;font-size:13px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+#engineer #engineerMapEmpty{position:absolute;max-width:280px;text-align:center;line-height:1.5;color:#9ab0c2;font-size:12px;padding:12px;background:#09131dcc}
+#engineer .engineer-mockup-map-column .engineer-priority-card{border-top:2px solid #d6a342!important}
+#engineer .engineer-mockup-ai-column>.engineer-ai-card{border-top:2px solid #318ed0!important}
+#engineer .engineer-mockup-ai-column .engineer-ai-output{min-height:170px}
+#engineer .engineer-mockup-insights-column .engineer-grid>.card:first-child{border-top:2px solid #29ab7c!important}
+#engineer .engineer-mockup-insights-column .engineer-grid>.card:nth-child(2){border-top:2px solid #d9aa4d!important}
+#engineer .engineer-mockup-ai-column .engineer-ai-question{flex-wrap:wrap}
+#engineer .engineer-mockup-ai-column .engineer-ai-question input{flex:1 1 175px;min-width:0}
+#engineer .engineer-mockup-ai-column .engineer-ai-actions{flex-wrap:wrap}
+@media(max-width:1350px){#engineer .engineer-mockup-layout{grid-template-columns:minmax(0,1.1fr) minmax(280px,1fr)}#engineer .engineer-mockup-ai-column{grid-column:1/-1}#engineer .engineer-mockup-ai-column .engineer-ai-output{min-height:95px}}
+@media(max-width:850px){#engineer .engineer-mockup-layout{grid-template-columns:1fr}#engineer .engineer-mockup-ai-column{grid-column:auto}#engineer .engineer-map-stage{height:320px}}

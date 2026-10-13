@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="css/ams-telemetry-side-kpis-v27.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-compare-side-kpis-v28.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-mockup-session-frame-v29.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-engineer-reference-v33.css?v=20261013-1">
 </head>
 <body>
 
@@ -412,6 +413,26 @@
         <article class="metric"><span>Consistency</span><strong id="engineerConsistency">—</strong></article>
       </div>
 
+      <div class="engineer-mockup-layout">
+        <div class="engineer-mockup-map-column">
+      <article class="card engineer-track-card">
+        <div class="card-head"><div><div class="card-title">Track Analysis</div><div class="trajectory-subtitle">Traçado de referência carregado · sessão selecionada</div></div><span id="engineerMapStatus" class="chip">SEM TRAÇADO</span></div>
+        <div class="engineer-map-stage"><svg id="engineerTrackSvg" viewBox="0 0 1000 600" aria-label="Traçado da pista selecionada"></svg><p id="engineerMapEmpty">Seleciona uma sessão com um mapa de pista validado para visualizar o traçado.</p></div>
+      </article>
+
+      <article class="card engineer-priority-card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Next Stint Priorities</div>
+            <div class="trajectory-subtitle">Máximo três objetivos · primeiro execução, depois setup</div>
+          </div>
+        </div>
+        <div id="engineerPriorities" class="engineer-priorities">Sem análise.</div>
+      </article>
+
+
+        </div>
+        <div class="engineer-mockup-insights-column">
       <div class="engineer-grid">
         <article class="card">
           <div class="card-head">
@@ -446,19 +467,8 @@
           </div>
           <p id="engineerSetupText" class="engineer-note">A estimativa de setup só é apresentada quando existem padrões repetíveis suficientes.</p>
         </article>
-      </div>
-
-      <article class="card engineer-priority-card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">Next Stint Priorities</div>
-            <div class="trajectory-subtitle">Máximo três objetivos · primeiro execução, depois setup</div>
-          </div>
-        </div>
-        <div id="engineerPriorities" class="engineer-priorities">Sem análise.</div>
-      </article>
-
-
+      </div>        </div>
+        <div class="engineer-mockup-ai-column">
       <article class="card engineer-ai-card">
         <div class="card-head">
           <div>
@@ -477,6 +487,9 @@
         </div>
         <div class="engineer-ai-foot">A AI interpreta os cálculos do AMS; não substitui a evidência nem inventa ganhos de setup.</div>
       </article>
+
+        </div>
+      </div>
 
       <article class="card table-card">
         <div class="card-head">
@@ -594,5 +607,6 @@
 <script src="js/ams-chart-toolbar.js?v=20261013-1"></script>
 <script src="js/ams-telemetry-expand.js?v=20261013-1"></script>
 <script src="js/ams-map-empty-states.js?v=20261013-1"></script>
+  <script src="js/ams-engineer-reference-v33.js?v=20261013-1"></script>
 </body>
 </html>
