@@ -1,0 +1,37 @@
+/* V4 Dense telemetry graphics — final CSS layer after square compact */
+:root{--ams-grid-line:#293343;--ams-panel-edge:#3c4655;--ams-hot:#ed4250;--ams-cool:#4f99e7;--ams-amber:#d8b36c}
+#dashboard .chart-wrap,#telemetry .chart-wrap,#compare .chart-wrap,.ams-plot{background:repeating-linear-gradient(0deg,transparent 0 31px,#24304064 32px),repeating-linear-gradient(90deg,transparent 0 49px,#24304064 50px),#0c1119!important;border:1px solid var(--ams-panel-edge)!important;min-width:0}
+canvas{max-width:100%}
+.card-head,.ams-concept-card h3,.ams-enhancement-card h3,.ams-work-card>h3{background:linear-gradient(90deg,#2b2029 0%,#171923 64%,transparent)!important;color:#f4f2f5!important}
+.card-title{letter-spacing:.5px!important}
+.ams-enhancement-data>div,.ams-kpis>div,.ams-mini-summary>div,.ams-corner-status>div{background:#10141d!important;border-color:#353c49!important}
+.metrics>.metric:nth-child(3n+1):after{background:linear-gradient(90deg,var(--ams-hot),transparent)!important}
+.metrics>.metric:nth-child(3n+2):after{background:linear-gradient(90deg,var(--ams-cool),transparent)!important}
+.metrics>.metric:nth-child(3n):after{background:linear-gradient(90deg,var(--ams-amber),transparent)!important}
+#compare .compare-focus-card{border-color:#4b4554!important}
+#compare .ams-geometry-grid,#compare .ams-phase-grid{gap:3px!important}
+#compare .ams-corner-insight,#compare .ams-phase-card{background:#141a24!important}
+#compare .ams-corner-insight.selected{border-left:3px solid var(--ams-hot)!important}
+.ams-geometry-grid .ams-corner-insight h4{margin-bottom:4px!important}
+#engineer .engineer-grid .card{padding:8px!important}
+#engineer .ams-enhancement-grid,#dashboard .ams-enhancement-grid{margin:3px 0!important}
+.ams-phase-measures>div,.ams-corner-numbers>div{background:#0b1018!important}
+.ams-event-feed{scrollbar-width:thin}
+.ams-event-row{border-left:2px solid #5c4350!important}
+.ams-event-row:has(.attention){border-left-color:var(--ams-hot)!important}
+.ams-mini-table-wrap{border:1px solid #313c4a}
+.ams-mini-table{border-collapse:collapse!important}
+.ams-mini-table thead th{position:sticky;top:0;background:#20232e!important;z-index:1}
+.ams-mini-table td{border-right:1px solid #25303e!important}
+.ams-mini-table tr.ams-loss{background:#321c2470}
+.ams-mini-table tr.ams-gain{background:#162b4370}
+.ams-setup-row input[type=range]{accent-color:var(--ams-hot)}
+.ams-premium-list>div,.ams-saved-row{border-left:2px solid #465773!important}
+.ams-preview{background:repeating-linear-gradient(0deg,transparent 0 24px,#3440542b 25px),repeating-linear-gradient(90deg,transparent 0 24px,#3440542b 25px),#0c111a!important}
+#overlay-builder .ams-overlay-tile{border-left:3px solid #4688ce!important}
+#overlay-builder .ams-overlay-tile.selected{border-left-color:#ed4250!important}
+.ams-primary{background:#b82737!important}
+.ams-secondary{background:#19283c!important}
+.ams-control{background:#101720!important}
+@media(max-width:1050px){.ams-geometry-grid{grid-template-columns:repeat(auto-fit,minmax(225px,1fr))!important}}
+@media(max-width:650px){.ams-geometry-grid{grid-template-columns:1fr!important}.ams-mini-table{min-width:660px}}
