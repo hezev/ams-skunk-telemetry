@@ -35,7 +35,7 @@
   section('setup-lab','Setup Lab & Tune Catalog','Guardar perfis de setup · comparar parâmetros · preparar experiências',
     '<div class="ams-premium-grid">'+
     card('1. Setup Sheet','<label class="ams-label" for="setupName">Nome do setup</label><input id="setupName" class="ams-control" maxlength="70" value="GT3 Baseline" />'+makeSetupControls()+'<div class="ams-visual-tabs"><button id="setupReset" class="ams-secondary" type="button">Repor</button><button id="setupSave" class="ams-primary" type="button">Guardar localmente</button></div><p id="setupMessage" class="ams-muted" role="status"></p>')+
-    card('2. Comparison & Recommendations','<div class="ams-premium-list" id="setupCompare"><div><span>Baseline</span><strong>Por definir</strong></div></div>'+note('Este módulo NÃO prevê ganhos de tempo. Recomendações automáticas exigem calibração e validação com telemetria real.')+'<div class="ams-line"></div><h3>Impacto estimado</h3>'+kpis([['Lap time','N/D'],['Stability','N/D'],['Traction','N/D'],['Tyre wear','N/D']])+svgPlot) +
+    card('2. Setup Comparison','<p class="ams-concept-note">Diferenças reais dos parâmetros relativamente ao setup de referência. Não são previsões de tempo por volta.</p><div class="ams-premium-list" id="setupCompare" aria-live="polite"></div>') +
     card('3. My Tune Catalog','<div id="setupCatalog" class="ams-premium-list"></div>'+note('Perfis guardados neste navegador. Ainda não sincronizados com Supabase.')+'<button id="setupExport" class="ams-secondary" type="button">Exportar JSON</button>')+
     '</div>');
   // Safe navigation: the existing application only registered listeners for original nav items.
@@ -48,6 +48,21 @@
   const setupKey='ams_setup_catalog_v1';
   const readSetups=()=>{try{const s=JSON.parse(localStorage.getItem(setupKey)||'[]');return Array.isArray(s)?s:[]}catch{return []}};
   const params=()=>Object.fromEntries(setupDefinitions.map(([name],i)=>[name,Number($('#setup-lab [data-setup-param="'+i+'"]').value)]));
+  let baseline=Object.fromEntries(setupDefinitions.map(d=>[d[0],d[3]]));
+  let baselineName='GT3 Baseline';
+  const renderComparison=()=>{
+    const container=$('#setupCompare');container.replaceChildren();
+    const heading=document.createElement('div');const text=document.createElement('span');text.textContent='Referência';const strong=document.createElement('strong');strong.textContent=baselineName;heading.append(text,strong);container.append(heading);
+    const current=params();let changed=0;
+    setupDefinitions.forEach(([name])=>{
+      const before=Number(baseline[name]),after=current[name],delta=after-before;
+      if(!Number.isFinite(before)||!Number.isFinite(after))return;
+      if(Math.abs(delta)>0.000001)changed++;
+      const row=document.createElement('div');const label=document.createElement('span');label.textContent=name;const value=document.createElement('strong');value.textContent=before+' → '+after+(Math.abs(delta)>0.000001?' ('+(delta>0?'+':'')+Number(delta.toFixed(2))+')':' (igual)');
+      row.append(label,value);container.append(row);
+    });
+    const summary=document.createElement('p');summary.className='ams-concept-note';summary.textContent=changed+' de '+setupDefinitions.length+' parâmetros alterados face à referência.';container.append(summary);
+  };
   const refreshSetup=()=>{
     const rows=readSetups(),catalog=$('#setupCatalog');
     catalog.replaceChildren();
@@ -60,13 +75,13 @@
         $('#setupName').value=item.name;
         setupDefinitions.forEach(([name],i)=>{const inp=$('#setup-lab [data-setup-param="'+i+'"]');inp.value=item.parameters[name]??setupDefinitions[i][3];$('#setupValue'+i).textContent=inp.value;});
         $('#setupMessage').textContent='Perfil carregado localmente.';
-        $('#setupCompare').textContent='Setup selecionado: '+item.name;
+        baseline={...item.parameters};baselineName=item.name;renderComparison();
       });
       div.append(label,b);catalog.append(div);
     });
   };
-  setupDefinitions.forEach((_,i)=>$('#setup-lab [data-setup-param="'+i+'"]').addEventListener('input',e=>$('#setupValue'+i).textContent=e.target.value));
-  $('#setupReset').addEventListener('click',()=>setupDefinitions.forEach((d,i)=>{const el=$('#setup-lab [data-setup-param="'+i+'"]');el.value=d[3];$('#setupValue'+i).textContent=el.value;}));
+  setupDefinitions.forEach((_,i)=>$('#setup-lab [data-setup-param="'+i+'"]').addEventListener('input',e=>{$('#setupValue'+i).textContent=e.target.value;renderComparison();}));
+  $('#setupReset').addEventListener('click',()=>{setupDefinitions.forEach((d,i)=>{const el=$('#setup-lab [data-setup-param="'+i+'"]');el.value=d[3];$('#setupValue'+i).textContent=el.value;});renderComparison();});
   $('#setupSave').addEventListener('click',()=>{
     const name=$('#setupName').value.trim()||'Sem nome',rows=readSetups();rows.push({name,parameters:params(),savedAt:new Date().toISOString()});
     try{localStorage.setItem(setupKey,JSON.stringify(rows.slice(-30)));$('#setupMessage').textContent='Setup guardado neste navegador.';refreshSetup()}catch{$('#setupMessage').textContent='Não foi possível guardar este setup.'}
@@ -74,5 +89,5 @@
   $('#setupExport').addEventListener('click',()=>{
     const data=JSON.stringify(readSetups(),null,2);const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='ams-setups.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-  });refreshSetup();
+  });refreshSetup();renderComparison();
 })();
