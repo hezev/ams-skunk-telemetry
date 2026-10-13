@@ -1,0 +1,66 @@
+/* v16 — instrument-panel geometry from approved AMS racing mockups.
+   Preserve all DOM/order/chart sizing, compact expansion controls, and telemetry algorithms. */
+#dashboard .layout-main>.card:first-child .card-head,
+#dashboard .layout-main>.card:nth-child(2) .card-head{
+  background:linear-gradient(90deg,#171f2a,#0e1620)!important;
+  border-bottom:1px solid #374557!important;
+  margin-bottom:4px!important;
+}
+#dashboard .gauges{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+#dashboard .gauges>div{
+  position:relative;
+  min-width:0;
+  background:linear-gradient(180deg,#101c28,#090f17)!important;
+  border:1px solid #293b4d!important;
+  border-left:2px solid #344c63!important;
+}
+#dashboard .gauges>div:first-child{border-left-color:#d92b3c!important}
+#dashboard .gauges>div:nth-child(2){border-left-color:#398ed1!important}
+#dashboard .gauges>div:nth-child(3){border-left-color:#d9a855!important}
+#dashboard .gauges>div:nth-child(4){border-left-color:#39b68b!important}
+#dashboard .gauges>div strong{
+  font-size:clamp(21px,2.15vw,32px)!important;
+  color:#eef5fb!important;
+  font-variant-numeric:tabular-nums!important;
+  letter-spacing:-.6px!important;
+}
+#dashboard .gauges>div span{color:#91a6ba!important;font-size:9px!important}
+#dashboard .inputs>div{background:#0c151e!important;padding:4px 6px!important}
+#dashboard .inputs .bar{background:#070e15!important;border-color:#2c3d50!important}
+#dashboard .tyre{border-top:2px solid #30506a!important}
+#dashboard .tyre:nth-child(2){border-top-color:#bc9f43!important}
+#dashboard .tyre:nth-child(3){border-top-color:#34895f!important}
+#dashboard .tyre:nth-child(4){border-top-color:#b74844!important}
+#dashboard .dashboard-lower .card-title{
+  background:#172230!important;
+  padding:5px 6px!important;
+  margin-bottom:5px!important;
+}
+#engineer .engineer-verdict{
+  background:linear-gradient(90deg,#21151c,#101a26)!important;
+  border-bottom:1px solid #394b5e!important;
+}
+#engineer .engineer-facts strong,#engineer .engineer-setup-kpi strong{
+  color:#eef5fd!important;
+  font-variant-numeric:tabular-nums!important;
+}
+#telemetry #telemetryMapFirst .trajectory-legend,
+#compare .trajectory-legend{
+  background:#0c151f!important;
+  border:1px solid #334657!important;
+  padding:4px 6px!important;
+}
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading>.card-title,
+#compare .compare-telemetry-grid .card-title{
+  text-shadow:none!important;
+  color:#e8eff7!important;
+}
+#telemetry .telemetry-grid-dense .chart-wrap,
+#compare .compare-telemetry-grid .chart-wrap{
+  box-shadow:inset 0 1px 0 #223448!important;
+}
+@media(max-width:640px){
+  #dashboard .gauges>div strong{font-size:22px!important}
+}
