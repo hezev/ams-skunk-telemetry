@@ -37,4 +37,23 @@ for(const token of ["refreshEngineeringAnalysis","renderMiniSectors","renderDriv
   if(!app.includes(token)) throw new Error("Missing app capability "+token);
 }
 
+
+// Layout regressions: map first, compact expandable charts second, coaching in a separate panel.
+const telemetryIndex=index.slice(index.indexOf('<section id="telemetry"'),index.indexOf('</section>',index.indexOf('<section id="telemetry"')));
+const mapPos=telemetryIndex.indexOf('id="telemetryMapFirst"');
+const chartPos=telemetryIndex.indexOf('class="telemetry-grid telemetry-grid-dense"');
+const analysisPos=telemetryIndex.indexOf('id="engineeringAnalysisMount"');
+if(mapPos<0||chartPos<0||analysisPos<0||!(mapPos<chartPos&&chartPos<analysisPos)){
+  throw new Error("Telemetry map / charts / analysis order regression");
+}
+const expand=read("wwwroot/js/ams-telemetry-expand.js");
+const compact=read("wwwroot/css/ams-telemetry-expand.css");
+try{new Function(expand);}catch(err){throw new Error("Telemetry expand syntax: "+err.message);}
+for(const token of ["ams-trajectory-coach-panel","trajectory-coach-current","trajectory-coach-table-wrap","telemetryMapFirst","ams-chart-expanded","AMSCharts?.drawAll"]){
+  if(!expand.includes(token))throw new Error("Missing map, coach or chart expansion integration: "+token);
+}
+for(const token of [".ams-chart-expanded","height:102px","height:90px"]){
+  if(!compact.includes(token))throw new Error("Missing compact/expanded chart styling: "+token);
+}
+
 console.log("AMS engineering telemetry smoke test: OK");
