@@ -1,0 +1,21 @@
+/* Compare hierarchy: large map first, thin telemetry strips below */
+#compare.view:not(.active){display:none!important}
+#compare.view.active{display:flex;flex-direction:column}
+#compare>.titlebar{order:0}
+#compare>.compare-focus-card{order:1;margin:2px 0 3px!important}
+#compare>.metrics{order:2;margin:2px 0!important}
+#compare>.ams-compare-strip{order:3;margin:2px 0!important}
+#compare>.compare-telemetry-grid{order:4;gap:3px!important;margin:2px 0 5px!important}
+#compare>.ams-enhancement-grid{order:5}
+#compare>.ams-work-card{order:6}
+#compare>.compare-focus-card .compare-focus-stage{height:clamp(290px,39vh,490px)!important}
+#compare .compare-telemetry-grid .chart-wrap,
+#compare .compare-telemetry-grid .chart-wrap.big{height:108px!important;min-height:108px!important;margin:2px 0 0!important;padding:0!important}
+#compare .compare-telemetry-grid .card{padding:5px!important}
+#compare .compare-telemetry-grid .card-head{padding:1px 3px 4px!important;margin:0!important;min-height:0!important}
+#compare .compare-telemetry-grid .card-title{font-size:10px!important}
+#compare .compare-replay-row{margin:3px 0 0!important;padding:4px!important}
+#compare .compare-focus-coach{margin:3px 0!important}
+#compare .compare-telemetry-grid canvas{width:100%!important;height:100%!important;display:block}
+@media(max-width:900px){#compare>.compare-focus-card .compare-focus-stage{height:310px!important}#compare .compare-telemetry-grid .chart-wrap.big{height:98px!important;min-height:98px!important}}
+@media(max-width:600px){#compare>.compare-focus-card .compare-focus-stage{height:260px!important}#compare .compare-telemetry-grid .chart-wrap.big{height:88px!important;min-height:88px!important}}
