@@ -1,0 +1,24 @@
+/* Workstation v9: Records and Setup Lab harmonized with approved dark, squared UI.
+   Presentation only: keep all rankings, input events and setup calculations intact. */
+#records,#setup-lab{--ws9-edge:#384453;--ws9-dark:#0d141d;--ws9-head:#18212c;--ws9-red:#e94b5a;--ws9-blue:#4b9ae8}
+#records>.titlebar,#setup-lab>.titlebar{margin-bottom:3px!important;padding-bottom:5px!important}
+#records .card,#setup-lab .ams-concept-card{background:var(--ws9-dark)!important;border:1px solid var(--ws9-edge)!important;border-radius:0!important;box-shadow:none!important;padding:7px!important;min-width:0}
+#records .card-head,#setup-lab .ams-concept-card>h3{background:var(--ws9-head)!important;color:#f3f6fa!important;font-size:11px!important;letter-spacing:.45px!important;margin:0 0 5px!important;padding:5px 7px!important}
+#records .ams-record-info{margin:3px 0!important;padding:6px 8px!important}
+#records .ams-record-filters{margin:3px 0!important;gap:3px!important}
+#records .ams-record-filters label{gap:2px!important}
+#records .ams-record-table-wrap{border:1px solid var(--ws9-edge);background:#0b1119}
+#records .ams-record-table-wrap th{background:var(--ws9-head)!important;color:#e0be79!important;padding:5px 7px!important;font-size:10px!important}
+#records .ams-record-table-wrap td{padding:5px 7px!important;font-size:11px!important}
+#records .ams-record-rankings{gap:3px!important;margin-top:3px!important}
+#records .ams-record-rankings>.card:first-child{border-top:2px solid var(--ws9-red)!important}
+#records .ams-record-rankings>.card:nth-child(2){border-top:2px solid var(--ws9-blue)!important}
+#setup-lab .ams-premium-grid{gap:3px!important;margin:3px 0!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:first-child{border-top:2px solid var(--ws9-red)!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){border-top:2px solid var(--ws9-blue)!important}
+#setup-lab .ams-setup-row{background:#101923!important;grid-template-columns:minmax(105px,1fr) minmax(90px,1.4fr) 42px!important;padding:5px 6px!important}
+#setup-lab .ams-setup-row output{color:#d6e5f7!important;font-size:11px!important}
+#setup-lab #setupCompare>div,#setup-lab #setupCatalog>div{gap:6px!important;padding:6px!important;border-bottom:1px solid #303b49}
+#setup-lab .ams-visual-tabs{gap:3px!important}
+#setup-lab .ams-control,#setup-lab button{border-radius:0!important}
+@media(max-width:700px){#setup-lab .ams-setup-row{grid-template-columns:100px minmax(50px,1fr) 40px!important}#records .ams-record-table-wrap td,#records .ams-record-table-wrap th{padding:4px 5px!important}}
