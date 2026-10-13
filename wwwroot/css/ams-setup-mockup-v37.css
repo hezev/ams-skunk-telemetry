@@ -1,0 +1,79 @@
+/* AMS Setup Lab v37 — three-zone original approved Setup Lab / Tune Catalog reference.
+   Enhancement only: inputs moved, not cloned; user catalog remains local.
+   No invented physics impact, community entries or cloud sync. */
+#setup-lab{--setup-bg:#0a1018;--setup-panel:#0c1520;--setup-line:#344454;--setup-blue:#259ae4;--setup-red:#ed3349}
+#setup-lab>.titlebar{display:flex!important;flex-wrap:wrap;align-items:center!important;justify-content:space-between!important;gap:8px!important;background:linear-gradient(90deg,#131b24,#080d14)!important;border-left:0!important;border-bottom:1px solid #3a4859!important;padding:10px!important;margin-bottom:4px!important}
+#setup-lab>.titlebar h1{font-size:clamp(20px,1.8vw,26px)!important;letter-spacing:.5px!important}
+#setup-lab>.titlebar p{font-size:10px!important;letter-spacing:1px!important;color:#93a9bd!important;text-transform:uppercase!important}
+#setup-lab .setup-header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:5px;min-width:0}
+#setup-lab .setup-badge{color:#42e1a2;font-size:10px;font-weight:800;letter-spacing:.3px;padding:6px 10px;border-left:1px solid #28453e}
+#setup-lab .setup-action-primary,#setup-lab .setup-action-secondary{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:7px 9px;color:#eaf5ff;border:1px solid #41566d;background:#101b28;cursor:pointer;border-radius:2px}
+#setup-lab .setup-action-primary{background:#183865;border-color:#3278b9}
+#setup-lab .setup-action-primary:hover,#setup-lab .setup-action-secondary:hover{border-color:#65b5ec;background:#21415c}
+#setup-lab .setup-context-strip{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;margin-bottom:6px;color:#99adbe;background:#0a1420;border:1px solid #2b3d4e;font-size:10px;letter-spacing:.3px;flex-wrap:wrap}
+#setup-lab>.setup-workstation{display:grid!important;grid-template-columns:minmax(320px,1.12fr) minmax(320px,1.18fr) minmax(290px,1fr)!important;gap:6px!important;align-items:stretch!important;margin:0 0 7px!important}
+#setup-lab .setup-workstation>.ams-concept-card{min-width:0!important;overflow:hidden!important;border:1px solid #2e4154!important;background:#090f18!important;border-radius:2px!important;box-shadow:none!important;padding:7px!important;margin:0!important}
+#setup-lab .setup-workstation>.ams-concept-card>h3{font-weight:850!important;letter-spacing:.65px!important;color:#ebf3ff!important;background:#152131!important;border:1px solid #263e52!important;padding:9px 8px!important;margin:0 0 6px!important;font-size:12px!important;border-radius:0!important}
+#setup-lab .setup-workstation>.setup-sheet-v37{border-top:2px solid #e63b50!important}
+#setup-lab .setup-workstation>.setup-recommend-v37{border-top:2px solid #2d92d2!important}
+#setup-lab .setup-workstation>.setup-catalog-v37{border-top:2px solid #cca247!important}
+#setup-lab .setup-sheet-v37 #setupName{width:100%!important;min-height:30px!important;background:#0e1d29!important;border:1px solid #3d5268!important;margin-bottom:6px!important;border-radius:2px!important}
+#setup-lab .setup-category-stack{display:flex;flex-direction:column;gap:5px;padding-bottom:8px}
+#setup-lab .setup-category{background:#0e1924;border:1px solid #2a4153;min-width:0}
+#setup-lab .setup-category-head{display:flex;align-items:center;justify-content:space-between;gap:5px;color:#dfeefa;padding:5px 7px;border-bottom:1px solid #30475c;background:#142131}
+#setup-lab .setup-category-head strong{font-size:10px;letter-spacing:.65px}
+#setup-lab .setup-category-head span{font-size:9px;color:#8fa9c0}
+#setup-lab .setup-control-row{display:grid!important;grid-template-columns:minmax(100px,1.1fr) minmax(60px,1fr) 42px!important;gap:6px!important;align-items:center!important;padding:6px 7px!important;margin:0!important;border-bottom:1px solid #1c3040!important;min-width:0}
+#setup-lab .setup-control-row:last-child{border-bottom:0!important}
+#setup-lab .setup-control-row span{font-size:10px!important;color:#c6d8e9!important;overflow-wrap:anywhere!important}
+#setup-lab .setup-control-row input[type=range]{width:100%!important;min-width:0!important;accent-color:#398ff0!important;margin:0!important}
+#setup-lab .setup-control-row output{background:#07121c!important;color:#f1f8ff!important;padding:4px!important;border:1px solid #324d63!important;border-radius:2px!important;min-width:36px!important;text-align:center!important;font-size:11px!important;font-weight:800!important}
+#setup-lab .setup-not-supported{border:1px solid #314151;background:#0c1722;font-size:10px;color:#a7bacd;margin-top:3px;padding:7px}
+#setup-lab .setup-not-supported summary{cursor:pointer;color:#b4c6da}
+#setup-lab .setup-not-supported p{line-height:1.45;margin:8px 0 0}
+#setup-lab .setup-sheet-v37 .ams-visual-tabs{display:flex!important;flex-wrap:wrap!important;gap:5px!important}
+#setup-lab .setup-sheet-v37 .ams-visual-tabs button{flex:1 1 110px!important}
+#setup-lab .setup-pane-intro{display:flex;flex-direction:column;gap:3px;padding:8px;border-left:3px solid #348fdb;color:#e7f4ff;background:#0f1a27;margin-bottom:6px}
+#setup-lab .setup-pane-intro strong{font-size:11px}
+#setup-lab .setup-pane-intro span{font-size:10px;color:#98adc0}
+#setup-lab .setup-recommend-tabs,#setup-lab .setup-catalog-tabs{display:flex;gap:4px;flex-wrap:wrap;padding-bottom:6px}
+#setup-lab .setup-recommend-tabs button,#setup-lab .setup-catalog-tabs button{color:#aebecf;background:#0c1622;border:1px solid #2e4258;border-radius:2px;padding:6px 8px;font-size:9px;font-weight:800;cursor:pointer}
+#setup-lab .setup-recommend-tabs button.is-active,#setup-lab .setup-catalog-tabs button.is-active{background:#99243a;border-color:#ed4058;color:#fff}
+#setup-lab .setup-recommendation-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+#setup-lab .setup-test-card{position:relative;padding:10px;background:#0e1925;border:1px solid #354b5d;border-left:3px solid #3297da;min-height:55px;display:flex;flex-direction:column;gap:4px}
+#setup-lab .setup-test-card.with-evidence{border-left-color:#34ac7b}
+#setup-lab .setup-test-card strong{font-size:11px;color:#e2f1fe}
+#setup-lab .setup-test-card p{font-size:10px;color:#adbdce;line-height:1.5;margin:0}
+#setup-lab .setup-test-summary{border-left-color:#d2a344}
+#setup-lab .setup-small-apply,#setup-lab .setup-small-secondary{align-self:flex-end;border:1px solid #ad3548;border-radius:2px;color:#fff;background:#9d2536;font-size:10px;padding:6px 8px;cursor:pointer}
+#setup-lab .setup-small-secondary{background:#152330;border-color:#415c75}
+#setup-lab .setup-small-apply:hover,#setup-lab .setup-small-secondary:hover{filter:brightness(1.18)}
+#setup-lab .setup-change-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px solid #304656;padding:5px 0}
+#setup-lab .setup-change-row span{flex:1;font-size:10px}
+#setup-lab .setup-change-row strong{color:#bfe8ff;font-size:10px}
+#setup-lab .setup-baseline-panel{border:1px solid #2d4558;background:#101925;padding:4px;margin-bottom:5px}
+#setup-lab .setup-baseline-panel summary{cursor:pointer;font-size:10px;font-weight:800;padding:7px;color:#d2e6f5}
+#setup-lab .setup-baseline-panel #setupCompare{max-height:260px;overflow:auto}
+#setup-lab .setup-baseline-panel #setupCompare>div{padding:5px!important;min-height:30px!important}
+#setup-lab .setup-catalog-toolbar{display:flex;gap:4px;align-items:center;margin-bottom:5px}
+#setup-lab .setup-catalog-search{width:100%!important;min-width:0;flex:1;background:#0d1825;border:1px solid #415771;border-radius:2px;padding:7px;color:#e6f2fc;font-size:11px}
+#setup-lab .setup-catalog-count{color:#93a9c0;font-size:10px;white-space:nowrap}
+#setup-lab .setup-catalog-unavailable{border:1px solid #33475a;background:#101b27;padding:15px;min-height:90px;font-size:11px;color:#a8c2d5;line-height:1.5}
+#setup-lab .setup-catalog-unavailable[hidden],#setup-lab .setup-catalog-toolbar[hidden],#setup-lab #setupCatalog[hidden],#setup-lab .ams-saved-row[hidden]{display:none!important}
+#setup-lab #setupCatalog{max-height:490px!important;overflow:auto!important}
+#setup-lab #setupCatalog .ams-saved-row{display:flex;align-items:center;gap:8px;border:1px solid #2a4154;background:#101925;margin-bottom:4px!important;padding:8px!important}
+#setup-lab #setupCatalog .ams-saved-row span{flex:1;min-width:0;font-size:11px;overflow-wrap:anywhere}
+#setup-lab #setupCatalog .ams-saved-row button{min-width:60px}
+#setup-lab .setup-impact-panel{border:1px solid #34475b;background:#09131d;padding:8px;margin-bottom:7px}
+#setup-lab .setup-impact-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:5px 7px;background:#142130;border-bottom:1px solid #293e53;margin-bottom:7px}
+#setup-lab .setup-impact-heading h3{font-size:12px;margin:0;color:#eff7ff;letter-spacing:.5px}
+#setup-lab .setup-impact-heading span{font-size:10px;color:#aebdcf}
+#setup-lab .setup-impact-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+#setup-lab .setup-impact-tile{min-width:0;border:1px solid #2c4356;background:#0d1925;padding:9px 8px;display:flex;flex-direction:column;gap:6px;min-height:94px}
+#setup-lab .setup-impact-tile span{font-size:9px;color:#afc3d6;text-transform:uppercase;letter-spacing:.45px}
+#setup-lab .setup-impact-tile strong{font-size:21px;line-height:1.1;color:#eaf2fa}
+#setup-lab .setup-impact-tile:last-child strong{color:#39dba5}
+#setup-lab .setup-impact-tile small{font-size:9px;color:#879fb2;line-height:1.4}
+@media(max-width:1350px){#setup-lab>.setup-workstation{grid-template-columns:minmax(300px,1fr) minmax(300px,1fr)!important}#setup-lab .setup-workstation>.setup-catalog-v37{grid-column:1/-1}#setup-lab .setup-impact-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:860px){#setup-lab>.setup-workstation{grid-template-columns:1fr!important}#setup-lab .setup-workstation>.setup-catalog-v37{grid-column:auto}#setup-lab .setup-impact-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#setup-lab .setup-context-strip{justify-content:flex-start}}
+@media(max-width:460px){#setup-lab .setup-control-row{grid-template-columns:minmax(95px,1fr) minmax(50px,.8fr) 42px!important}#setup-lab .setup-header-actions{justify-content:flex-start}#setup-lab .setup-impact-grid{grid-template-columns:1fr 1fr}}
