@@ -1,0 +1,79 @@
+/* Mockup finishing v13: layout rhythm, instrument contrast and keyboard focus.
+   Presentation only. No maps, replay, telemetry, JS or data bindings changed. */
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab){
+  --ams-v13-gap:3px;
+  --ams-v13-edge:#344354;
+  --ams-v13-heading:#192534;
+  --ams-v13-ink:#e8f0fa;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(.card,.metric,.table-card,.ams-concept-card,.titlebar,.chart-wrap,.track-stage){
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(.card,.table-card,.ams-concept-card){
+  min-width:0;
+  border-color:var(--ams-v13-edge)!important;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(.card-title,.card-head h3,.ams-chart-inline-heading .card-title){
+  color:var(--ams-v13-ink)!important;
+  font-weight:750!important;
+  letter-spacing:.5px!important;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(button,input,select,textarea){
+  border-radius:0!important;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(button,input,select,textarea):focus-visible{
+  outline:2px solid #e7bf74!important;
+  outline-offset:2px!important;
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) button:not(:disabled):hover{
+  filter:brightness(1.12);
+}
+:is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) :is(.metrics,.dashboard-lower,.engineer-grid,.telemetry-grid-dense,.compare-telemetry-grid,.ams-premium-grid){
+  gap:var(--ams-v13-gap)!important;
+}
+#dashboard .layout-main>.card:first-child .track-stage{
+  border:1px solid #42576c!important;
+  overflow:hidden;
+}
+#dashboard .dashboard-lower>.card .card-title{
+  border-bottom:1px solid #37495d!important;
+}
+#engineer .engineer-verdict{
+  border-right:1px solid #405067!important;
+}
+#telemetry .telemetry-grid-dense .chart-wrap,
+#compare .compare-telemetry-grid .chart-wrap{
+  min-width:0;
+  overflow:hidden;
+}
+#telemetry .ams-trajectory-coach-panel{
+  border-left:2px solid #4ba5ef!important;
+}
+#compare>.compare-focus-card{
+  border-left:2px solid #ef4656!important;
+}
+#records .ams-record-table-wrap{
+  max-width:100%;
+  overflow-x:auto;
+}
+#records .ams-record-table-wrap th,
+#records .ams-record-table-wrap td{
+  font-variant-numeric:tabular-nums;
+}
+#setup-lab .ams-setup-row{
+  min-width:0;
+}
+@media(max-width:700px){
+  :is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab){
+    --ams-v13-gap:4px;
+  }
+  #dashboard .layout-main>.card:first-child .track-stage{
+    min-height:300px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  :is(#dashboard,#engineer,#telemetry,#compare,#records,#setup-lab) button{
+    transition:none!important;
+  }
+}
