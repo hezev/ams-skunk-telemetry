@@ -1,0 +1,28 @@
+/* AMS workstation v7: aligned visual hierarchy for Telemetry and Lap Compare.
+   Deliberately presentation-only: keep SVG/graph IDs, cursor logic and all map geometry untouched. */
+#telemetry,#compare{--work-line:#384250;--work-bg:#0b1018;--work-header:#151c27;--work-red:#e94b5a;--work-blue:#4b9ae8}
+#telemetry .card,#compare .card,#telemetry .ams-work-card,#compare .ams-work-card{border-radius:0!important;box-shadow:none!important;border-color:var(--work-line)!important}
+#telemetry>.titlebar,#compare>.titlebar{margin-bottom:3px!important;padding-bottom:5px!important}
+#telemetry .telemetry-kpis,#compare>.metrics{gap:3px!important;margin:3px 0!important}
+#telemetry .telemetry-kpis>.metric,#compare>.metrics>.metric{min-height:0!important;padding:6px 8px!important}
+#telemetry .replay-control-card{padding:5px 8px!important;margin:3px 0!important}
+#telemetry #telemetryMapFirst,#telemetry .telemetry-grid-dense,#telemetry #engineeringAnalysisMount{margin-top:3px!important;margin-bottom:3px!important}
+#telemetry #telemetryMapFirst>.card,#compare>.compare-focus-card{background:var(--work-bg)!important;border-top:2px solid var(--work-red)!important;padding:7px!important}
+#telemetry #telemetryMapFirst .card-head,#compare>.compare-focus-card .card-head{min-height:0!important;gap:6px!important;padding-bottom:4px!important;margin-bottom:3px!important}
+#telemetry #telemetryMapFirst .trajectory-stage,#compare>.compare-focus-card .compare-focus-stage{background:radial-gradient(ellipse at 50% 45%,#14202b 0%,#090e15 75%)!important;border:1px solid #323f50!important}
+#telemetry .telemetry-grid-dense>.card,#compare .compare-telemetry-grid>.card{background:#101620!important;border-left:2px solid #404c5b!important}
+#telemetry .telemetry-grid-dense>.card:hover,#compare .compare-telemetry-grid>.card:hover{border-left-color:var(--work-blue)!important}
+#telemetry .telemetry-grid-dense .ams-chart-expanded{border-left:3px solid var(--work-red)!important}
+#telemetry .telemetry-grid-dense .chart-wrap,#compare .compare-telemetry-grid .chart-wrap{border-color:#303e4d!important;background-color:#090e16!important}
+#telemetry .ams-chart-size-button{border-radius:0!important;min-width:58px;text-align:center}
+#telemetry .ams-trajectory-coach-panel{border-top:2px solid var(--work-blue)!important}
+#telemetry .ams-trajectory-coach-panel>.card-head{background:var(--work-header)!important}
+#telemetry #engineeringAnalysisMount .engineering-overview,#telemetry #engineeringAnalysisMount .analysis-tables{gap:3px!important;margin:3px 0!important}
+#telemetry #engineeringAnalysisMount .card{padding:6px!important}
+#telemetry #engineeringAnalysisMount .analysis-table{font-size:11px!important}
+#telemetry #engineeringAnalysisMount .analysis-table th,#telemetry #engineeringAnalysisMount .analysis-table td{padding:4px 6px!important}
+#compare .compare-telemetry-grid{gap:3px!important;margin-top:3px!important;margin-bottom:3px!important}
+#compare .compare-telemetry-grid .card-head{min-height:0!important;background:var(--work-header)!important}
+#compare .compare-telemetry-grid .chart-wrap,#compare .compare-telemetry-grid .chart-wrap.big{height:96px!important;min-height:96px!important}
+@media(max-width:900px){#compare .compare-telemetry-grid .chart-wrap,#compare .compare-telemetry-grid .chart-wrap.big{height:90px!important;min-height:90px!important}}
+@media(max-width:600px){#telemetry .telemetry-kpis>.metric,#compare>.metrics>.metric{padding:5px!important}#compare .compare-telemetry-grid .chart-wrap,#compare .compare-telemetry-grid .chart-wrap.big{height:84px!important;min-height:84px!important}}
