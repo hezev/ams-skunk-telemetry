@@ -1,0 +1,31 @@
+/* v29: approved mockup framing — session header and four live workspace surfaces.
+   No synthetic telemetry, map transforms, chart heights/order or control resizing. */
+.topbar{height:50px!important;min-height:50px!important;padding:0 12px!important;background:#080e15!important;border-bottom:1px solid #394a59!important;gap:12px!important}
+.topbar .session-strip{display:flex!important;gap:0!important;min-width:0;overflow:hidden}
+.topbar .session-strip>*{display:inline-flex;align-items:center;white-space:nowrap;min-width:0;max-width:30%;overflow:hidden;text-overflow:ellipsis;padding:7px 12px!important;border-right:1px solid #2d4355!important;font-size:11px!important}
+.topbar .session-strip>*:first-child{padding-left:3px!important;color:#f4f7fc!important;text-transform:uppercase!important;font-weight:900!important}
+.topbar .session-strip>*:nth-child(2){color:#c5d6e6!important}
+.topbar .session-strip>*:nth-child(3){color:#e2b45a!important}
+.topbar .session-strip>*:nth-child(4){color:#9bb3c8!important;max-width:25%}
+.topbar .top-actions{flex-shrink:0!important}
+.topbar .live-badge{background:#14251e!important;border:1px solid #2e604b!important;min-height:26px!important;padding:4px 10px!important;font-size:10px!important}
+.topbar .live-badge:has(i):not(.live){color:#aab8c3!important;background:#1a2028!important;border-color:#374454!important}
+#dashboard>.metrics.metrics-6{gap:4px!important}
+#dashboard>.metrics.metrics-6>.metric{padding:7px 10px!important}
+#dashboard>.metrics.metrics-6>.metric:first-child{border-top:2px solid #ed3046!important}
+#dashboard>.metrics.metrics-6>.metric:nth-child(3){border-top:2px solid #39aa78!important}
+#dashboard>.metrics.metrics-6>.metric:nth-child(4){border-top:2px solid #3489c6!important}
+#dashboard>.metrics.metrics-6>.metric:nth-child(5){border-top:2px solid #caa24d!important}
+#dashboard .inputs>div{gap:7px!important}
+#dashboard .inputs .bar{border-radius:0!important;background:#182633!important}
+#engineer .engineer-grid>.card{min-width:0}
+#engineer .engineer-ai-question input{min-width:0}
+#engineer .engineer-priority-card .engineer-priorities{border-left:2px solid #d9a345!important;padding-left:12px!important}
+#engineer .engineer-influence i{border-radius:0!important;background:#162536!important}
+#engineer .engineer-facts>div{background:#101a25!important;border:1px solid #2b4357!important}
+#compare .compare-focus-card .trajectory-legend{font-weight:800!important}
+#compare .compare-focus-card .compare-replay-row{border-top:1px solid #2e4459!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric{background:#0c1722!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric{background:#0c1722!important}
+@media(max-width:780px){.topbar{padding:0 6px!important}.topbar .session-strip>*{padding:6px!important;font-size:10px!important}.topbar .session-strip>*:nth-child(4){display:none!important}}
+@media(max-width:520px){.topbar .session-strip>*:nth-child(3){display:none!important}.topbar .session-strip>*:nth-child(2){max-width:48%}}
