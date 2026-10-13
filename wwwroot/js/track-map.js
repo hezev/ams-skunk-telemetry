@@ -1571,7 +1571,9 @@ window.AMSTrack = {
       '<path class="compare-focus-line trajectory-a ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathA+'"></path>'+
       '<path class="compare-focus-line trajectory-ref ghost" style="stroke-width:'+Math.max(1,sw.line*.72).toFixed(2)+'" d="'+pathR+'"></path>'+
       '<path id="compareFocusProgressA" class="compare-focus-line trajectory-a progress" style="stroke-width:'+sw.line.toFixed(2)+'" d=""></path>'+
-      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" style="stroke-width:'+sw.line.toFixed(2)+'" d=""></path>';
+      '<path id="compareFocusProgressRef" class="compare-focus-line trajectory-ref progress" style="stroke-width:'+sw.line.toFixed(2)+'" d=""></path>'+
+      '<circle id="compareLapMarkerA" class="ams-lap-marker ams-lap-marker-a" r="6" visibility="hidden"></circle>'+
+      '<circle id="compareLapMarkerRef" class="ams-lap-marker ams-lap-marker-ref" r="5" visibility="hidden"></circle>';
 
     mini.setAttribute("viewBox",full.x+" "+full.y+" "+full.w+" "+full.h);
     mini.setAttribute("preserveAspectRatio","xMidYMid meet");
