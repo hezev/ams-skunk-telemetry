@@ -202,7 +202,18 @@ window.AMSEngineer = {
   },
   render(report){
     const set=(id,value)=>{ const el=document.getElementById(id); if(el)el.textContent=value; };
-    if(!report?.ok){ set("engineerStatus",report?.reason||"Sem dados suficientes."); return; }
+    if(!report?.ok){
+      set("engineerStatus",report?.reason||"Sem dados suficientes.");
+      for(const id of ["engineerBestLap","engineerPace","engineerAchievable","engineerConsistency","engineerAbsolute","engineerDriverPotential","engineerDriverShare","engineerSetupShare","engineerSetupPotential","engineerSetupConfidence"])set(id,"—");
+      set("engineerVerdict","Analisa uma sessão para gerar o diagnóstico.");
+      set("engineerSetupText","A estimativa depende de evidência repetível da sessão.");
+      for(const id of ["engineerDriverBar","engineerSetupBar"]){const bar=document.getElementById(id);if(bar)bar.style.width="0%";}
+      const priority=document.getElementById("engineerPriorities");if(priority)priority.textContent="Sem análise.";
+      const evidence=document.getElementById("engineerEvidenceBody");if(evidence)evidence.replaceChildren();
+      window.AMSEngineerMockupPanels?.render(report);
+      window.dispatchEvent(new CustomEvent("ams-engineer-analysis",{detail:{report}}));
+      return;
+    }
     set("engineerStatus","EVIDENCE ENGINE · "+report.lapCount+" VOLTAS");
     set("engineerBestLap",this.fmtLap(report.bestTime));
     set("engineerPace",this.fmtLap(report.consistentPace));
@@ -252,5 +263,6 @@ window.AMSEngineer = {
         body.appendChild(tr);
       }
     }
+    window.dispatchEvent(new CustomEvent("ams-engineer-analysis",{detail:{report}}));
   }
 };
