@@ -1,0 +1,30 @@
+/* v39: true garage snapshots, distinct from generic sliders and unverified projections. */
+#setup-lab .setup-garage-card{border:1px solid #315570;border-top:2px solid #42a3da;background:#0c1926;margin-top:8px;padding:8px;min-width:0}
+#setup-lab .setup-garage-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px;padding-bottom:6px;border-bottom:1px solid #2c4055}
+#setup-lab .setup-garage-heading strong{color:#f1f7ff;font-size:11px;letter-spacing:.6px}
+#setup-lab .setup-garage-heading span{font-size:9px;color:#90b4ce}
+#setup-lab .setup-garage-info{font-size:10px;color:#a8bfd0;line-height:1.45;margin:7px 0}
+#setup-lab .setup-garage-actions{display:flex;gap:6px;flex-wrap:wrap;padding:5px 0}
+#setup-lab .setup-garage-actions button{background:#16314a;color:#e4f5ff;border:1px solid #357db1;border-radius:2px;padding:7px 9px;cursor:pointer;font-size:10px}
+#setup-lab .setup-garage-actions button:nth-child(2){background:#121e2b;border-color:#43586b}
+#setup-lab .setup-garage-actions button:disabled{opacity:.45;cursor:not-allowed}
+#setup-lab .setup-garage-status{color:#c9bc9c;font-size:10px;line-height:1.4;margin:5px 0}
+#setup-lab .setup-garage-select{width:100%!important;max-width:100%!important;min-height:30px!important;border:1px solid #416078!important;background:#0b1826!important;color:#e3f0fd!important;font-size:10px!important}
+#setup-lab .setup-garage-facts{margin:5px 0}
+#setup-lab .setup-garage-source{display:flex;flex-direction:column;gap:3px;padding:6px 5px;background:#122130;border-left:2px solid #2aa67b}
+#setup-lab .setup-garage-source strong{font-size:10px;color:#d7eeff}
+#setup-lab .setup-garage-source span{font-size:9px;color:#90abbd;overflow-wrap:anywhere}
+#setup-lab .setup-garage-values{max-height:230px;overflow:auto;border-top:1px solid #2b4155;margin-top:5px}
+#setup-lab .setup-garage-value{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px;padding:4px 3px;border-bottom:1px solid #293b4b}
+#setup-lab .setup-garage-value span{font-size:10px;color:#aebdcd;overflow-wrap:anywhere}
+#setup-lab .setup-garage-value strong{font-size:10px;color:#e1f3ff;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#setup-lab .setup-garage-compare{border:1px solid #2b4d61;background:#101b28;margin:7px 0;padding:7px}
+#setup-lab .setup-garage-compare summary{color:#d4eafb;font-weight:800;font-size:10px;cursor:pointer}
+#setup-lab .setup-garage-compare-controls{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:7px 0}
+#setup-lab .setup-garage-compare-controls select{min-width:0!important;width:100%!important;background:#0a1825!important;color:#edf5fc!important;font-size:10px!important;border:1px solid #36536a!important}
+#setup-lab .setup-garage-compare-note{font-size:10px;line-height:1.4;color:#a2b8ca;margin:7px 0}
+#setup-lab .setup-garage-diff{max-height:210px;overflow:auto}
+#setup-lab .setup-garage-diff-row{display:flex;align-items:center;gap:6px;justify-content:space-between;padding:5px 2px;border-bottom:1px solid #2c4151}
+#setup-lab .setup-garage-diff-row span{flex:1;min-width:0;font-size:9px;color:#acbfd1;overflow-wrap:anywhere}
+#setup-lab .setup-garage-diff-row strong{font-size:9px;color:#8ce6ca;text-align:right;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+@media(max-width:560px){#setup-lab .setup-garage-compare-controls{grid-template-columns:1fr}}
