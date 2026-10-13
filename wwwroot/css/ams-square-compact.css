@@ -1,0 +1,44 @@
+/* AMS ultra-compact square workstation — final override */
+:root{--ams-gap:3px;--ams-pad:9px}
+*,*::before,*::after{border-radius:0!important}
+.content{padding:7px 8px 14px!important;max-width:none!important}
+.titlebar{margin:0 0 5px!important;padding:5px 8px 7px!important}
+.titlebar:before{border-radius:0!important;top:6px}
+.titlebar h1{margin:0 0 3px!important}
+.titlebar p{margin:0!important}
+.main{min-width:0}
+.topbar{min-height:48px!important;padding-top:5px!important;padding-bottom:5px!important}
+.sidebar{padding:8px 5px!important}
+.brand{padding:8px 7px 10px!important;margin-bottom:4px!important}
+#mainNav{gap:1px!important}
+#mainNav button{min-height:33px!important;padding-top:6px!important;padding-bottom:6px!important}
+.metrics,.metrics-4,.metrics-6,.ams-kpis,.ams-enhancement-grid,.ams-premium-grid,.ams-compare-strip,.dashboard-lower,.layout-main,.engineer-grid,.ams-corner-grid,.ams-geometry-grid,.ams-phase-grid,.ams-corner-status,.ams-mini-summary,.ams-phase-measures,.ams-enhancement-data,.ams-monitor-status,.ams-event-feed,.gauges,.inputs,.tyres,.ams-premium-list{gap:var(--ams-gap)!important;column-gap:var(--ams-gap)!important;row-gap:var(--ams-gap)!important}
+.metrics,.ams-compare-strip,.ams-enhancement-grid,.ams-premium-grid,.layout-main,.dashboard-lower,.engineer-grid{margin-top:3px!important;margin-bottom:4px!important}
+.card,.metric,.ams-concept-card,.ams-enhancement-card,.ams-work-card,.ams-enhancement-data>div,.ams-kpis>div,.ams-mini-summary>div,.ams-corner-status>div,.ams-corner-insight,.ams-phase-card,.ams-event-row,.ams-overlay-tile,.ams-preview,.ams-setup-row,.ams-saved-row{box-shadow:none!important}
+.card,.metric,.ams-concept-card,.ams-enhancement-card,.ams-work-card,.ams-corner-insight,.ams-phase-card{padding:var(--ams-pad)!important;margin:0!important}
+.ams-work-card{margin:4px 0!important}
+.metric{min-height:70px!important}
+.metric span{font-size:9px!important}
+.metric strong{font-size:clamp(19px,2vw,27px)!important}
+.ams-kpis>div{min-height:60px!important;padding:8px!important}
+.ams-kpis strong{font-size:15px!important;margin-top:2px!important}
+.card-head,.ams-concept-card h3,.ams-enhancement-card h3,.ams-work-card>h3{margin-bottom:5px!important;padding-bottom:5px!important}
+.card-title{font-size:11px!important}
+.ams-enhancement-data>div,.ams-corner-status>div,.ams-mini-summary>div,.ams-phase-measures>div{padding:7px!important}
+.ams-enhancement-card h3,.ams-concept-card h3,.ams-work-card>h3{margin-top:0!important}
+.ams-label{margin:5px 0 2px!important}
+.ams-control,.ams-primary,.ams-secondary,.action-btn,.login-btn,.login-secondary{padding:6px 8px!important}
+.ams-preview{border-style:solid!important}
+.ams-overlay-tile{padding:7px!important}
+.ams-event-row{padding:6px!important}
+.ams-line{margin:6px 0!important}
+.ams-visual-tabs{gap:3px!important;margin:4px 0!important}
+.ams-corner-numbers{gap:3px!important}
+.ams-setup-row{margin-bottom:3px!important}
+table th,table td,.ams-mini-table th,.ams-mini-table td{padding:5px 6px!important}
+#dashboard .layout-main{gap:var(--ams-gap)!important}
+#dashboard .track-stage{min-height:350px!important}
+#overlay-builder .ams-preview{min-height:460px!important}
+#setup-lab .ams-premium-grid,#overlay-builder .ams-premium-grid{gap:var(--ams-gap)!important}
+@media(max-width:1100px){#dashboard .track-stage{min-height:275px!important}#overlay-builder .ams-preview{min-height:350px!important}}
+@media(max-width:700px){.content{padding:5px!important}.card,.metric,.ams-concept-card,.ams-enhancement-card,.ams-work-card{padding:7px!important}#overlay-builder .ams-preview{min-height:280px!important}}
