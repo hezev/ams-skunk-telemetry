@@ -1,0 +1,30 @@
+/* v15 — visual references: AMS dark pitwall + modular telemetry mockups.
+   CSS-only. Preserve graph DOM order, chart height, expand-button size, maps and replay. */
+:root{--ams-ref-accent:#d52434;--ams-ref-surface:#0b1017;--ams-ref-pane:#0f1822;--ams-ref-line:#293949;--ams-ref-text:#eaf1f7}
+.sidebar{background:linear-gradient(180deg,#070b10,#0d141d)!important;border-right:1px solid #37414a!important}
+.sidebar .brand{background:#080d13!important;border-bottom:2px solid #c82533!important}
+.sidebar .brand-main{font-style:italic!important;font-weight:900!important;letter-spacing:-.6px!important}
+#mainNav button{border-left:3px solid transparent!important;text-align:left!important}
+#mainNav button.active{background:linear-gradient(90deg,#aa1725,#da2535)!important;border-left-color:#ff5865!important;color:#fff!important}
+.topbar{background:linear-gradient(90deg,#0b1119,#111b27)!important;border-bottom:1px solid #364451!important}
+.topbar .session-strip{font-variant-numeric:tabular-nums}
+:is(#dashboard,#telemetry,#compare,#engineer,#records,#setup-lab)>.titlebar{background:linear-gradient(90deg,#180e16,#101823 55%,#0c131b)!important;border-bottom:1px solid #3e4a56!important}
+:is(#dashboard,#telemetry,#compare,#engineer,#records,#setup-lab) .card{background:linear-gradient(180deg,#111b26,#0b121b)!important}
+:is(#dashboard,#telemetry,#compare,#engineer,#records,#setup-lab) .card-head{border-bottom:1px solid #354455!important}
+:is(#dashboard,#telemetry,#compare,#engineer,#records,#setup-lab) .card-title{text-transform:uppercase!important;font-size:10px!important;font-weight:800!important;letter-spacing:.7px!important}
+#dashboard .layout-main>.card:first-child{background:#0b121b!important}
+#dashboard .track-stage{background-color:#090f16!important}
+#dashboard .gauges>div{background:#0a121b!important;border-bottom:1px solid #2f4255!important}
+#dashboard .gauges strong{font-variant-numeric:tabular-nums!important}
+#dashboard .dashboard-lower>.card{background:linear-gradient(#121b27,#0c131c)!important}
+#dashboard .tyre{background:#0b141e!important}
+#telemetry #telemetryMapFirst>.card,#compare>.compare-focus-card{background:#090f17!important;border-top-color:var(--ams-ref-accent)!important}
+#telemetry .telemetry-grid-dense>.card,#compare .compare-telemetry-grid>.card{background:#0b1119!important}
+#telemetry .telemetry-grid-dense .chart-wrap,#compare .compare-telemetry-grid .chart-wrap{background:#070d13!important;border-color:#253748!important}
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading,#compare .compare-telemetry-grid .card-head{background:#111b25!important;border-bottom:1px solid #304052!important}
+#telemetry .ams-trajectory-coach-panel{background:#0e1925!important}
+#compare .compare-focus-hud>div{background:#0b1622ee!important}
+#records .ams-record-table-wrap thead,#engineer .engineer-table thead{border-bottom:2px solid #c72434!important}
+#records .ams-record-table-wrap tbody tr:hover,#engineer .engineer-table tbody tr:hover{background:#172637!important}
+#setup-lab .ams-setup-row{border-left:2px solid #25384c!important}
+@media(max-width:700px){.sidebar .brand-main{letter-spacing:0!important}}
