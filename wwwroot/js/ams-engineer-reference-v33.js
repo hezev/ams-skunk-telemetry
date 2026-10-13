@@ -1,39 +1,83 @@
-/* Engineer v33: real track geometry only; no synthetic data or mapping changes. */
+/* v35: Engineer map tied to the completed session report, never stale global track state.
+   Overlay colors measure within-session median-vs-best segment losses, not invented gains. */
 (()=>{'use strict';
-const svg=document.getElementById('engineerTrackSvg'),empty=document.getElementById('engineerMapEmpty'),status=document.getElementById('engineerMapStatus');
+const svg=document.getElementById('engineerTrackSvg');
+const empty=document.getElementById('engineerMapEmpty');
+const status=document.getElementById('engineerMapStatus');
+const legend=document.getElementById('engineerMapLegend');
 if(!svg||!empty||!status)return;
 const ns='http://www.w3.org/2000/svg';
-const node=(tag,attrs,parent=svg)=>{const el=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));parent.append(el);return el;};
-let signature='';
+const element=(tag,attrs,parent=svg)=>{
+ const el=document.createElementNS(ns,tag);
+ Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+ parent.append(el);return el;
+};
+let snapshot=null,report=null;
+const clear=()=>{
+ svg.replaceChildren();
+ svg.setAttribute('viewBox','0 0 1000 600');
+ empty.hidden=false;
+ status.textContent='SEM ANÁLISE';
+ if(legend)legend.hidden=true;
+};
+const station=(pts,progress)=>{
+ const n=pts.length,p=((Number(progress)%1)+1)%1,u=p*n,i=Math.floor(u)%n,j=(i+1)%n,t=u-Math.floor(u);
+ return {x:pts[i].x+(pts[j].x-pts[i].x)*t,y:pts[i].y+(pts[j].y-pts[i].y)*t};
+};
 function render(){
- const track=window.AMSTrack;
- const points=Array.isArray(track?.centerline)?track.centerline:[];
- const ref=track?.reference;
- const count=points.length,first=points[0],last=points[count-1];
- const key=[count,ref?.name||'',ref?.source||'',first?.x,first?.y,last?.x,last?.y,track?.officialCorners?.length||0].join('|');
- if(key===signature)return;
- signature=key;svg.replaceChildren();
- if(count<50||!ref){empty.hidden=false;status.textContent='SEM TRAÇADO';return;}
- const view=track.analysisViewBox?.();
- if(view)svg.setAttribute('viewBox',view);
- const coords=points.filter((_,i)=>i%3===0).map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
- node('polyline',{points:coords,class:'engineer-under'});
- node('polyline',{points:coords,class:'engineer-line'});
- const turns=track.detectCorners?.()||[];
- if(turns.length&&turns.every(c=>c.official)){
-  for(const c of turns){
-   const p=track.localPoint?.(c.p);
-   if(!p)continue;
-   node('circle',{cx:p.x,cy:p.y,r:16,class:'engineer-turn'});
-   node('text',{x:p.x,y:p.y,class:'engineer-turn-num'}).textContent=String(c.index);
-  }
+ if(!snapshot||!report?.ok||snapshot.points.length<50){clear();return;}
+ const pts=snapshot.points;
+ svg.replaceChildren();
+ const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+ const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+ const spread=Math.max(maxX-minX,maxY-minY,1),pad=spread*.06;
+ const view=[minX-pad,minY-pad,maxX-minX+2*pad,maxY-minY+2*pad];
+ svg.setAttribute('viewBox',view.map(x=>x.toFixed(2)).join(' '));
+ svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+ const trace=pts.filter((_,i)=>i%3===0);
+ trace.push(pts[0]);
+ const coords=trace.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join(' ');
+ const width=Math.max(.8,spread*.0045),shadow=Math.max(3,spread*.014);
+ element('polyline',{points:coords,fill:'none',stroke:'#16364b','stroke-width':shadow,'stroke-linejoin':'round'});
+ element('polyline',{points:coords,fill:'none',stroke:'#7896aa','stroke-width':width,'stroke-linejoin':'round'});
+ const zones=(Array.isArray(report.zones)?report.zones:[]).filter(z=>Number.isFinite(z.start)&&Number.isFinite(z.end)&&z.end>z.start&&Number.isFinite(z.avgLoss));
+ const maxLoss=Math.max(0,...zones.map(z=>z.avgLoss));
+ for(const z of zones){
+  const samples=[];
+  const steps=Math.max(14,Math.ceil((z.end-z.start)*700));
+  for(let i=0;i<=steps;i++)samples.push(station(pts,z.start+(z.end-z.start)*i/steps));
+  const relative=maxLoss>0.004?z.avgLoss/maxLoss:0;
+  const color=relative>=.68?'#ee4b5b':relative>=.31?'#e9b947':'#23bd81';
+  const shape=element('polyline',{points:samples.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join(' '),
+   fill:'none',stroke:color,'stroke-width':Math.max(2.8,spread*.008),
+   'stroke-linecap':'round','stroke-linejoin':'round'});
+  element('title',{},shape).textContent=(z.label||'Zona')+' · perda mediana vs melhor segmento: +'+z.avgLoss.toFixed(3)+'s';
+ }
+ for(const c of snapshot.turns){
+  const p=station(pts,c.p),r=Math.max(10,spread*.014);
+  element('circle',{cx:p.x,cy:p.y,r,fill:'#0b1925',stroke:'#63b8f1','stroke-width':Math.max(1.6,spread*.002)});
+  const t=element('text',{x:p.x,y:p.y+Math.max(3,spread*.0045),'text-anchor':'middle',fill:'#eef8ff','font-size':Math.max(10,spread*.013),'font-weight':'800'});
+  t.textContent=String(c.index);
  }
  empty.hidden=true;
- status.textContent=(ref.name||'Traçado')+(turns.every(c=>c.official)&&turns.length?' · '+turns.length+' curvas':' · GEO');
+ if(legend)legend.hidden=zones.length===0;
+ status.textContent=(snapshot.name||'Traçado')+(snapshot.turns.length?' · '+snapshot.turns.length+' curvas oficiais':' · curvas não validadas');
 }
-const observer=new MutationObserver(()=>{if(document.getElementById('engineer')?.classList.contains('active'))requestAnimationFrame(render);});
-observer.observe(document.getElementById('engineer'),{attributes:true,attributeFilter:['class']});
-document.getElementById('engineerAnalyzeBtn')?.addEventListener('click',()=>requestAnimationFrame(render));
-document.getElementById('engineerSessionSelect')?.addEventListener('change',()=>requestAnimationFrame(render));
-render();
+window.addEventListener('ams-engineer-analysis',e=>{
+ report=e.detail?.report||null;
+ const track=window.AMSTrack;
+ if(!report?.ok||!track?.reference||!Array.isArray(track.centerline)||track.centerline.length<50){snapshot=null;clear();return;}
+ const detected=track.detectCorners?.()||[];
+ snapshot={
+  name:track.reference.name||'Traçado de referência',
+  points:track.centerline.map(p=>({x:Number(p.x),y:Number(p.y)})),
+  turns:detected.length&&detected.every(x=>x.official)?detected.map(c=>({p:c.p,index:c.index})):[]
+ };
+ render();
+});
+document.getElementById('engineerSessionSelect')?.addEventListener('change',()=>{
+ snapshot=null;report=null;clear();
+ window.AMSEngineer?.render({ok:false,reason:'Analisa a sessão selecionada para atualizar os indicadores.'});
+});
+clear();
 })();
