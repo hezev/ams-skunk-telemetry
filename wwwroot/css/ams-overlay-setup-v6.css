@@ -1,0 +1,18 @@
+/* Overlay and Setup Lab: tighter mockup-aligned engineering columns. */
+#overlay-builder .ams-premium-grid{grid-template-columns:minmax(180px,.7fr) minmax(500px,2.6fr) minmax(215px,.9fr)!important;align-items:start;gap:3px!important}
+#overlay-builder .ams-premium-grid>.ams-concept-card{padding:7px!important}
+#overlay-builder .ams-preview{min-height:540px!important;background-color:#0b121d!important}
+#overlay-builder .ams-premium-list{gap:2px!important}
+#overlay-builder .ams-add-widget{padding:5px 7px!important;font-size:11px!important}
+#overlay-builder .ams-overlay-profile-actions{display:flex;gap:3px;margin:3px 0;flex-wrap:wrap}
+#overlay-builder .ams-overlay-profile-actions button{flex:1;font-size:10px;white-space:nowrap;padding:7px!important}
+#overlay-builder #overlayStatus{font-size:10px;padding:5px;border-left:2px solid #d3a356!important}
+#overlay-builder .ams-visual-tabs{gap:3px!important}
+#setup-lab .ams-premium-grid{grid-template-columns:minmax(270px,1.1fr) minmax(390px,1.65fr) minmax(230px,.95fr)!important;align-items:start;gap:3px!important}
+#setup-lab .ams-setup-row{display:grid;grid-template-columns:110px minmax(80px,1fr) 38px;align-items:center;gap:5px;padding:5px!important;border-bottom:1px solid #2c3847}
+#setup-lab .ams-setup-row span{font-size:11px}
+#setup-lab .ams-setup-row output{text-align:right;font-variant-numeric:tabular-nums}
+#setup-lab #setupCatalog{max-height:520px;overflow:auto}
+#setup-lab .ams-plot{max-height:150px!important;overflow:hidden}
+@media(max-width:1150px){#overlay-builder .ams-premium-grid,#setup-lab .ams-premium-grid{grid-template-columns:1fr 1fr!important}#overlay-builder .ams-premium-grid>.ams-concept-card:nth-child(2),#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:1/-1;grid-row:2}}
+@media(max-width:700px){#overlay-builder .ams-premium-grid,#setup-lab .ams-premium-grid{grid-template-columns:1fr!important}#overlay-builder .ams-premium-grid>.ams-concept-card:nth-child(2),#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:auto;grid-row:auto}#overlay-builder .ams-preview{min-height:320px!important}}
