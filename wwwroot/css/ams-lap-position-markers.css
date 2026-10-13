@@ -1,0 +1,4 @@
+/* Distinct replay-position dots; subtle tracks remain visible but no longer carry location alone. */
+#trajectoryCompareSvg .ams-lap-marker,#compareFocusSvg .ams-lap-marker{stroke:#fff;stroke-width:2.2;paint-order:stroke fill;vector-effect:non-scaling-stroke;pointer-events:none;filter:drop-shadow(0 0 3px #000)}
+#trajectoryCompareSvg .ams-lap-marker-a,#compareFocusSvg .ams-lap-marker-a{fill:#fa4057}
+#trajectoryCompareSvg .ams-lap-marker-ref,#compareFocusSvg .ams-lap-marker-ref{fill:#46aaff}
