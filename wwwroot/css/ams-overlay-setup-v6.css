@@ -5,5 +5,5 @@
 #setup-lab .ams-setup-row output{text-align:right;font-variant-numeric:tabular-nums}
 #setup-lab #setupCatalog{max-height:520px;overflow:auto}
 #setup-lab .ams-plot{max-height:150px!important;overflow:hidden}
-#overlay-builder .ams-premium-grid>.ams-concept-card:nth-child(2),#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:1/-1;grid-row:2}}
-@media(max-width:700px){#overlay-builder .ams-premium-grid,#setup-lab .ams-premium-grid{grid-template-columns:1fr!important}#overlay-builder .ams-premium-grid>.ams-concept-card:nth-child(2),#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:auto;grid-row:auto}#overlay-builder .ams-preview{min-height:320px!important}}
+@media(max-width:1150px){#setup-lab .ams-premium-grid{grid-template-columns:1fr 1fr!important}#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:1/-1;grid-row:2}}
+@media(max-width:700px){#setup-lab .ams-premium-grid{grid-template-columns:1fr!important}#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){grid-column:auto;grid-row:auto}}
