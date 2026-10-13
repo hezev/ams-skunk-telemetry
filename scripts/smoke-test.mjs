@@ -57,4 +57,23 @@ for(const token of [".ams-chart-expanded","height:102px","height:90px"]){
 }
 
 for(const id of ["trajectoryMarkerA","trajectoryMarkerRef","compareLapMarkerA","compareLapMarkerRef"]){if(!track.includes(id))throw new Error("Missing visible lap marker "+id);}
+
+// Production presentation integrity: every linked local CSS/JS asset must exist.
+const assetRefs=[...index.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="((?:css|js)\/[^"]+)"/g)]
+  .map(match=>match[1].split("?")[0]);
+for(const asset of assetRefs){
+  if(!fs.existsSync("wwwroot/"+asset))throw new Error("Missing deployed asset: "+asset);
+}
+const cssOrder=assetRefs.filter(path=>path.endsWith(".css"));
+const idx=path=>cssOrder.indexOf(path);
+for(const [before,after] of [
+  ["css/ams-square-compact.css","css/ams-workstation-v7.css"],
+  ["css/ams-telemetry-expand.css","css/ams-workstation-v7.css"],
+  ["css/ams-workstation-v7.css","css/ams-dashboard-engineer-v8.css"],
+  ["css/ams-dashboard-engineer-v8.css","css/ams-records-setup-v9.css"]
+]){
+  if(idx(before)<0||idx(after)<0||idx(before)>=idx(after))throw new Error("Workstation CSS load order regression: "+before+" -> "+after);
+}
+if(index.includes('data-view="overlay-builder"'))throw new Error("Overlay Builder unexpectedly restored to navigation");
+
 console.log("AMS engineering telemetry smoke test: OK");
