@@ -4,7 +4,22 @@
 const view=document.getElementById('telemetry'),slot=document.getElementById('telemetryMapFirst');
 if(!view||!slot)return;
 const map=document.querySelector('#engineeringAnalysisMount .trajectory-compare-card');
-if(map){slot.append(map);map.classList.add('ams-telemetry-map-card');}
+if(map){
+  const current=map.querySelector('.trajectory-coach-current');
+  const table=map.querySelector('.trajectory-coach-table-wrap');
+  if(current||table){
+    const panel=document.createElement('article');
+    panel.className='card ams-trajectory-coach-panel';
+    const head=document.createElement('div');head.className='card-head';
+    const title=document.createElement('div');title.className='card-title';title.textContent='Trajectory Coach';
+    head.append(title);panel.append(head);
+    if(current)panel.append(current);
+    if(table)panel.append(table);
+    const overview=document.querySelector('#engineeringAnalysisMount .engineering-overview');
+    if(overview)overview.before(panel);else document.getElementById('engineeringAnalysisMount').prepend(panel);
+  }
+  slot.append(map);map.classList.add('ams-telemetry-map-card');
+}
 const grid=view.querySelector('.telemetry-grid');
 if(!grid)return;
 const redraw=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{try{window.AMSCharts?.drawAll?.();}catch(e){console.warn('Chart redraw:',e);}}));
