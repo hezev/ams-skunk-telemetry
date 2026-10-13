@@ -6,44 +6,7 @@ const create=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.classN
 const panel=(heading)=>{const p=create('article','ams-work-card');p.append(create('h3','',heading));return p};
 const dash=$('#dashboard'),compare=$('#compare'),eng=$('#engineer');
 if(!dash||!compare||!eng)return;
-const eventPanel=panel('Race Events · Session Feed'),feed=create('div','ams-event-feed');
-const eDesc=create('div','ams-event-hint','Observações locais a partir dos indicadores de sessão. Não são incidentes oficiais do simulador.');
-const clear=create('button','ams-secondary','Limpar histórico');clear.type='button';
-clear.addEventListener('click',()=>{feed.replaceChildren();history.length=0;});
-eventPanel.append(eDesc,feed,clear);
-const insertAfter=(view,node)=>{const last=view.querySelector('.ams-enhancement-grid')||view.querySelector('.dashboard-lower')||view.querySelector('.metrics');if(last)last.insertAdjacentElement('afterend',node);else view.append(node)};
-insertAfter(dash,eventPanel);
-const history=[];
-const add=(type,title,description)=>{
- const item={type,title,description,time:new Date()};
- if(history.length&&history[0].type===type&&history[0].description===description)return;
- history.unshift(item);history.splice(24);
- feed.replaceChildren();
- history.forEach(x=>{
-   const row=create('div','ams-event-row');
-   const time=create('time','',x.time.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
-   const info=create('div');info.append(create('strong','',x.title),create('span','',x.description));
-   const tag=create('b','ams-event-type '+x.type,x.type==='attention'?'ATENÇÃO':'DADOS');
-   row.append(time,info,tag);feed.append(row);
- });
-};
-let previous={};
-const obs=['connectionText','position','classPosition','lastLap','fuel','sessionTime','trackChip'];
-const read=(id)=>($('#'+id)?.textContent||'').trim();
-const snapshot=()=>{
- obs.forEach(id=>{
-  const next=read(id);
-  if(!next||next==='—'||next===previous[id]){previous[id]=next;return;}
-  if(previous[id]!==undefined){
-   const labels={connectionText:'Ligação à telemetria',position:'Posição alterada',classPosition:'Posição na classe',lastLap:'Nova volta',fuel:'Combustível atualizado',sessionTime:'Tempo de sessão',trackChip:'Estado do circuito'};
-   if(id==='sessionTime'||id==='fuel')return void(previous[id]=next); // too frequent for event feed
-   add(id==='connectionText'&&/ERROR|OFFLINE|DISCONNECT/i.test(next)?'attention':'data',labels[id],next);
-  }
-  previous[id]=next;
- });
-};
-obs.forEach(id=>{const e=$('#'+id);if(!e)return;new MutationObserver(snapshot).observe(e,{subtree:true,childList:true,characterData:true})});
-snapshot();
+// Dashboard Race Events removed; Corner Explorer and Engineer panels retained.
 const box=panel('Corner Explorer · Focus & Replay');
 const note=create('p','ams-event-hint','Seleciona uma zona do traçado para mover o cursor do replay. Os dados exibidos são os da comparação selecionada.');
 const buttons=create('div','ams-corner-grid');
