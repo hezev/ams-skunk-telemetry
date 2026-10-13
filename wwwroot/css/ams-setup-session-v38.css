@@ -1,0 +1,22 @@
+/* Setup Lab v38: authenticated session context, car identity & honest evidence status. */
+#setup-lab .setup-real-session-workspace{border:1px solid #34506a;border-top:2px solid #378dd2;background:#0b1722;padding:8px;margin:0 0 6px}
+#setup-lab .setup-real-session-head{display:flex;justify-content:space-between;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+#setup-lab .setup-real-session-head strong{font-size:11px;letter-spacing:.5px;color:#ebf6ff}
+#setup-lab .setup-real-session-head small{font-size:10px;color:#86a6bd}
+#setup-lab .setup-real-session-controls{display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+#setup-lab .setup-session-picker{display:flex;flex-direction:column;gap:4px;flex:1 1 300px;min-width:160px;color:#a9becf;font-size:10px}
+#setup-lab .setup-session-select{min-width:0!important;width:100%!important;max-width:100%!important;background:#091522!important;border:1px solid #3e5f7a!important;color:#e6f3fd!important;border-radius:2px!important;min-height:31px!important;padding:5px 7px!important;font-size:11px!important}
+#setup-lab .setup-real-analyze{background:#1b3755;border:1px solid #3b82ba;color:#eaf7ff;font-size:10px;font-weight:800;letter-spacing:.3px;border-radius:2px;padding:7px 12px;min-height:31px;cursor:pointer}
+#setup-lab .setup-real-analyze:hover:not(:disabled){background:#245175}
+#setup-lab .setup-real-analyze:disabled{opacity:.48;cursor:not-allowed}
+#setup-lab .setup-real-status{font-size:10px;color:#a2b8c9;flex:1 1 225px;min-width:0;line-height:1.4}
+#setup-lab .setup-session-facts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+#setup-lab .setup-session-fact{display:flex;flex-direction:column;gap:3px;min-width:0;background:#111d2a;border:1px solid #2d4258;padding:7px}
+#setup-lab .setup-session-fact span{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#91a6b8}
+#setup-lab .setup-session-fact strong{font-size:11px;color:#eaf3fb;overflow-wrap:anywhere;line-height:1.3}
+#setup-lab .setup-session-warning{font-size:10px;color:#d9b66e;line-height:1.4;margin:6px 0 0;padding-left:7px;border-left:2px solid #aa8132}
+#setup-lab .setup-profile-context{font-size:9px;color:#8caec6;line-height:1.3;flex:1 1 100%;display:block}
+#setup-lab .setup-profile-incompatible{border-left:2px solid #b26f47!important}
+#setup-lab .setup-profile-incompatible button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:1150px){#setup-lab .setup-session-facts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){#setup-lab .setup-session-facts{grid-template-columns:repeat(2,minmax(0,1fr))}#setup-lab .setup-real-session-controls{align-items:stretch}#setup-lab .setup-real-status{flex-basis:100%}}
