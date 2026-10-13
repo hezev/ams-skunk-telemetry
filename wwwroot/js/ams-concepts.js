@@ -109,8 +109,28 @@
     const data=JSON.stringify(readSetups(),null,2);const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='ams-setups.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });refreshSetup();
-  let overlay=initialOverlay.map(x=>({...x}));let selected=null;
+  // Every HUD profile has an independent, persisted widget layout.
+  // Legacy single-layout saves are migrated into GT3 Sprint on first load.
+  const profilesKey='ams_overlay_profiles_v2';
+  const profileSelect=$('#overlayProfile');
+  const profileNames=[...profileSelect.options].map(o=>o.value);
+  const copyLayout=list=>list.map(w=>({...w}));
+  const defaultLayout=()=>copyLayout([
+    {id:'tile-1',name:'Standings',x:4,y:6},
+    {id:'tile-2',name:'Track Map',x:70,y:6},
+    {id:'tile-3',name:'Delta Bar',x:40,y:5},
+    {id:'tile-4',name:'Fuel',x:70,y:71},
+    {id:'tile-5',name:'Inputs',x:5,y:72}
+  ]);
+  const validLayout=list=>Array.isArray(list)?list.filter(w=>w&&typeof w.id==='string'&&typeof w.name==='string'&&Number.isFinite(Number(w.x))&&Number.isFinite(Number(w.y))).slice(0,40).map(w=>({id:w.id,name:w.name,x:Math.max(0,Math.min(84,Number(w.x))),y:Math.max(0,Math.min(85,Number(w.y)))})):null;
+  let profiles={};
+  try{const raw=JSON.parse(localStorage.getItem(profilesKey)||'{}');if(raw&&typeof raw==='object'&&!Array.isArray(raw))for(const name of profileNames){const layout=validLayout(raw[name]);if(layout)profiles[name]=layout;}}catch{}
+  if(!profiles['GT3 Sprint'])profiles['GT3 Sprint']=validLayout(savedOverlay())||defaultLayout();
+  const activeName=()=>profileSelect.value;
+  let overlay=copyLayout(profiles[activeName()]||defaultLayout()),selected=null;
   const canvas=$('#overlayCanvas');
+  const status=$('#overlayStatus');
+  const markChanged=()=>{status.textContent='Alterações por guardar no perfil '+activeName()+'.';};
   const selectTile=id=>{selected=id;renderOverlay();};
   const renderOverlay=()=>{
     canvas.replaceChildren();
@@ -122,7 +142,7 @@
       el.append(label,val);el.addEventListener('click',()=>selectTile(w.id));
       el.addEventListener('pointerdown',e=>{
         if(e.button!==0)return;selectTile(w.id);const b=canvas.getBoundingClientRect();
-        const move=ev=>{w.x=Math.max(0,Math.min(84,Math.round((ev.clientX-b.left)/b.width*100)));w.y=Math.max(0,Math.min(85,Math.round((ev.clientY-b.top)/b.height*100)));el.style.left=w.x+'%';el.style.top=w.y+'%';$('#overlayPosX').value=w.x;$('#overlayPosY').value=w.y;};
+        const move=ev=>{w.x=Math.max(0,Math.min(84,Math.round((ev.clientX-b.left)/b.width*100)));w.y=Math.max(0,Math.min(85,Math.round((ev.clientY-b.top)/b.height*100)));el.style.left=w.x+'%';el.style.top=w.y+'%';$('#overlayPosX').value=w.x;$('#overlayPosY').value=w.y;markChanged();};
         const done=()=>{document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',done);};
         document.addEventListener('pointermove',move);document.addEventListener('pointerup',done,{once:true});
       });
@@ -133,13 +153,28 @@
   };
   document.querySelectorAll('.ams-add-widget').forEach(b=>b.addEventListener('click',()=>{
     const id='tile-'+Date.now().toString(36)+'-'+overlay.length;
-    overlay.push({id,name:b.dataset.widgetName,x:30,y:32});selectTile(id);
+    overlay.push({id,name:b.dataset.widgetName,x:30,y:32});selectTile(id);markChanged();
   }));
   ['X','Y'].forEach(axis=>$('#overlayPos'+axis).addEventListener('change',e=>{
-    const w=overlay.find(x=>x.id===selected);if(!w)return;w[axis.toLowerCase()]=Math.max(0,Math.min(85,Number(e.target.value)||0));renderOverlay();
+    const w=overlay.find(x=>x.id===selected);if(!w)return;w[axis.toLowerCase()]=Math.max(0,Math.min(85,Number(e.target.value)||0));renderOverlay();markChanged();
   }));
-  $('#overlayRemove').addEventListener('click',()=>{overlay=overlay.filter(w=>w.id!==selected);selected=null;renderOverlay()});
-  $('#overlayReset').addEventListener('click',()=>{overlay=initialOverlay.map(x=>({...x}));selected=null;renderOverlay()});
-  $('#overlaySave').addEventListener('click',()=>{try{localStorage.setItem('ams_overlay_layout_v1',JSON.stringify(overlay));$('#overlayStatus').textContent='Layout guardado neste navegador.'}catch{$('#overlayStatus').textContent='Erro ao guardar layout.'}});
+  $('#overlayRemove').addEventListener('click',()=>{overlay=overlay.filter(w=>w.id!==selected);selected=null;renderOverlay();markChanged();});
+  $('#overlayReset').addEventListener('click',()=>{overlay=defaultLayout();selected=null;renderOverlay();markChanged();});
+  const saveProfile=()=>{try{profiles[activeName()]=copyLayout(overlay);localStorage.setItem(profilesKey,JSON.stringify(profiles));status.textContent='Perfil '+activeName()+' guardado neste navegador.';return true}catch{status.textContent='Erro ao guardar o perfil.';return false}};
+  $('#overlaySave').addEventListener('click',saveProfile);
+  profileSelect.addEventListener('change',()=>{
+    overlay=copyLayout(profiles[activeName()]||defaultLayout());selected=null;renderOverlay();
+    status.textContent=profiles[activeName()]?'Perfil '+activeName()+' carregado.':'Novo perfil '+activeName()+' com layout inicial.';
+  });
+  // Additional profile operations respect the selected HUD configuration.
+  const actions=document.createElement('div');actions.className='ams-overlay-profile-actions';
+  const duplicate=document.createElement('button');duplicate.type='button';duplicate.className='ams-secondary';duplicate.textContent='Duplicar neste perfil';
+  duplicate.addEventListener('click',()=>{const original=profiles['GT3 Sprint']||defaultLayout();overlay=copyLayout(original);selected=null;renderOverlay();markChanged();});
+  const exportBtn=document.createElement('button');exportBtn.type='button';exportBtn.className='ams-secondary';exportBtn.textContent='Exportar perfil JSON';
+  exportBtn.addEventListener('click',()=>{
+    const text=JSON.stringify({profile:activeName(),widgets:overlay},null,2),url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='ams-hud-'+activeName().toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  actions.append(duplicate,exportBtn);status.before(actions);
   renderOverlay();
 })();
