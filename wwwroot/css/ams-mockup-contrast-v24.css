@@ -1,0 +1,25 @@
+/* v24: compact finishing on instrumentation labels and grid alignment.
+   No charts order/height, expand buttons, map geometry or logic modifications. */
+#dashboard .card-head .chip,#telemetry .analysis-actions .chip,#compare .analysis-actions .chip{
+  background:#141d28!important;border-color:#43566b!important;color:#d8e6f4!important;
+  font-size:9px!important;letter-spacing:.6px!important;border-radius:0!important
+}
+:is(#dashboard,#telemetry,#compare,#engineer,#records,#live) .card-head .card-title{
+  color:#f1f5fb!important;text-transform:uppercase!important;letter-spacing:.75px!important
+}
+#dashboard .metric strong,#telemetry .telemetry-kpis strong,#live .live-summary strong{
+  font-variant-numeric:tabular-nums!important
+}
+#telemetry .replay-control-row,#compare .compare-replay-row{
+  color:#b9c9da!important;font-size:10px!important
+}
+#telemetry .replay-control-row input[type=range],#compare input[type=range]{
+  accent-color:#df3447!important
+}
+#records .ams-record-table-wrap th,#live .table-card th,#sessions .table-card th,#laps .table-card th{
+  font-weight:800!important;letter-spacing:.6px!important
+}
+#workspace .workspace-widget .card-title,#team .table-card th{
+  font-weight:800!important;letter-spacing:.55px!important
+}
+@media(prefers-reduced-motion:reduce){#mainNav button{transition:none!important}}
