@@ -894,6 +894,26 @@ window.AMSTrack = {
       html+='<circle class="analysis-event '+cls+'" cx="'+pt.x.toFixed(2)+'" cy="'+pt.y.toFixed(2)+'" r="7"><title>'+(e.type==="brake"?"Brake":"Throttle")+' · '+((Number(e.position)||0)*100).toFixed(1)+'%</title></circle>';
     }
 
+    // Turn labels are deliberately painted on the Gain/Loss analysis SVG.
+    // The iRacing turns.svg layer is only mounted on the dashboard map, not here.
+    // T1..Tn = validated official artwork numbering; C1..Cn = geometry estimates.
+    const turns=this.detectCorners();
+    if(turns.length){
+      const verified=turns.every(t=>t.official===true);
+      for(const turn of turns){
+        const pt=this.localPoint(turn.p);
+        if(!pt)continue;
+        const n=Number(turn.index);
+        if(!Number.isInteger(n)||n<1||n>99)continue;
+        const label=(verified?"T":"C")+n;
+        const kind=verified?"oficial":"estimada";
+        html+='<g class="ams-turn-marker '+(verified?'official':'estimated')+'" transform="translate('+pt.x.toFixed(2)+' '+pt.y.toFixed(2)+')">'+
+          '<circle r="17" fill="#09121e" fill-opacity=".92" stroke="'+(verified?'#53b5fa':'#e5b55c')+'" stroke-width="2"/>'+
+          '<text x="0" y="5" text-anchor="middle" font-size="14" font-weight="700" fill="#f4f8fc">'+label+'</text>'+
+          '<title>Curva '+n+' · numeração '+kind+'</title></g>';
+      }
+    }
+
     const cursor=this.localPoint(this.progress)||this.centerline[0];
     html+='<circle id="analysisTrackCursor" class="analysis-track-cursor" cx="'+cursor.x.toFixed(2)+'" cy="'+cursor.y.toFixed(2)+'" r="10"></circle>';
     svg.innerHTML=html;
