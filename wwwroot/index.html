@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/ams-compare-map-first.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-chart-toolbar.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-dashboard-engineer-v5.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-global-records.css?v=20261013-1">
 </head>
 <body>
 
@@ -459,8 +460,28 @@
     </section>
 
     <section id="records" class="view">
-      <div class="titlebar"><div><h1>AMS Records</h1><p>Melhores voltas por simulador, pista e carro</p></div></div>
-      <article class="card table-card"><table><thead><tr><th>#</th><th>Driver</th><th>Car</th><th>Track</th><th>Lap Time</th></tr></thead><tbody id="recordsBody"></tbody></table></article>
+      <div class="titlebar"><div><h1>AMS Lap Records</h1><p>Recorde absoluto por simulador, pista e carro · disponível para todos os pilotos autenticados</p></div></div>
+      <div class="ams-record-info" id="recordsStatus">A carregar classificação global…</div>
+      <article class="card table-card">
+        <div class="card-title">LAP RECORDS · Recorde por pista / carro</div>
+        <div class="ams-record-filters">
+          <label>Procurar pista ou carro <input id="recordSearch" type="search" placeholder="Circuito, carro, piloto…" autocomplete="off"></label>
+          <label>Simulador <select id="recordSimulator"><option value="">Todos</option></select></label>
+        </div>
+        <div class="ams-record-table-wrap"><table><thead><tr><th>Pista</th><th>Carro</th><th>Simulador</th><th>Tempo recorde</th><th>Piloto</th></tr></thead><tbody id="recordsBody"><tr><td colspan="5">A carregar…</td></tr></tbody></table></div>
+      </article>
+      <div class="ams-record-rankings">
+        <article class="card table-card">
+          <div class="card-title">RANKING · Progressão</div>
+          <p class="ams-record-hint">Melhoria percentual entre a primeira volta e o melhor tempo pessoal nas mesmas combinações de pista e carro; requer pelo menos duas voltas.</p>
+          <div class="ams-record-table-wrap"><table><thead><tr><th>#</th><th>Piloto</th><th>Melhoria</th><th>Tempo ganho</th><th>Combinações</th></tr></thead><tbody id="progressionBody"></tbody></table></div>
+        </article>
+        <article class="card table-card">
+          <div class="card-title">RANKING · Carreira</div>
+          <p class="ams-record-hint">Ordenado por recordes absolutos, depois pistas distintas e voltas registadas.</p>
+          <div class="ams-record-table-wrap"><table><thead><tr><th>#</th><th>Piloto</th><th>Recordes</th><th>Pistas</th><th>Voltas</th></tr></thead><tbody id="careerBody"></tbody></table></div>
+        </article>
+      </div>
     </section>
 
     <section id="driver" class="view">

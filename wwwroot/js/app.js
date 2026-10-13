@@ -83,15 +83,57 @@
   }
 
   function renderRecords(){
-    const body=q("#recordsBody"); if(!body)return; body.innerHTML="";
-    const best=new Map();
-    for(const l of state.laps){
-      const k=[l.pilot_id,l.simulator,l.circuit,l.car].join("|");
-      if(!best.has(k)||l.lap_time_ms<best.get(k).lap_time_ms)best.set(k,l);
+    const board=state.publicBoard||{records:[],progression:[],career:[]};
+    const body=q("#recordsBody"),progression=q("#progressionBody"),career=q("#careerBody");
+    if(!body||!progression||!career)return;
+    const records=Array.isArray(board.records)?board.records:[];
+    const sims=q("#recordSimulator");
+    if(sims){
+      const chosen=sims.value;
+      const names=[...new Set(records.map(r=>r.simulator).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+      sims.replaceChildren(new Option("Todos",""));
+      for(const name of names)sims.add(new Option(name,name));
+      sims.value=names.includes(chosen)?chosen:"";
     }
-    const rows=[...best.values()].sort((a,b)=>a.lap_time_ms-b.lap_time_ms);
-    if(!rows.length){body.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem registos disponíveis.</td></tr>';return;}
-    rows.forEach((r,i)=>{const tr=document.createElement("tr");tr.innerHTML=`<td><strong>${i+1}</strong></td><td>${pilotName(r.pilot_id)}</td><td>${r.car||"—"}</td><td>${r.circuit||"—"}</td><td><strong>${fmtLap(r.lap_time_ms)}</strong></td>`;body.appendChild(tr);});
+    const cell=(tr,value,strong=false)=>{
+      const td=document.createElement("td");if(strong){const s=document.createElement("strong");s.textContent=String(value);td.append(s);}else td.textContent=String(value);tr.append(td);
+    };
+    const empty=(target,cols,message)=>{target.replaceChildren();const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=cols;td.className="empty-cloud";td.textContent=message;tr.append(td);target.append(tr);};
+    const showRecords=()=>{
+      const needle=(q("#recordSearch")?.value||"").trim().toLocaleLowerCase("pt-PT");
+      const simulator=sims?.value||"";
+      const filtered=records.filter(r=>(!simulator||r.simulator===simulator)&&(!needle||[r.circuit,r.car,r.pilot_name,r.simulator].some(v=>String(v||"").toLocaleLowerCase("pt-PT").includes(needle))));
+      body.replaceChildren();
+      for(const r of filtered){const tr=document.createElement("tr");cell(tr,r.circuit||"—");cell(tr,r.car||"—");cell(tr,r.simulator||"—");cell(tr,fmtLap(r.lap_time_ms),true);cell(tr,r.pilot_name||"Piloto AMS");body.append(tr);}
+      if(!filtered.length)empty(body,5,records.length?"Nenhum recorde corresponde ao filtro.":"Ainda não existem recordes globais.");
+    };
+    showRecords();
+    const ranking=(target,rows,mode)=>{
+      target.replaceChildren();
+      rows.forEach((r,i)=>{
+        const tr=document.createElement("tr");cell(tr,i+1);cell(tr,r.pilot_name||"Piloto AMS",true);
+        if(mode==="progress"){cell(tr,Number(r.improvement_pct||0).toFixed(2)+"%");cell(tr,Number(r.seconds_gained||0).toFixed(3)+" s");cell(tr,r.comparable_combos||0);}
+        else{cell(tr,r.records||0);cell(tr,r.tracks||0);cell(tr,r.total_laps||0);}
+        target.append(tr);
+      });
+      if(!rows.length)empty(target,5,mode==="progress"?"Sem pilotos com duas voltas comparáveis.":"Sem pilotos com voltas registadas.");
+    };
+    ranking(progression,Array.isArray(board.progression)?board.progression:[],"progress");
+    ranking(career,Array.isArray(board.career)?board.career:[],"career");
+    q("#recordSearch")?.addEventListener("input",showRecords);
+    sims?.addEventListener("change",showRecords);
+    setText("recordsStatus",records.length+" recordes por pista e carro · resultados globais para pilotos autenticados");
+  }
+
+  async function loadPublicRecords(token){
+    try{
+      const data=await AMSSupabase.request("/rest/v1/rpc/ams_public_record_board",{token,method:"POST",body:{}});
+      state.publicBoard=data||{records:[],progression:[],career:[]};
+      renderRecords();
+    }catch(err){
+      console.warn("AMS global records:",err);
+      setText("recordsStatus","Não foi possível obter a classificação global. Verifica a ligação ao Supabase.");
+    }
   }
 
   function renderDriver(){
@@ -632,7 +674,8 @@
       state.isCoach=await coachFlag(token);
       state.laps=await visibleLaps(token,state.isCoach);
       state.pilots=await visiblePilots(token,state.isCoach);
-      renderLaps();renderSessions();renderRecords();renderDriver();renderTeam();fillSelectors();
+      renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+      await loadPublicRecords(token);
       if(state.laps.length)await selectLap(state.laps[0].id);
       setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
     }catch(err){
