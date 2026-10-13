@@ -1,0 +1,47 @@
+/* AMS Motorsport Workstation v3 — mockup visual parity pass. */
+:root{--sidebar-w:218px;--ams-ink:#090b10;--ams-stroke:#333c4d;--ams-red:#ed3547;--ams-blue:#418ed9;--ams-gold:#d7ac5f}
+html{scrollbar-color:#434a59 #0c1118}
+body{background:radial-gradient(ellipse at 85% -25%,#202331,#090b10 60%) fixed!important}
+.sidebar{background:linear-gradient(180deg,#171924,#0b0c13 72%)!important;box-shadow:10px 0 28px #0003}
+.brand-main{font-size:25px;font-weight:900;letter-spacing:1.1px}
+.brand-main span{color:#ed3547!important}
+.sidebar .brand-sub{color:#c0a97f;letter-spacing:2.6px}
+.sidebar-foot{border-top:1px solid #3b3541;padding-top:14px}
+#mainNav button{border:1px solid transparent!important;text-align:left;transition:background .15s,border-color .15s;min-height:39px}
+#mainNav button:hover{background:#25212c!important;border-color:#4a3945!important}
+#mainNav button.active{background:linear-gradient(90deg,#6b2334 0%,#291b27 90%)!important;border-left:3px solid #f64e5d!important}
+.topbar{box-shadow:0 3px 25px #0003}
+.live-badge{border-color:#803342!important;background:#421c28!important;color:#f4c1c7!important}
+.content{max-width:1800px!important}
+.titlebar{position:relative;padding-left:16px}
+.titlebar:before{content:"";position:absolute;left:0;top:4px;width:4px;height:33px;background:#f34655;border-radius:2px}
+.titlebar h1{font-size:clamp(22px,2vw,30px)!important;font-weight:850;letter-spacing:.75px}
+.metric,.ams-kpis>div{box-shadow:0 8px 20px #0002;border-radius:9px}
+.metric strong{font-size:clamp(22px,2.4vw,32px)}
+.card{box-shadow:inset 0 1px #ffffff06,0 10px 28px #0003!important}
+.card-head{min-height:40px}
+.card-title{font-weight:800;letter-spacing:1px}
+#dashboard .track-stage{min-height:420px!important;background:radial-gradient(ellipse at 50% 50%,#202a38,#0b1119 75%)}
+#dashboard .layout-main{grid-template-columns:minmax(0,1.7fr) minmax(340px,1fr)}
+#dashboard .gauges{gap:9px}#dashboard .gauges>div{background:#101823;border:1px solid #3a4251;border-radius:8px}
+.ams-enhancement-grid{grid-template-columns:minmax(0,1.6fr) minmax(265px,.8fr)!important}
+.ams-enhancement-data strong{color:#f1f4fa}
+.ams-enhancement-card,.ams-concept-card,.ams-work-card{box-shadow:0 10px 24px #0003}
+.ams-enhancement-card h3,.ams-concept-card h3,.ams-work-card>h3{color:#eef2f7;font-weight:850;letter-spacing:1.25px}
+.ams-concept-card h3:before,.ams-enhancement-card h3:before,.ams-work-card>h3:before{content:"";display:inline-block;height:9px;width:3px;background:#de4858;margin-right:9px}
+.ams-premium-grid{gap:14px}
+#setup-lab .ams-premium-grid{grid-template-columns:minmax(255px,1.15fr) minmax(360px,1.65fr) minmax(255px,1fr)}
+#overlay-builder .ams-premium-grid{grid-template-columns:minmax(200px,.8fr) minmax(450px,2.3fr) minmax(225px,1fr)}
+#overlay-builder .ams-preview{min-height:530px}
+#overlay-builder .ams-overlay-tile{border:1px solid #546781;background:#131b27f2;box-shadow:0 12px 32px #0009}
+#overlay-builder .ams-overlay-tile.selected{border-color:#ff566a;box-shadow:0 0 0 1px #ff566a,0 12px 32px #0008}
+#setup-lab .ams-setup-row output{color:#eac480}
+.ams-corner-insight,.ams-phase-card{box-shadow:0 6px 18px #0002}
+.ams-mini-table tbody tr:hover{background:#2c202a}
+#engineer .engineer-grid{gap:15px}
+#compare .compare-focus-card{border-color:#555064}
+#compare .compare-focus-card .card-title{color:#f6f2f4}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #e1b571!important;outline-offset:2px}
+@media(max-width:1350px){#setup-lab .ams-premium-grid,#overlay-builder .ams-premium-grid{grid-template-columns:1fr 1fr}#setup-lab .ams-premium-grid>*:last-child,#overlay-builder .ams-premium-grid>*:last-child{grid-column:1/-1}}
+@media(max-width:1100px){#dashboard .layout-main,.ams-enhancement-grid{grid-template-columns:1fr!important}#dashboard .track-stage{min-height:325px!important}}
+@media(max-width:750px){#setup-lab .ams-premium-grid,#overlay-builder .ams-premium-grid{grid-template-columns:1fr}#setup-lab .ams-premium-grid>*:last-child,#overlay-builder .ams-premium-grid>*:last-child{grid-column:auto}#overlay-builder .ams-preview{min-height:360px}.titlebar{padding-left:10px}.titlebar:before{height:26px}}
