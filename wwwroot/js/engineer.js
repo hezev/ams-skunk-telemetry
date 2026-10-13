@@ -73,10 +73,10 @@ window.AMSEngineer = {
   analyze(details,options={}){
     const trackLengthM=Number(options.trackLengthM);
     const miniCount=Math.max(10,Math.min(40,Number(options.minisectors)||20));
-    const prepared=(details||[])
+    const validByArrival=(details||[])
       .map(d=>AMSAnalysis.prepareLap(d))
-      .filter(l=>l.samples.length>=30&&Number.isFinite(Number(l.lapTimeSec))&&l.lapTimeSec>0)
-      .sort((a,b)=>a.lapTimeSec-b.lapTimeSec);
+      .filter(l=>l.samples.length>=30&&Number.isFinite(Number(l.lapTimeSec))&&l.lapTimeSec>0);
+    const prepared=[...validByArrival].sort((a,b)=>a.lapTimeSec-b.lapTimeSec);
     if(prepared.length<2)return {ok:false,reason:"São necessárias pelo menos duas voltas com telemetria válida."};
 
     const times=prepared.map(l=>l.lapTimeSec);
@@ -118,6 +118,7 @@ window.AMSEngineer = {
       rawZones.push({
         index:i+1,start,end,label:this.zoneLabel(i+1,start,end),bestSeg,secondSeg,medianSeg,timeSd,bestLapSeg,avgLoss,repeatablePotential,
         brakeStdP,throttleStdP,minSpeedSd,
+        brakeSamples:brakeP.length,throttleSamples:throttleP.length,
         brakeStdM:Number.isFinite(trackLengthM)?brakeStdP*trackLengthM:null,
         throttleStdM:Number.isFinite(trackLengthM)?throttleStdP*trackLengthM:null,
         ratioMedian:this.median(ratio),ratioCv:this.cv(ratio),
@@ -194,9 +195,23 @@ window.AMSEngineer = {
     else if(driverShare>.62)verdict="A maior parte da oportunidade está na execução do piloto, não no setup.";
     else if(setupCandidates.length&&driverShare>.35)verdict="Há uma combinação de execução do piloto e possível influência do setup.";
 
+    // Last chronologically supplied valid lap versus fastest valid lap.
+    // No fictional traces: every ordinate is interpolated from stored telemetry.
+    const currentLap=validByArrival[validByArrival.length-1];
+    const channel=(lap,key)=>Array.from({length:121},(_,i)=>{
+      const value=AMSAnalysis.interpolate(lap,i/120,key);
+      return Number.isFinite(value)?Number(value):null;
+    });
+    const lapComparison={
+      latestTime:currentLap.lapTimeSec,
+      bestTime,
+      speedCurrent:channel(currentLap,"speed"),speedBest:channel(bestLap,"speed"),
+      throttleCurrent:channel(currentLap,"throttle"),throttleBest:channel(bestLap,"throttle")
+    };
+
     return {
       ok:true,lapCount:prepared.length,bestTime,consistentPace:pace,lapStdDev:lapSd,consistency,achievable,absoluteTheoretical,
-      repeatablePotential,driverPotential,driverShare,setupShare,balanceTelemetry,verdict,priorities,zones,
+      repeatablePotential,driverPotential,driverShare,setupShare,balanceTelemetry,verdict,priorities,zones,lapComparison,
       setupPotential:{low:setupLow,high:setupUpper,confidence:setupCandidates.length?Math.round(this.mean(setupCandidates.map(z=>z.confidence))||0):0,candidates:setupCandidates.length}
     };
   },
