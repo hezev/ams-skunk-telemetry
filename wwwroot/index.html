@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="css/ams-approved-mockups-v25.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-approved-layout-v26.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-telemetry-side-kpis-v27.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-compare-side-kpis-v28.css?v=20261013-1">
 </head>
 <body>
 
@@ -313,62 +314,65 @@
         </div>
       </div>
 
-      <div class="metrics metrics-4">
-        <article class="metric"><span>Lap A</span><strong id="compareTimeA">—</strong></article>
-        <article class="metric"><span>Reference</span><strong id="compareTimeB">—</strong></article>
-        <article class="metric"><span>Difference</span><strong id="compareDiff">—</strong></article>
-        <article class="metric"><span>Compatibility</span><strong id="compareCompatibility">—</strong></article>
+      <div class="compare-map-kpi-layout">
+        <article class="card compare-focus-card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Track Focus · Trajectory Compare</div>
+              <div class="trajectory-subtitle">Vista ampliada acompanha automaticamente o ponto atual</div>
+            </div>
+            <div class="trajectory-toolbar">
+              <span class="trajectory-legend"><i class="a"></i> Lap A</span>
+              <span class="trajectory-legend"><i class="ref"></i> Reference</span>
+              <span id="compareFocusStatus" class="chip">Seleciona duas voltas</span>
+            </div>
+          </div>
+
+          <div id="compareFocusStage" class="compare-focus-stage">
+            <svg id="compareFocusSvg" aria-label="Vista ampliada da trajectória"></svg>
+            <div class="compare-mini-map">
+              <svg id="compareMiniMapSvg" aria-label="Mapa geral da pista"></svg>
+            </div>
+            <div class="compare-focus-hud">
+              <div><span>Position A / Ref</span><strong id="compareFocusPosition">0.0%</strong></div>
+              <div><span>Separation</span><strong id="compareFocusSeparation">—</strong></div>
+              <div><span>Δ Time</span><strong id="compareFocusDelta">—</strong></div>
+            </div>
+          </div>
+
+          <div id="compareFocusCoach" class="compare-focus-coach">A análise da zona atual aparece aqui durante o replay.</div>
+
+          <div class="compare-replay-row">
+            <button id="compareReplayToggle" class="action-btn" type="button">▶</button>
+            <input id="compareReplaySeek" type="range" min="0" max="1000" value="0">
+            <span id="compareReplayPosition">0.0s</span>
+            <label>Speed
+              <select id="compareReplaySpeed">
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+                <option value="4">4×</option>
+              </select>
+            </label>
+            <label>Zoom
+              <select id="compareFocusZoom">
+                <option value="2.5">2.5×</option>
+                <option value="4" selected>4×</option>
+                <option value="6">6×</option>
+                <option value="8">8×</option>
+              </select>
+            </label>
+          </div>
+        </article>
+
+        <div class="metrics metrics-4 compare-side-kpis">
+          <article class="metric"><span>Lap A</span><strong id="compareTimeA">—</strong></article>
+          <article class="metric"><span>Reference</span><strong id="compareTimeB">—</strong></article>
+          <article class="metric"><span>Difference</span><strong id="compareDiff">—</strong></article>
+          <article class="metric"><span>Compatibility</span><strong id="compareCompatibility">—</strong></article>
+        </div>
+
       </div>
-
-      <article class="card compare-focus-card">
-        <div class="card-head">
-          <div>
-            <div class="card-title">Track Focus · Trajectory Compare</div>
-            <div class="trajectory-subtitle">Vista ampliada acompanha automaticamente o ponto atual</div>
-          </div>
-          <div class="trajectory-toolbar">
-            <span class="trajectory-legend"><i class="a"></i> Lap A</span>
-            <span class="trajectory-legend"><i class="ref"></i> Reference</span>
-            <span id="compareFocusStatus" class="chip">Seleciona duas voltas</span>
-          </div>
-        </div>
-
-        <div id="compareFocusStage" class="compare-focus-stage">
-          <svg id="compareFocusSvg" aria-label="Vista ampliada da trajectória"></svg>
-          <div class="compare-mini-map">
-            <svg id="compareMiniMapSvg" aria-label="Mapa geral da pista"></svg>
-          </div>
-          <div class="compare-focus-hud">
-            <div><span>Position A / Ref</span><strong id="compareFocusPosition">0.0%</strong></div>
-            <div><span>Separation</span><strong id="compareFocusSeparation">—</strong></div>
-            <div><span>Δ Time</span><strong id="compareFocusDelta">—</strong></div>
-          </div>
-        </div>
-
-        <div id="compareFocusCoach" class="compare-focus-coach">A análise da zona atual aparece aqui durante o replay.</div>
-
-        <div class="compare-replay-row">
-          <button id="compareReplayToggle" class="action-btn" type="button">▶</button>
-          <input id="compareReplaySeek" type="range" min="0" max="1000" value="0">
-          <span id="compareReplayPosition">0.0s</span>
-          <label>Speed
-            <select id="compareReplaySpeed">
-              <option value="0.5">0.5×</option>
-              <option value="1" selected>1×</option>
-              <option value="2">2×</option>
-              <option value="4">4×</option>
-            </select>
-          </label>
-          <label>Zoom
-            <select id="compareFocusZoom">
-              <option value="2.5">2.5×</option>
-              <option value="4" selected>4×</option>
-              <option value="6">6×</option>
-              <option value="8">8×</option>
-            </select>
-          </label>
-        </div>
-      </article>
 
       <div class="compare-telemetry-grid">
         <article class="card">

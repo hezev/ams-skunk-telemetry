@@ -1,0 +1,15 @@
+/* v28: four existing Compare metrics vertically to the right of Track Focus map.
+   No edits to mapping, dots, coach, replay behavior or comparison charts. */
+#compare .compare-map-kpi-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,255px);gap:7px;align-items:stretch;margin-bottom:7px}
+#compare .compare-map-kpi-layout>.compare-focus-card{min-width:0;margin:0!important;overflow:hidden}
+#compare .compare-map-kpi-layout>.compare-side-kpis{min-width:0;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(4,minmax(0,1fr));gap:5px!important;margin:0!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric{min-width:0;display:flex!important;flex-direction:column!important;justify-content:center!important;padding:10px 12px!important;border-left:2px solid #355877!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric:first-child{border-left-color:#e63b52!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric:nth-child(2){border-left-color:#378fd0!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric:nth-child(3){border-left-color:#edbd52!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric:nth-child(4){border-left-color:#35a77b!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric>span{font-size:10px!important;letter-spacing:.55px!important}
+#compare .compare-map-kpi-layout>.compare-side-kpis>.metric>strong{font-size:clamp(17px,1.75vw,25px)!important;font-variant-numeric:tabular-nums!important;line-height:1.15!important}
+#compare .compare-map-kpi-layout .compare-focus-stage{min-height:350px!important;height:clamp(350px,36vw,455px)!important}
+@media(max-width:950px){#compare .compare-map-kpi-layout{grid-template-columns:minmax(0,1fr) 190px}}
+@media(max-width:690px){#compare .compare-map-kpi-layout{grid-template-columns:1fr}#compare .compare-map-kpi-layout>.compare-side-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:none;gap:4px!important}#compare .compare-map-kpi-layout>.compare-side-kpis>.metric>strong{font-size:17px!important}#compare .compare-map-kpi-layout .compare-focus-stage{min-height:295px!important;height:320px!important}}
