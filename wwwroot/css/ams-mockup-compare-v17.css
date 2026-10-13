@@ -1,0 +1,50 @@
+/* v17 — AMS reference mockup visual polish for comparison workstation.
+   Presentational only. Do not alter chart order, grid columns, chart heights,
+   compact expand controls, trajectory/map geometry or replay behavior. */
+#telemetry .telemetry-kpis>.metric,
+#compare>.metrics>.metric{
+  background:linear-gradient(180deg,#141f2b,#0a121b)!important;
+  border-bottom:1px solid #314355!important;
+  font-variant-numeric:tabular-nums;
+}
+#telemetry .telemetry-kpis>.metric strong,
+#compare>.metrics>.metric strong{
+  font-variant-numeric:tabular-nums!important;
+  letter-spacing:-.3px!important;
+}
+#telemetry .replay-control-card,
+#compare .compare-replay-row{
+  border-left:2px solid #d52b3c!important;
+  background:linear-gradient(90deg,#18202c,#101822)!important;
+}
+#telemetry #telemetryMapFirst .trajectory-stage,
+#compare>.compare-focus-card .compare-focus-stage{
+  background:radial-gradient(ellipse at center,#192a3b 0%,#090f17 75%)!important;
+}
+#telemetry .telemetry-grid-dense>.card{
+  border-bottom:1px solid #2e4152!important;
+}
+#telemetry .ams-trajectory-coach-panel{
+  border-left:2px solid #408bd0!important;
+  background:linear-gradient(#101c29,#0b141d)!important;
+}
+#compare .compare-focus-hud{
+  font-variant-numeric:tabular-nums;
+}
+#compare .compare-focus-hud>div{
+  border-bottom:2px solid #39516a!important;
+}
+#compare .compare-focus-hud>div:first-child{
+  border-bottom-color:#da3240!important;
+}
+#compare .compare-focus-coach{
+  background:#0c1723!important;
+}
+#compare .ams-chart-toolbar{
+  border-bottom:2px solid #35495f!important;
+}
+#telemetry .telemetry-grid-dense .card-title,
+#compare .compare-telemetry-grid .card-title{
+  letter-spacing:.45px!important;
+  text-transform:uppercase!important;
+}
