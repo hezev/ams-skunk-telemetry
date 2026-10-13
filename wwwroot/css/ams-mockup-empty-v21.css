@@ -1,0 +1,42 @@
+/* v21 — polished, honest no-data instrument presentation.
+   No invented data, no chart order/height changes, no map/replay changes. */
+#driver>.metrics:has(strong:not(:empty)),
+#team>.table-card,#workspace .workspace-grid{font-variant-numeric:tabular-nums}
+#driver>.metrics>.metric strong{font-variant-numeric:tabular-nums!important}
+#driver>.metrics>.metric strong:not([class]){color:#edf4fb!important}
+#driver>.metrics>.metric span{white-space:normal}
+#team>.table-card:has(tbody:empty){
+  min-height:120px;
+  background:linear-gradient(180deg,#101d29,#0b121a)!important;
+}
+#team>.table-card tbody:empty::after{
+  content:"SEM PILOTOS DISPONÍVEIS NESTA CONTA";
+  display:block;
+  padding:19px 12px;
+  color:#92aabc;
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:.75px;
+}
+#workspace .workspace-widget .workspace-value{
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:12px 8px!important;
+  background:repeating-linear-gradient(0deg,#0b141e,#0b141e 17px,#0f1924 18px)!important;
+  border:1px solid #293c4e!important;
+  color:#aabed0!important;
+  font-size:11px!important;
+}
+#workspace .workspace-widget .workspace-value:not(:empty){
+  overflow-wrap:anywhere;
+}
+#driver>.metrics>.metric,#workspace .workspace-widget{
+  box-shadow:none!important;
+  border-radius:0!important;
+}
+@media(max-width:700px){
+  #workspace .workspace-widget .workspace-value{min-height:56px}
+}
