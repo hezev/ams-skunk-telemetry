@@ -70,6 +70,8 @@ window.AMSTrack = {
             category:parts[0]||"",
             family:parts[1]||"",
             config:parts[2]||"",
+            // Official iRacing metadata is per layout, never per venue.
+            cornersPerLap:Number.isInteger(Number(node.corners_per_lap))&&Number(node.corners_per_lap)>0&&Number(node.corners_per_lap)<100?Number(node.corners_per_lap):null,
             search:this.normalize(context.join(" "))
           });
         }
@@ -169,14 +171,14 @@ window.AMSTrack = {
 
   async getIndex(){
     if(this.index)return this.index;
-    const cached=sessionStorage.getItem("ams_track_index_v1");
+    const cached=sessionStorage.getItem("ams_track_index_v2");
     if(cached){
       try{this.index=JSON.parse(cached);return this.index;}catch{}
     }
     const res=await fetch(AMS_CONFIG.trackMetadataUrl,{cache:"force-cache"});
     if(!res.ok)throw new Error("Não foi possível carregar o catálogo iRacing.");
     this.index=this.buildIndex(await res.json());
-    try{sessionStorage.setItem("ams_track_index_v1",JSON.stringify(this.index));}catch{}
+    try{sessionStorage.setItem("ams_track_index_v2",JSON.stringify(this.index));}catch{}
     return this.index;
   },
 
@@ -1322,12 +1324,17 @@ window.AMSTrack = {
       return c.mag>=prev&&c.mag>=next;
     }).sort((a,b)=>b.mag-a.mag);
 
+    // Avoid creating more geometric corners than the official matched layout has.
+    // SVG turns.svg supplies the actual official labels visually; geometric apex
+    // estimates remain approximate, so do not claim official positions or names.
+    const officialCount=Number(this.activeEntry?.cornersPerLap);
+    const limit=Number.isInteger(officialCount)&&officialCount>0&&officialCount<100?officialCount:18;
     const selected=[];
     const circularDistance=(a,b)=>{const d=Math.abs(a-b);return Math.min(d,1-d);};
     for(const c of local){
       if(selected.every(x=>circularDistance(x.p,c.p)>.027)){
         selected.push(c);
-        if(selected.length>=18)break;
+        if(selected.length>=limit)break;
       }
     }
     return selected.sort((a,b)=>a.p-b.p).map((x,i)=>({
