@@ -1,0 +1,4 @@
+/* Quiet empty-state guidance, never covers an active replay or track marker. */
+#telemetry .trajectory-stage,#compare #compareFocusStage{position:relative}
+.ams-map-empty-hint:not([hidden]){position:absolute;inset:auto 8px 8px 8px;text-align:center;z-index:2;pointer-events:none;font-size:11px;color:#c7d2e0;background:#101923df;border:1px solid #405065;padding:8px}
+.ams-map-empty-hint[hidden]{display:none!important}
