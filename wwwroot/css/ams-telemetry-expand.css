@@ -1,0 +1,15 @@
+/* Dense, interactive Telemetry layout */
+#telemetry #telemetryMapFirst{margin:3px 0;min-width:0}
+#telemetry #telemetryMapFirst>.card{margin:0!important;padding:8px!important}
+#telemetry #telemetryMapFirst .trajectory-stage{height:clamp(280px,38vh,480px)!important}
+#telemetry .telemetry-grid-dense{gap:3px!important;margin:3px 0!important}
+#telemetry .telemetry-grid-dense>.card{min-width:0;padding:5px!important}
+#telemetry .ams-chart-inline-heading{display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:23px}
+#telemetry .ams-chart-inline-heading>.card-title{font-size:10px!important;margin:0!important}
+#telemetry .ams-chart-size-button{background:#182230;border:1px solid #4d5a6c;color:#dfebfa;font-size:10px;font-weight:700;padding:3px 7px;cursor:pointer}
+#telemetry .ams-chart-size-button:focus-visible,#telemetry .chart-wrap:focus-visible{outline:2px solid #dfb268;outline-offset:-2px}
+#telemetry .telemetry-grid-dense .chart-wrap,#telemetry .telemetry-grid-dense .chart-wrap.big{height:102px!important;min-height:102px!important;margin-top:3px!important;cursor:zoom-in}
+#telemetry .telemetry-grid-dense .ams-chart-expanded{grid-column:1/-1!important;border-color:#d44353!important;background:#151c28!important}
+#telemetry .telemetry-grid-dense .ams-chart-expanded .chart-wrap,#telemetry .telemetry-grid-dense .ams-chart-expanded .chart-wrap.big{height:clamp(260px,43vh,440px)!important;min-height:260px!important;cursor:zoom-out}
+#telemetry .telemetry-grid-dense .chart-wrap canvas{display:block;width:100%!important;height:100%!important}
+@media(max-width:740px){#telemetry .telemetry-grid-dense .chart-wrap,#telemetry .telemetry-grid-dense .chart-wrap.big{height:90px!important;min-height:90px!important}#telemetry #telemetryMapFirst .trajectory-stage{height:260px!important}}
