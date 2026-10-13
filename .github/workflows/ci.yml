@@ -30,3 +30,4 @@ jobs:
           node --check wwwroot/js/ams-mini-sector-explorer.js
           node --check wwwroot/js/ams-geometry-corners.js
           node --check wwwroot/js/ams-corner-phases.js
+          node --check wwwroot/js/ams-alignment-audit.js
