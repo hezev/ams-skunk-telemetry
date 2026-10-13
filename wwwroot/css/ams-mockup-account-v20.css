@@ -1,0 +1,96 @@
+/* v20: mockup-consistent visual treatment of the remaining account/workspace views.
+   No layout reorder, graphs, maps, button sizing, persistence or telemetry logic. */
+#driver>.titlebar,#team>.titlebar,#workspace>.titlebar{
+  background:linear-gradient(90deg,#1b1119,#121c27 65%,#0d141d)!important;
+  border-left:3px solid #d52c3b!important;
+  border-bottom:1px solid #394c5d!important;
+  padding:8px 11px!important;
+  margin-bottom:3px!important;
+}
+#driver>.titlebar h1,#team>.titlebar h1,#workspace>.titlebar h1{
+  font-size:clamp(17px,1.65vw,23px)!important;
+  text-transform:uppercase!important;
+  font-weight:800!important;
+  letter-spacing:.8px!important;
+}
+#driver>.titlebar p,#team>.titlebar p,#workspace>.titlebar p{
+  font-size:10px!important;
+  color:#aabccc!important;
+}
+#driver>.metrics{gap:3px!important}
+#driver>.metrics>.metric{
+  background:linear-gradient(180deg,#14202c,#0b131e)!important;
+  border:1px solid #34485b!important;
+  border-top:2px solid #526176!important;
+  padding:8px 10px!important;
+  font-variant-numeric:tabular-nums!important;
+}
+#driver>.metrics>.metric:first-child{border-top-color:#d53040!important}
+#driver>.metrics>.metric:nth-child(2){border-top-color:#448fd5!important}
+#driver>.metrics>.metric:last-child{border-top-color:#37ab7c!important}
+#driver>.metrics>.metric span{
+  font-size:9px!important;
+  color:#aebfd0!important;
+  letter-spacing:.7px!important;
+  text-transform:uppercase!important;
+}
+#team>.table-card{
+  background:#0b131d!important;
+  border-top:2px solid #c52b3b!important;
+  overflow-x:auto!important;
+  padding:6px!important;
+}
+#team>.table-card table{width:100%!important;font-variant-numeric:tabular-nums!important}
+#team>.table-card th{
+  color:#e0ebf5!important;
+  background:#1a2735!important;
+  border-bottom:1px solid #506176!important;
+  text-transform:uppercase!important;
+  font-size:10px!important;
+  white-space:nowrap!important;
+}
+#team>.table-card td{
+  border-bottom:1px solid #293a4c!important;
+  color:#dae5f0!important;
+  font-size:11px!important;
+}
+#team>.table-card tbody tr:nth-child(even){background:#111c28!important}
+#team>.table-card tbody tr:hover{background:#1a2a3a!important}
+#workspace .workspace-controls{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px!important;
+}
+#workspace .workspace-controls label{
+  background:#111c28!important;
+  border:1px solid #3a4e63!important;
+  padding:4px 7px!important;
+  color:#d9e7f4!important;
+  font-size:10px!important;
+  text-transform:uppercase!important;
+  letter-spacing:.45px!important;
+}
+#workspace .workspace-controls input{accent-color:#e2394a!important}
+#workspace .workspace-grid{gap:3px!important}
+#workspace .workspace-widget{
+  min-width:0;
+  border:1px solid #35485b!important;
+  border-top:2px solid #506782!important;
+  background:linear-gradient(180deg,#111b27,#0a121b)!important;
+  padding:7px!important;
+}
+#workspace .workspace-widget:first-child{border-top-color:#d52c3b!important}
+#workspace .workspace-widget:nth-child(2){border-top-color:#438ed0!important}
+#workspace .workspace-widget:nth-child(3){border-top-color:#d1aa65!important}
+#workspace .workspace-widget .card-title{
+  background:#172433!important;
+  border-bottom:1px solid #3c4e60!important;
+  color:#eaf2fa!important;
+  font-size:10px!important;
+  letter-spacing:.7px!important;
+  text-transform:uppercase!important;
+  padding:5px 7px!important;
+}
+#workspace .workspace-value{color:#d4e2ef!important;font-variant-numeric:tabular-nums!important}
+@media(max-width:700px){#workspace .workspace-controls{width:100%}}
