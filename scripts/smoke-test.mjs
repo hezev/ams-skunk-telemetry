@@ -56,4 +56,5 @@ for(const token of [".ams-chart-expanded","height:102px","height:90px"]){
   if(!compact.includes(token))throw new Error("Missing compact/expanded chart styling: "+token);
 }
 
+for(const id of ["trajectoryMarkerA","trajectoryMarkerRef","compareLapMarkerA","compareLapMarkerRef"]){if(!track.includes(id))throw new Error("Missing visible lap marker "+id);}
 console.log("AMS engineering telemetry smoke test: OK");
