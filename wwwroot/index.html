@@ -51,6 +51,7 @@
   <link rel="stylesheet" href="css/ams-engineer-reference-v33.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-insights-v34.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-key-insights-v35.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-engineer-mockup-v36.css?v=20261014-1">
 </head>
 <body>
 
@@ -408,11 +409,13 @@
         </div>
       </div>
 
-      <div class="metrics metrics-4">
-        <article class="metric"><span>Best Lap</span><strong id="engineerBestLap">—</strong></article>
-        <article class="metric"><span>Consistent Pace</span><strong id="engineerPace">—</strong></article>
-        <article class="metric"><span>Achievable Lap</span><strong id="engineerAchievable">—</strong></article>
-        <article class="metric"><span>Consistency</span><strong id="engineerConsistency">—</strong></article>
+      <div class="metrics metrics-6 engineer-mockup-kpis" aria-label="Resumo de inteligência da sessão">
+        <article class="metric"><span>BIGGEST GAIN</span><strong id="engineerBiggestGain">—</strong><small id="engineerBiggestGainDetail">Potencial de melhoria por zona</small></article>
+        <article class="metric"><span>MAIN LOSS AREA</span><strong id="engineerMainLoss">—</strong><small id="engineerMainLossDetail">Maior perda mediana por zona</small></article>
+        <article class="metric"><span>BRAKING CONSISTENCY</span><strong id="engineerBrakingConsistency">—</strong><small id="engineerBrakingDetail">Zonas com travagem repetível</small></article>
+        <article class="metric"><span>THROTTLE CONFIDENCE</span><strong id="engineerThrottleConfidence">—</strong><small id="engineerThrottleDetail">Zonas com throttle repetível</small></article>
+        <article class="metric"><span>TRAFFIC EFFECT</span><strong id="engineerTrafficEffect">—</strong><small id="engineerTrafficDetail">Sem dados de tráfego validados</small></article>
+        <article class="metric engineer-focus-kpi"><span>RECOMMENDED FOCUS</span><strong id="engineerRecommendedFocus">—</strong><small id="engineerFocusDetail">À espera de análise</small></article>
       </div>
 
       <div class="engineer-mockup-layout">
@@ -441,6 +444,7 @@
               <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Strengths</div><span class="chip">EVIDENCE</span></div><div id="engineerStrengths" class="engineer-finding-list">Analisa uma sessão para identificar zonas consistentes.</div></article>
               <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Weaknesses</div><span class="chip">EVIDENCE</span></div><div id="engineerWeaknesses" class="engineer-finding-list">Aguarda dados da sessão.</div></article>
               <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Suggested Drills</div><span class="chip">NEXT STINT</span></div><div id="engineerDrills" class="engineer-finding-list">As recomendações baseiam-se nas prioridades analisadas.</div></article>
+              <article class="card engineer-finding-card engineer-anomaly-card"><div class="card-head"><div class="card-title">Detected Anomalies</div><span class="chip">EVIDENCE</span></div><div id="engineerAnomalies" class="engineer-finding-list">A aguardar telemetria para detetar variações invulgares.</div></article>
             </div>
           </div>
       <div class="engineer-grid">
@@ -490,6 +494,12 @@
             <button id="engineerAiBtn" class="action-btn" type="button">Generate Briefing</button>
           </div>
         </div>
+        <div class="engineer-ai-suggestions" aria-label="Questões rápidas ao engenheiro">
+          <button type="button" data-engineer-prompt="Qual é a principal zona onde estou a perder tempo?">Onde perco mais tempo?</button>
+          <button type="button" data-engineer-prompt="Como posso melhorar a consistência na travagem?">Melhorar travagem</button>
+          <button type="button" data-engineer-prompt="Quais devem ser as prioridades da próxima sessão?">Próxima sessão</button>
+          <button type="button" data-engineer-prompt="Compara a minha última volta com a melhor volta.">Comparar voltas</button>
+        </div>
         <div id="engineerAiOutput" class="engineer-ai-output">Analisa a sessão e pede um briefing para receber prioridades, diagnóstico de consistência e leitura setup vs pilotagem.</div>
         <div class="engineer-ai-question">
           <input id="engineerQuestion" type="text" maxlength="1200" placeholder="Ex.: Onde estou a perder mais tempo? Devo mexer no setup?">
@@ -503,7 +513,28 @@
 
       <div class="engineer-bottom-grid">
         <article class="card engineer-scorecard-card"><div class="card-head"><div class="card-title">Driver Scorecard</div><span class="chip">SESSION</span></div><div class="engineer-scorecard"><div><span>Consistency</span><strong id="engineerScoreConsistency">—</strong></div><div><span>Lap variance σ</span><strong id="engineerScoreVariance">—</strong></div><div><span>Driver influence</span><strong id="engineerScoreDriver">—</strong></div><div><span>Zones analysed</span><strong id="engineerScoreZones">—</strong></div></div></article>
+
+        <article class="card engineer-lap-comparison">
+          <div class="card-head"><div><div class="card-title">Lap Comparison</div><div class="trajectory-subtitle" id="engineerComparisonStatus">Última volta válida vs melhor volta da sessão · apenas telemetria real</div></div><span id="engineerComparisonDelta" class="chip">—</span></div>
+          <div class="engineer-compare-legend"><span class="latest">Última volta válida</span><span class="best">Melhor volta</span></div>
+          <div class="engineer-compare-plots">
+            <div><span>Speed</span><svg id="engineerCompareSpeed" viewBox="0 0 560 95" preserveAspectRatio="none" role="img" aria-label="Comparação da velocidade por posição de pista"></svg></div>
+            <div><span>Throttle</span><svg id="engineerCompareThrottle" viewBox="0 0 560 95" preserveAspectRatio="none" role="img" aria-label="Comparação do acelerador por posição de pista"></svg></div>
+          </div>
+          <p id="engineerComparisonEmpty" class="engineer-compare-empty">Analisa uma sessão com pelo menos duas voltas completas para comparar os gráficos.</p>
+        </article>
       </div>
+
+
+      <details class="engineer-secondary-details">
+        <summary>Indicadores adicionais de sessão (tempos e consistência)</summary>
+        <div class="metrics metrics-4">
+        <article class="metric"><span>Best Lap</span><strong id="engineerBestLap">—</strong></article>
+        <article class="metric"><span>Consistent Pace</span><strong id="engineerPace">—</strong></article>
+        <article class="metric"><span>Achievable Lap</span><strong id="engineerAchievable">—</strong></article>
+        <article class="metric"><span>Consistency</span><strong id="engineerConsistency">—</strong></article>
+      </div>
+      </details>
 
       <article class="card table-card">
         <div class="card-head">
@@ -623,5 +654,6 @@
 <script src="js/ams-map-empty-states.js?v=20261013-1"></script>
   <script src="js/ams-engineer-reference-v33.js?v=20261013-35"></script>
   <script src="js/ams-engineer-insights-v34.js?v=20261013-35"></script>
+  <script src="js/ams-engineer-mockup-v36.js?v=20261014-1"></script>
 </body>
 </html>
