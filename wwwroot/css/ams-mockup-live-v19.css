@@ -1,0 +1,80 @@
+/* v19 — AMS archived pitwall mockup: live timing + historical tables.
+   Pure presentation. No DOM restructuring, graph changes or replay changes. */
+#live>.titlebar,#sessions>.titlebar,#laps>.titlebar{
+  border-left:3px solid #d42c3b!important;
+  border-bottom:1px solid #3c4b5a!important;
+  background:linear-gradient(90deg,#1c1119,#111b26 68%,#0b121b)!important;
+  padding:8px 11px!important;
+  margin-bottom:3px!important;
+}
+#live>.titlebar h1,#sessions>.titlebar h1,#laps>.titlebar h1{
+  font-size:clamp(17px,1.6vw,23px)!important;
+  font-weight:800!important;
+  letter-spacing:.85px!important;
+  text-transform:uppercase!important;
+}
+#live>.titlebar p,#sessions>.titlebar p,#laps>.titlebar p{
+  font-size:10px!important;
+  color:#aabbcc!important;
+}
+#live .live-summary{
+  gap:3px!important;
+  margin:3px 0!important;
+}
+#live .live-summary>article{
+  background:linear-gradient(180deg,#16202c,#0b131e)!important;
+  border:1px solid #35485b!important;
+  border-top:2px solid #455871!important;
+  box-shadow:none!important;
+  padding:8px 10px!important;
+  min-width:0;
+}
+#live .live-summary>article:first-child{border-top-color:#d12d3c!important}
+#live .live-summary>article:nth-child(3){border-top-color:#478ccd!important}
+#live .live-summary>article>span{
+  color:#aabacc!important;
+  font-size:9px!important;
+  text-transform:uppercase!important;
+  letter-spacing:.65px!important;
+}
+#live .live-summary>article>strong{
+  font-variant-numeric:tabular-nums!important;
+  color:#eef4fb!important;
+}
+#live>.table-card,#sessions>.table-card,#laps>.table-card{
+  border-top:2px solid #c92a38!important;
+  background:#0b131c!important;
+  overflow-x:auto!important;
+  padding:6px!important;
+}
+#live>.table-card table,#sessions>.table-card table,#laps>.table-card table{
+  width:100%!important;
+  border-collapse:collapse!important;
+  font-variant-numeric:tabular-nums!important;
+}
+#live>.table-card th,#sessions>.table-card th,#laps>.table-card th{
+  color:#dce7f2!important;
+  background:#1a2735!important;
+  border-bottom:1px solid #516176!important;
+  font-size:10px!important;
+  text-transform:uppercase!important;
+  letter-spacing:.35px!important;
+  white-space:nowrap!important;
+}
+#live>.table-card td,#sessions>.table-card td,#laps>.table-card td{
+  color:#d6e1ee!important;
+  border-bottom:1px solid #253747!important;
+  font-size:11px!important;
+}
+#live>.table-card tbody tr:nth-child(even),
+#sessions>.table-card tbody tr:nth-child(even),
+#laps>.table-card tbody tr:nth-child(even){background:#111c28!important}
+#live>.table-card tbody tr:hover,
+#sessions>.table-card tbody tr:hover,
+#laps>.table-card tbody tr:hover{background:#1b2938!important}
+#live>.table-card tbody tr:first-child{box-shadow:inset 3px 0 #d0ad68!important}
+@media(max-width:700px){
+  #live>.table-card,#sessions>.table-card,#laps>.table-card{
+    scrollbar-width:thin;
+  }
+}
