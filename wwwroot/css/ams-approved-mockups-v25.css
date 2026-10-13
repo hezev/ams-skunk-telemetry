@@ -1,0 +1,57 @@
+/* v25 — approved image-gen mockups: real page composition, not generic button enlargement.
+   Preserve all telemetry graph order, 102px collapsed heights, small expand buttons,
+   map implementations, replay, and empty/data logic. Race Events / Overlay remain removed. */
+:root{--ams-mock-red:#ed283e;--ams-mock-panel:#0b1118;--ams-mock-border:#273745;--ams-mock-label:#a0b1c2}
+body{background:#05090e!important;color:#e9f0f7!important}
+.sidebar{background:linear-gradient(180deg,#070c11,#080d13)!important;border-right:1px solid #273440!important}
+.main .content{max-width:none!important}
+.main .content>.view>.titlebar{margin-bottom:4px!important;padding:8px 11px!important;background:linear-gradient(90deg,#10141c,#090f16)!important;border-bottom:1px solid #263644!important}
+.main .content>.view>.titlebar h1{font-family:Arial,Helvetica,sans-serif!important;font-weight:900!important;font-size:clamp(19px,1.7vw,27px)!important;letter-spacing:.8px!important}
+.main .content>.view>.titlebar p{font-size:10px!important;letter-spacing:1px!important;text-transform:uppercase!important;color:#99b0c5!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .card{border:1px solid var(--ams-mock-border)!important;background:linear-gradient(180deg,#0e161f,#080e15)!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .card-head{background:#111a24!important;border-bottom:1px solid #293a4b!important;padding:5px 7px!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .card-title{font-size:11px!important;font-weight:800!important;letter-spacing:.35px!important;text-transform:uppercase!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .metric{border:1px solid #253847!important;background:#0b141d!important;box-shadow:none!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .metric>span{color:#a2b8ca!important;font-size:9px!important;text-transform:uppercase!important}
+:is(#dashboard,#compare,#engineer,#setup-lab) .metric>strong{font-variant-numeric:tabular-nums!important}
+#dashboard .layout-main{grid-template-columns:minmax(0,1.85fr) minmax(330px,.9fr)!important;gap:4px!important}
+#dashboard .layout-main>.card:first-child{border-top:2px solid #d72b40!important}
+#dashboard .layout-main>.card:first-child .track-stage{min-height:380px!important;background:#070e13!important}
+#dashboard .layout-main>.card:nth-child(2){border-top:2px solid #28679b!important}
+#dashboard .gauges{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important}
+#dashboard .gauges>div{border-radius:0!important;background:#0b151f!important}
+#dashboard .gauges>div strong{font-size:clamp(20px,2vw,31px)!important}
+#dashboard .dashboard-lower{gap:4px!important}
+#dashboard .dashboard-lower>.card{border-top:2px solid #284157!important}
+#dashboard .dashboard-lower>.card:first-child{border-top-color:#d02c42!important}
+#dashboard .dashboard-lower>.card:last-child{border-top-color:#339b79!important}
+#compare>.metrics{gap:4px!important}
+#compare>.compare-focus-card{border-top:2px solid #d82d42!important}
+#compare .compare-focus-stage{background:#07121a!important}
+#compare .compare-focus-hud>div{border-left:2px solid #426386!important;background:#0a151fee!important}
+#compare .compare-telemetry-grid{gap:4px!important}
+#compare .compare-telemetry-grid>.card{border-top:2px solid #2f6fa3!important}
+#compare .compare-telemetry-grid>.card:last-child{border-top-color:#d72e40!important}
+#compare .compare-telemetry-grid .chart-wrap{background:#050b10!important}
+#engineer>.metrics{gap:4px!important}
+#engineer>.metrics>.metric:nth-child(1){border-top:2px solid #28a779!important}
+#engineer>.metrics>.metric:nth-child(2){border-top:2px solid #e04e4d!important}
+#engineer>.metrics>.metric:nth-child(3){border-top:2px solid #2e96d6!important}
+#engineer>.metrics>.metric:nth-child(4){border-top:2px solid #e0ad3d!important}
+#engineer .engineer-grid{gap:4px!important}
+#engineer .engineer-grid>.card:first-child{border-top:2px solid #2ba474!important}
+#engineer .engineer-grid>.card:nth-child(2){border-top:2px solid #dcad48!important}
+#engineer .engineer-priority-card{border-top:2px solid #d6a342!important}
+#engineer .engineer-ai-card{border-top:2px solid #2d83c0!important}
+#engineer .engineer-ai-output{background:#0b1722!important;border-color:#2a4357!important}
+#engineer .engineer-table th{background:#142232!important}
+#setup-lab .ams-premium-grid{gap:4px!important}
+#setup-lab .ams-premium-grid>.ams-concept-card{border-top:2px solid #415a73!important;background:#0a131c!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:first-child{border-top-color:#df3749!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(2){border-top-color:#347dcc!important}
+#setup-lab .ams-premium-grid>.ams-concept-card:nth-child(3){border-top-color:#d1a243!important}
+#setup-lab .ams-setup-row{padding:3px 5px!important;border-bottom:1px solid #253747!important}
+#setup-lab .ams-setup-row input[type=range]{accent-color:#458fdd!important}
+#setup-lab .ams-concept-card h3{letter-spacing:.5px!important}
+@media(max-width:1120px){#dashboard .layout-main{grid-template-columns:1fr!important}#dashboard .layout-main>.card:first-child .track-stage{min-height:290px!important}}
+@media(max-width:700px){.main .content>.view>.titlebar h1{font-size:19px!important}#dashboard .dashboard-lower{gap:4px!important}}
