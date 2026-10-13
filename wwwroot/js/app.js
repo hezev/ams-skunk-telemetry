@@ -697,6 +697,7 @@
     }
   }
 
+  document.addEventListener("ams-setup-request-sessions",publishSetupSessions);
   q("#engineerAnalyzeBtn")?.addEventListener("click",analyzeEngineerSession);
   q("#engineerSessionSelect")?.addEventListener("change",()=>setText("engineerStatus","Pronto para analisar"));
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
