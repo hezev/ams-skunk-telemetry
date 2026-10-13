@@ -45,6 +45,10 @@
     document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===btn.dataset.view));
     nav.querySelectorAll('button').forEach(v=>v.classList.toggle('active',v===btn));
   });
+  const setupContext=()=>window.AMSSetupSessionContext?.getSelected?.()||null;
+  const sameCarContext=(saved,current)=>!saved||!current||
+    (String(saved.simulator||'').trim().toLowerCase()===String(current.simulator||'').trim().toLowerCase()
+     &&String(saved.car||'').trim().toLowerCase()===String(current.car||'').trim().toLowerCase());
   const setupKey='ams_setup_catalog_v1';
   const readSetups=()=>{try{const s=JSON.parse(localStorage.getItem(setupKey)||'[]');return Array.isArray(s)?s:[]}catch{return []}};
   const params=()=>Object.fromEntries(setupDefinitions.map(([name],i)=>[name,Number($('#setup-lab [data-setup-param="'+i+'"]').value)]));
@@ -72,18 +76,35 @@
       const label=document.createElement('span');label.textContent=item.name;
       const b=document.createElement('button');b.type='button';b.className='ams-secondary';b.textContent='Carregar';
       b.addEventListener('click',()=>{
+        const context=setupContext();
+        if(!sameCarContext(item.context,context)){
+          $('#setupMessage').textContent='Este perfil pertence a outro carro/simulador. Seleciona uma sessão compatível para o carregar.';
+          return;
+        }
         $('#setupName').value=item.name;
         setupDefinitions.forEach(([name],i)=>{const inp=$('#setup-lab [data-setup-param="'+i+'"]');inp.value=item.parameters[name]??setupDefinitions[i][3];$('#setupValue'+i).textContent=inp.value;});
         $('#setupMessage').textContent='Perfil carregado localmente.';
         baseline={...item.parameters};baselineName=item.name;renderComparison();
       });
-      div.append(label,b);catalog.append(div);
+      const small=document.createElement('small');
+      small.className='setup-profile-context';
+      small.textContent=item.context
+        ?[item.context.simulator,item.context.car,item.context.track].filter(Boolean).join(' · ')
+        :'Perfil antigo sem carro identificado';
+      if(!sameCarContext(item.context,setupContext())){
+        div.classList.add('setup-profile-incompatible');
+        b.disabled=true;b.title='Carro ou simulador incompatível com a sessão selecionada';
+      }
+      div.append(label,small,b);catalog.append(div);
     });
   };
   setupDefinitions.forEach((_,i)=>$('#setup-lab [data-setup-param="'+i+'"]').addEventListener('input',e=>{$('#setupValue'+i).textContent=e.target.value;renderComparison();}));
   $('#setupReset').addEventListener('click',()=>{setupDefinitions.forEach((d,i)=>{const el=$('#setup-lab [data-setup-param="'+i+'"]');el.value=d[3];$('#setupValue'+i).textContent=el.value;});renderComparison();});
   $('#setupSave').addEventListener('click',()=>{
-    const name=$('#setupName').value.trim()||'Sem nome',rows=readSetups();rows.push({name,parameters:params(),savedAt:new Date().toISOString()});
+    const name=$('#setupName').value.trim()||'Sem nome',rows=readSetups();
+    const context=setupContext();
+    rows.push({name,parameters:params(),savedAt:new Date().toISOString(),
+      context:context?{simulator:context.simulator,car:context.car,track:context.track}:null});
     try{localStorage.setItem(setupKey,JSON.stringify(rows.slice(-30)));$('#setupMessage').textContent='Setup guardado neste navegador.';refreshSetup()}catch{$('#setupMessage').textContent='Não foi possível guardar este setup.'}
   });
   $('#setupExport').addEventListener('click',()=>{
@@ -105,12 +126,21 @@
           if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max||Math.abs((n-min)/step-Math.round((n-min)/step))>0.00001)throw new Error('Parâmetro inválido: '+name);
           values[name]=n;
         }
-        return {name:item.name.trim(),parameters:values,savedAt:typeof item.savedAt==='string'&&Number.isFinite(Date.parse(item.savedAt))?item.savedAt:new Date().toISOString()};
+        let context=null;
+        if(item.context!=null){
+          if(typeof item.context!=='object'||Array.isArray(item.context)||
+             !['simulator','car','track'].every(k=>typeof item.context[k]==='string'&&item.context[k].length<=120))
+            throw new Error('Contexto do perfil inválido.');
+          context={simulator:item.context.simulator,car:item.context.car,track:item.context.track};
+        }
+        return {name:item.name.trim(),parameters:values,savedAt:typeof item.savedAt==='string'&&Number.isFinite(Date.parse(item.savedAt))?item.savedAt:new Date().toISOString(),context};
       });
       const merged=[...readSetups(),...validated].slice(-30);
       localStorage.setItem(setupKey,JSON.stringify(merged));
       refreshSetup();$('#setupMessage').textContent=validated.length+' setups importados com sucesso.';
     }catch(err){$('#setupMessage').textContent='Importação rejeitada: '+(err.message||'JSON inválido');}
     finally{e.target.value='';}
-  });refreshSetup();renderComparison();
+  });
+  document.addEventListener('ams-setup-context-change',refreshSetup);
+  refreshSetup();renderComparison();
 })();

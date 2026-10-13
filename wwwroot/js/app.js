@@ -55,6 +55,17 @@
     return [...m.values()].sort((a,b)=>(b.last?.getTime()||0)-(a.last?.getTime()||0));
   }
 
+  // Explicit, read-only session context for Setup Lab. No access token,
+  // raw telemetry, pilot credentials or synthetic garage parameters exposed.
+  function publishSetupSessions(){
+    const sessions=groupSessions(state.laps).map(x=>({
+      id:String(x.id),simulator:String(x.sim||""),track:String(x.track||""),car:String(x.car||""),
+      lapCount:x.laps.length,bestLapMs:Number.isFinite(x.best)?x.best:null,
+      lastAt:x.last?.toISOString()||null
+    }));
+    document.dispatchEvent(new CustomEvent("ams-setup-sessions",{detail:{sessions}}));
+  }
+
   function pilotName(id){
     return state.pilots.find(p=>p.id===id)?.pilot_name || (id===AMSAuth.user?.id ? (AMSAuth.user?.user_metadata?.pilot_name||"Tu") : "Piloto AMS");
   }
@@ -231,7 +242,10 @@
         .slice(-20);
       const details=(await Promise.all(candidates.map(l=>detail(l.id)))).filter(Boolean);
       if(details.length<2){
-        AMSEngineer.render({ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."});
+        const report={ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."};
+        state.engineerReport=null;
+        AMSEngineer.render(report);
+        document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
         return;
       }
 
@@ -243,12 +257,16 @@
       });
       state.engineerReport=report;
       AMSEngineer.render(report);
+      document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
       setText("simName",session.sim||"—");
       setText("trackName",session.track||"—");
       setText("carName",session.car||"—");
     }catch(err){
       console.warn("AMS engineer:",err);
-      AMSEngineer.render({ok:false,reason:"Erro na análise: "+String(err.message||err)});
+      const report={ok:false,reason:"Erro na análise: "+String(err.message||err)};
+      state.engineerReport=null;
+      AMSEngineer.render(report);
+      document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
     }finally{
       if(btn){btn.disabled=false;btn.textContent="Analyse Session";}
     }
@@ -675,6 +693,7 @@
       state.laps=await visibleLaps(token,state.isCoach);
       state.pilots=await visiblePilots(token,state.isCoach);
       renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+      publishSetupSessions();
       await loadPublicRecords(token);
       if(state.laps.length)await selectLap(state.laps[0].id);
       setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
@@ -684,6 +703,7 @@
     }
   }
 
+  document.addEventListener("ams-setup-request-sessions",publishSetupSessions);
   q("#engineerAnalyzeBtn")?.addEventListener("click",analyzeEngineerSession);
   q("#engineerSessionSelect")?.addEventListener("change",()=>setText("engineerStatus","Pronto para analisar"));
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
@@ -717,7 +737,7 @@
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
-  document.addEventListener("ams-auth-changed",e=>{if(e.detail?.user)loadCloud();else stopReplay();});
+  document.addEventListener("ams-auth-changed",e=>{if(e.detail?.user)loadCloud();else{stopReplay();state.laps=[];state.engineerReport=null;publishSetupSessions();document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:null,report:null}}));}});
 
   initWorkspace();
   AMSAuth.init();

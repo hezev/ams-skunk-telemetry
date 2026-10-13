@@ -157,7 +157,13 @@ function updateRecommendations(){
 }
 const compareObserver=new MutationObserver(()=>{updateRecommendations();refreshImpact();});
 compareObserver.observe(compare,{childList:true});
-window.addEventListener('ams-engineer-analysis',e=>{lastReport=e.detail?.report?.ok?e.detail.report:null;updateRecommendations();});
+document.addEventListener('ams-setup-engineer-evidence',e=>{
+ const current=window.AMSSetupSessionContext?.getSelected?.();
+ const incoming=e.detail?.report;
+ lastReport=current&&e.detail?.sessionId===current.id&&incoming?.ok?incoming:null;
+ updateRecommendations();
+});
+document.addEventListener('ams-setup-context-change',()=>{lastReport=null;updateRecommendations();});
 
 // Turn the existing local catalog into a searchable active panel.
 const searchBar=el('div','setup-catalog-toolbar');
