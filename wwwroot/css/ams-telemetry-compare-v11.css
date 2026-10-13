@@ -1,0 +1,27 @@
+/* Finishing pass for Telemetry and Compare, after Dashboard and Engineer v10.
+   Presentation only; map rendering, trajectories, cursors, and graph controls untouched. */
+#telemetry,#compare{--v11-red:#ef4656;--v11-blue:#4ba5ef;--v11-border:#354455}
+#telemetry>.titlebar,#compare>.titlebar{border-left:3px solid var(--v11-red)!important;background:linear-gradient(90deg,#1b111a,#111923 65%,#0d121a)!important;padding:8px 11px!important;margin-bottom:3px!important}
+#telemetry>.titlebar h1,#compare>.titlebar h1{font-size:clamp(17px,1.65vw,23px)!important;font-weight:800!important;letter-spacing:1px!important;text-transform:uppercase!important}
+#telemetry>.titlebar p,#compare>.titlebar p{font-size:10px!important;line-height:1.4!important;margin-top:3px!important}
+#telemetry .telemetry-kpis>.metric,#compare>.metrics>.metric{background:linear-gradient(#16202c,#0c131d)!important;border:1px solid var(--v11-border)!important;border-top:2px solid #48556a!important;padding:7px 9px!important}
+#telemetry .telemetry-kpis>.metric:first-child,#compare>.metrics>.metric:first-child{border-top-color:var(--v11-red)!important}
+#telemetry .telemetry-kpis>.metric:nth-child(3),#compare>.metrics>.metric:nth-child(3){border-top-color:var(--v11-blue)!important}
+#telemetry .telemetry-kpis>.metric>span,#compare>.metrics>.metric>span{font-size:9px!important;letter-spacing:.65px!important;text-transform:uppercase!important}
+#telemetry .replay-control-card,#compare .compare-replay-row{background:#141e2a!important;border:1px solid var(--v11-border)!important}
+#telemetry #telemetryMapFirst>.card,#compare>.compare-focus-card{border-top:3px solid var(--v11-red)!important;background:#0a111a!important}
+#telemetry #telemetryMapFirst .trajectory-stage,#compare>.compare-focus-card .compare-focus-stage{background:radial-gradient(ellipse at center,#162637 0%,#0b131c 72%)!important;border:1px solid #465668!important}
+#telemetry #telemetryMapFirst .trajectory-legend,#compare .trajectory-legend{font-size:10px!important;letter-spacing:.4px!important}
+#telemetry .telemetry-grid-dense>.card,#compare .compare-telemetry-grid>.card{border-top:1px solid #3a4a5b!important;border-left:2px solid #3c5067!important;background:#0d1520!important}
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading,#compare .compare-telemetry-grid .card-head{background:#16202c!important;padding:3px 5px!important;min-height:24px!important}
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading>.card-title,#compare .compare-telemetry-grid .card-title{font-size:10px!important;letter-spacing:.6px!important;color:#e6eef7!important;text-transform:uppercase!important}
+#telemetry .telemetry-grid-dense .chart-wrap,#compare .compare-telemetry-grid .chart-wrap{border:1px solid #35465a!important;background:#090f17!important}
+#telemetry .telemetry-grid-dense .ams-chart-expanded{border:2px solid var(--v11-red)!important}
+#telemetry .ams-trajectory-coach-panel{border-top:3px solid var(--v11-blue)!important;background:#0d1520!important}
+#telemetry .ams-trajectory-coach-panel .trajectory-coach-current{background:#101c2a!important}
+#compare .compare-focus-hud>div{background:#101c29e8!important;border:1px solid #47556a!important;min-width:0}
+#compare .compare-focus-hud strong{font-variant-numeric:tabular-nums!important}
+#compare .compare-focus-coach{background:#101923!important;border-left:3px solid var(--v11-blue)!important}
+#telemetry #engineeringAnalysisMount .card,#compare .ams-work-card{border-color:var(--v11-border)!important;background:#0e1620!important}
+#telemetry #engineeringAnalysisMount .card-head,#compare .ams-work-card>h3{background:#18232f!important;color:#e5edf5!important;letter-spacing:.5px!important}
+@media(max-width:700px){#telemetry>.titlebar,#compare>.titlebar{padding:7px!important}#telemetry .telemetry-kpis>.metric,#compare>.metrics>.metric{padding:5px!important}}
