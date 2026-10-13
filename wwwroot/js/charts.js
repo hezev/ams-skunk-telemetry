@@ -63,7 +63,8 @@ window.AMSCharts = {
     const p=Number(pos);this.cursorPos=Number.isFinite(p)?Math.max(0,Math.min(1,p)):null;this.scheduleDraw();
   },
   setCompareExternalCursors(a,b){
-    const pa=Number(a),pb=Number(b);
+    const pa=a===null||a===undefined||a===""?NaN:Number(a);
+    const pb=b===null||b===undefined||b===""?NaN:Number(b);
     this.compareCursorA=Number.isFinite(pa)?Math.max(0,Math.min(1,pa)):null;
     this.compareCursorB=Number.isFinite(pb)?Math.max(0,Math.min(1,pb)):null;
     if(this.compareCursorA!==null||this.compareCursorB!==null)this.cursorPos=null;

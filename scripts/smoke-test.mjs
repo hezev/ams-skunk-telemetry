@@ -76,4 +76,16 @@ for(const [before,after] of [
 }
 if(index.includes('data-view="overlay-builder"'))throw new Error("Overlay Builder unexpectedly restored to navigation");
 
+
+const cursorMethod=charts.match(/  setCompareExternalCursors\(a,b\)\{[\s\S]*?\n  \},/);
+if(!cursorMethod)throw new Error("Missing Compare cursor update method");
+const {setCompareExternalCursors}=new Function("return ({"+cursorMethod[0]+"})")();
+const chartState={compareCursorA:undefined,compareCursorB:undefined,cursorPos:.4,scheduleDraw(){}};
+setCompareExternalCursors.call(chartState,.2,.7);
+if(chartState.compareCursorA!==.2||chartState.compareCursorB!==.7)throw new Error("Compare replay cursors not synchronized");
+setCompareExternalCursors.call(chartState,null,null);
+if(chartState.compareCursorA!==null||chartState.compareCursorB!==null)throw new Error("Cleared Compare cursors incorrectly snap to start");
+setCompareExternalCursors.call(chartState,0,1);
+if(chartState.compareCursorA!==0||chartState.compareCursorB!==1)throw new Error("Valid Compare 0% or 100% cursor rejected");
+
 console.log("AMS engineering telemetry smoke test: OK");
