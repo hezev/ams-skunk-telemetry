@@ -1,0 +1,31 @@
+/* Dashboard + Engineer high-density mockup alignment. Preserves existing DOM data bindings. */
+#dashboard .layout-main{grid-template-columns:minmax(0,1.8fr) minmax(330px,.9fr)!important;align-items:stretch}
+#dashboard .layout-main>.card{min-width:0}
+#dashboard .layout-main>.card:first-child{display:flex;flex-direction:column}
+#dashboard .layout-main>.card:first-child .track-stage{flex:1;min-height:clamp(330px,49vh,620px)!important;background:radial-gradient(ellipse at 50% 45%,#1d2939 0%,#0b111b 65%)!important}
+#dashboard .layout-main>.card:nth-child(2){display:flex;flex-direction:column}
+#dashboard .layout-main>.card:nth-child(2) .chart-wrap{height:125px!important;min-height:125px!important;margin-top:auto!important}
+#dashboard .gauges{grid-template-columns:repeat(2,minmax(0,1fr));gap:3px!important}
+#dashboard .gauges>div{padding:9px!important;min-width:0}
+#dashboard .gauges strong{font-variant-numeric:tabular-nums;letter-spacing:.4px}
+#dashboard .inputs{margin:6px 0!important}
+#dashboard .dashboard-lower{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px!important}
+#dashboard .dashboard-lower .card{min-width:0}
+#dashboard .tyres{gap:3px!important}
+#dashboard .tyre{padding:6px!important}
+#dashboard .dynamics-grid,#dashboard .strategy{gap:3px!important}
+#engineer .metrics{margin-bottom:3px!important}
+#engineer .engineer-grid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:stretch;gap:3px!important}
+#engineer .engineer-grid>.card{min-width:0;padding:8px!important}
+#engineer .engineer-influence{gap:6px!important;margin:5px 0!important}
+#engineer .engineer-facts,#engineer .engineer-setup-kpi{gap:3px!important}
+#engineer .engineer-priority-card,#engineer .engineer-ai-card{margin-top:3px!important}
+#engineer .engineer-priorities{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:3px!important}
+#engineer .engineer-ai-question{display:flex;gap:3px!important}
+#engineer .engineer-ai-question input{min-width:0;flex:1}
+#engineer .engineering-controls{margin:3px 0!important}
+#engineer .engineering-control-grid{gap:3px!important}
+#engineer .analysis-cursor-readout{gap:3px!important}
+#engineer .ams-work-card{margin:3px 0!important}
+@media(max-width:1100px){#dashboard .layout-main{grid-template-columns:1fr!important}#dashboard .layout-main>.card:first-child .track-stage{min-height:310px!important}#dashboard .layout-main>.card:nth-child(2) .chart-wrap{height:115px!important}#dashboard .dashboard-lower{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){#engineer .engineer-grid,#dashboard .dashboard-lower{grid-template-columns:1fr!important}#dashboard .layout-main>.card:first-child .track-stage{min-height:260px!important}#engineer .engineer-ai-question{flex-wrap:wrap}}
