@@ -1,0 +1,86 @@
+/* v14 visual usability improvements based on live desktop inspection.
+   No map geometry, replay synchronization, telemetry computation or data changes. */
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading{
+  min-height:34px!important;
+  gap:7px!important;
+  flex-wrap:wrap;
+}
+#telemetry .telemetry-grid-dense .ams-chart-inline-heading .card-title{
+  flex:1 1 100px;
+  min-width:0;
+  line-height:1.35!important;
+}
+#telemetry .ams-chart-size-button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  min-width:75px!important;
+  min-height:30px!important;
+  padding:5px 10px!important;
+  background:#253c53!important;
+  border:1px solid #6c94b8!important;
+  color:#f4f9ff!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.3px!important;
+  cursor:pointer!important;
+}
+#telemetry .ams-chart-size-button:hover{
+  background:#335674!important;
+  border-color:#a1c5e4!important;
+}
+#telemetry .ams-chart-size-button:focus-visible{
+  outline:2px solid #ebc67c!important;
+  outline-offset:2px!important;
+}
+#telemetry .telemetry-grid-dense>.card{
+  padding:6px!important;
+}
+#telemetry .telemetry-grid-dense .chart-wrap{
+  margin-top:4px!important;
+}
+#telemetry .telemetry-grid-dense .ams-chart-expanded{
+  position:relative;
+  z-index:2;
+}
+#dashboard>.metrics>.metric{
+  padding-block:11px!important;
+}
+#dashboard>.metrics>.metric>span{
+  line-height:1.35!important;
+}
+#dashboard .dashboard-lower>.card{
+  min-width:0;
+}
+#compare .ams-chart-toolbar{
+  row-gap:8px!important;
+  padding:7px!important;
+}
+#compare .ams-chart-toolbar-actions{
+  gap:5px!important;
+}
+#compare .ams-channel-toggle,#compare .ams-channel-reset{
+  min-height:32px!important;
+  padding:7px 11px!important;
+}
+@media(max-width:900px){
+  #compare .ams-chart-toolbar{
+    align-items:flex-start!important;
+  }
+  #compare .ams-chart-toolbar-actions{
+    width:100%;
+  }
+}
+@media(max-width:640px){
+  #telemetry .ams-chart-size-button{
+    min-height:34px!important;
+    min-width:82px!important;
+  }
+  #dashboard>.metrics>.metric{
+    padding-block:9px!important;
+  }
+  #compare .ams-channel-toggle,#compare .ams-channel-reset{
+    flex:1 1 auto;
+  }
+}
