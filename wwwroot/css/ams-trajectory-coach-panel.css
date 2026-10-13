@@ -1,0 +1,7 @@
+/* Trajectory Coach belongs to its own compact analysis card after charts. */
+#telemetry .ams-trajectory-coach-panel{margin:3px 0!important;padding:8px!important;min-width:0}
+#telemetry .ams-trajectory-coach-panel .card-head{margin:0 0 4px!important}
+#telemetry .ams-trajectory-coach-panel .trajectory-coach-current{margin:3px 0!important}
+#telemetry .ams-trajectory-coach-panel .trajectory-coach-table-wrap{overflow-x:auto;max-width:100%}
+#telemetry .ams-trajectory-coach-panel table{width:100%}
+#telemetry #telemetryMapFirst .trajectory-compare-card{padding-bottom:7px!important}
