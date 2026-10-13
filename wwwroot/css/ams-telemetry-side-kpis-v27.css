@@ -1,0 +1,16 @@
+/* Telemetry v27: the SIX existing lap KPIs move next to the map.
+   Preserves existing element IDs, JS bindings, replay position, graph DOM order/heights,
+   expand controls, Trajectory Coach position and map geometry logic. */
+#telemetry .telemetry-map-kpi-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,255px);gap:7px;align-items:stretch;margin:0 0 7px}
+#telemetry .telemetry-map-kpi-layout>#telemetryMapFirst{min-width:0;display:flex;flex-direction:column}
+#telemetry .telemetry-map-kpi-layout>#telemetryMapFirst>.card{min-width:0;flex:1;margin:0!important}
+#telemetry .telemetry-map-kpi-layout>#telemetryMapFirst .trajectory-stage{min-height:380px!important;max-height:none!important;height:clamp(380px,38vw,490px)!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(6,minmax(0,1fr));gap:5px!important;min-width:0;margin:0!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0;padding:9px 12px!important;border-left:2px solid #355877!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric:nth-child(1){border-left-color:#e63b52!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric:nth-child(3){border-left-color:#378fd0!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric:nth-child(6){border-left-color:#edbd52!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric>span{font-size:10px!important;letter-spacing:.55px!important}
+#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric>strong{font-size:clamp(17px,1.75vw,25px)!important;font-variant-numeric:tabular-nums!important;line-height:1.15!important}
+@media(max-width:950px){#telemetry .telemetry-map-kpi-layout{grid-template-columns:minmax(0,1fr) 190px}#telemetry .telemetry-map-kpi-layout>#telemetryMapFirst .trajectory-stage{min-height:335px!important;height:390px!important}}
+@media(max-width:690px){#telemetry .telemetry-map-kpi-layout{grid-template-columns:1fr}#telemetry .telemetry-map-kpi-layout>#telemetryMapFirst .trajectory-stage{min-height:285px!important;height:320px!important}#telemetry .telemetry-map-kpi-layout>.telemetry-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:none;gap:4px!important}#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric{padding:7px 9px!important}#telemetry .telemetry-map-kpi-layout>.telemetry-kpis>.metric>strong{font-size:17px!important}}

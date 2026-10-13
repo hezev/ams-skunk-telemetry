@@ -45,6 +45,7 @@
   <link rel="stylesheet" href="css/ams-mockup-contrast-v24.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-approved-mockups-v25.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-approved-layout-v26.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-telemetry-side-kpis-v27.css?v=20261013-1">
 </head>
 <body>
 
@@ -238,15 +239,6 @@
         </div>
       </div>
 
-      <div class="telemetry-kpis">
-        <article class="metric"><span>Lap Time</span><strong id="telemetryLapTime">—</strong></article>
-        <article class="metric"><span>Max Speed</span><strong id="telemetryMaxSpeed">—</strong></article>
-        <article class="metric"><span>Reference</span><strong id="telemetryReferenceTime">—</strong></article>
-        <article class="metric"><span>Fuel Used</span><strong id="telemetryFuelUsed">—</strong></article>
-        <article class="metric"><span>Peak Lat G</span><strong id="telemetryPeakLatG">—</strong></article>
-        <article class="metric"><span>Lap Delta</span><strong id="telemetryLapDelta">—</strong></article>
-      </div>
-
       <article class="card replay-control-card">
         <div class="replay-control-row">
           <span>Replay / Seek</span>
@@ -263,7 +255,17 @@
         </div>
       </article>
 
-      <div id="telemetryMapFirst"></div>
+      <div class="telemetry-map-kpi-layout">
+        <div id="telemetryMapFirst"></div>
+        <div class="telemetry-kpis" aria-label="Indicadores da volta">
+          <article class="metric"><span>Lap Time</span><strong id="telemetryLapTime">—</strong></article>
+          <article class="metric"><span>Max Speed</span><strong id="telemetryMaxSpeed">—</strong></article>
+          <article class="metric"><span>Reference</span><strong id="telemetryReferenceTime">—</strong></article>
+          <article class="metric"><span>Fuel Used</span><strong id="telemetryFuelUsed">—</strong></article>
+          <article class="metric"><span>Peak G</span><strong id="telemetryPeakLatG">—</strong></article>
+          <article class="metric"><span>Lap Delta</span><strong id="telemetryLapDelta">—</strong></article>
+        </div>
+      </div>
 
       <div class="telemetry-grid telemetry-grid-dense">
         <article class="card telemetry-wide"><div class="card-title">Speed</div><div class="chart-wrap big"><canvas class="trace" data-trace="speed"></canvas></div></article>
