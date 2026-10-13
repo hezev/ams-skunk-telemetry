@@ -1,0 +1,30 @@
+/* Dashboard and Engineer: mockup-aligned dense workstation v8.
+   Presentation only; existing telemetry/chart/map/data IDs remain untouched. */
+#dashboard,#engineer{--ams-ws-edge:#384454;--ams-ws-panel:#0d131c;--ams-ws-head:#18202b;--ams-ws-red:#e94b5a;--ams-ws-blue:#4b9ae8}
+#dashboard .card,#engineer .card,#dashboard .ams-work-card,#engineer .ams-work-card{border-radius:0!important;box-shadow:none!important;border-color:var(--ams-ws-edge)!important;background:var(--ams-ws-panel)!important}
+#dashboard>.titlebar,#engineer>.titlebar{margin-bottom:3px!important;padding-bottom:5px!important}
+#dashboard>.metrics,#engineer>.metrics{gap:3px!important;margin:3px 0!important}
+#dashboard>.metrics>.metric,#engineer>.metrics>.metric{min-height:0!important;padding:7px 8px!important;border-radius:0!important}
+#dashboard>.metrics>.metric strong,#engineer>.metrics>.metric strong{font-variant-numeric:tabular-nums}
+#dashboard .layout-main,#dashboard .dashboard-lower,#engineer .engineer-grid{gap:3px!important;margin-top:3px!important;margin-bottom:3px!important}
+#dashboard .layout-main>.card,#engineer .engineer-grid>.card{padding:7px!important}
+#dashboard .layout-main>.card:first-child{border-top:2px solid var(--ams-ws-red)!important}
+#dashboard .track-stage{background:radial-gradient(ellipse at 50% 43%,#192636,#0a111a 75%)!important;border:1px solid #344355!important}
+#dashboard .card-head,#engineer .card-head{background:var(--ams-ws-head)!important;gap:5px!important;min-height:0!important;margin:0 0 4px!important;padding:4px 6px!important}
+#dashboard .card-title,#engineer .card-title{font-size:11px!important;letter-spacing:.45px!important}
+#dashboard .gauges{gap:3px!important}
+#dashboard .gauges>div{background:#101923!important;border:1px solid #334050!important;padding:7px!important}
+#dashboard .inputs{margin:4px 0!important}
+#dashboard .dashboard-lower>.card{padding:7px!important}
+#dashboard .dashboard-lower .chart-wrap{margin-top:3px!important}
+#dashboard .tyre,#dashboard .dynamics-grid>div{border-color:#344051!important}
+#engineer .engineer-grid>.card:first-child{border-top:2px solid var(--ams-ws-red)!important}
+#engineer .engineer-grid>.card:nth-child(2){border-top:2px solid var(--ams-ws-blue)!important}
+#engineer .engineer-verdict{font-size:12px!important;line-height:1.4!important}
+#engineer .engineer-influence,#engineer .engineer-facts,#engineer .engineer-setup-kpi{gap:3px!important;margin:4px 0!important}
+#engineer .engineer-priority-card,#engineer .engineer-ai-card{margin:3px 0!important;padding:7px!important}
+#engineer .ams-work-card{padding:7px!important;margin:3px 0!important}
+#engineer .ams-enhancement-grid{gap:3px!important;margin:3px 0!important}
+#engineer .analysis-table th,#engineer .analysis-table td{padding:4px 6px!important}
+@media(max-width:900px){#dashboard .layout-main>.card,#engineer .engineer-grid>.card{padding:6px!important}}
+@media(max-width:600px){#dashboard>.metrics>.metric,#engineer>.metrics>.metric{padding:5px!important}#dashboard .card-head,#engineer .card-head{padding:3px 5px!important}}
