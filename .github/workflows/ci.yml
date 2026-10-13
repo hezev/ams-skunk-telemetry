@@ -33,3 +33,4 @@ jobs:
           node --check wwwroot/js/ams-alignment-audit.js
           node --check wwwroot/js/ams-chart-toolbar.js
           node --check wwwroot/js/ams-telemetry-expand.js
+          node --check wwwroot/js/ams-map-empty-states.js
