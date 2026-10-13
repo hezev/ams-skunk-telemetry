@@ -1,0 +1,71 @@
+/* v22 — global AMS race-workstation navigation finish.
+   Strictly presentation: no chart/grid order, chart height, expand controls, maps or data. */
+.sidebar .brand{border-bottom:2px solid #c9293a!important}
+.sidebar .brand-sub{color:#9dacbc!important;font-size:9px!important;letter-spacing:1.5px!important}
+#mainNav{gap:2px!important}
+#mainNav button{
+  position:relative;
+  border-radius:0!important;
+  box-shadow:none!important;
+  font-weight:700!important;
+  letter-spacing:.18px!important;
+}
+#mainNav button:not(.active){
+  color:#b8c8d8!important;
+  background:transparent!important;
+}
+#mainNav button:not(.active):hover{
+  background:#192636!important;
+  border-left-color:#758da6!important;
+  color:#fff!important;
+}
+#mainNav button.active{
+  color:#fff!important;
+  background:linear-gradient(90deg,#b61f32,#5b1d2a)!important;
+  border-left:3px solid #f45b68!important;
+  box-shadow:none!important;
+}
+.sidebar-foot{
+  border-top:1px solid #334557!important;
+  font-size:10px!important;
+  letter-spacing:.4px!important;
+}
+.topbar{
+  border-bottom:1px solid #405164!important;
+  box-shadow:none!important;
+}
+.topbar .session-strip{
+  gap:8px!important;
+  font-variant-numeric:tabular-nums!important;
+}
+.topbar .session-strip>strong{
+  color:#f1f6fc!important;
+  font-weight:850!important;
+}
+.topbar .session-strip>span{
+  color:#b2c4d6!important;
+}
+.topbar .live-badge{
+  border-radius:0!important;
+  letter-spacing:.65px!important;
+  font-size:10px!important;
+  font-weight:800!important;
+}
+.main .content>.view>.titlebar:before{
+  border-radius:0!important;
+}
+.main .content>.view>.titlebar h1{
+  text-transform:uppercase!important;
+  letter-spacing:.7px!important;
+  line-height:1.15!important;
+}
+.main .content>.view>.titlebar p{
+  color:#a4b7c9!important;
+  line-height:1.4!important;
+}
+.main .content>.view :is(.chip,.action-btn,.login-btn){
+  border-radius:0!important;
+}
+@media(max-width:750px){
+  .topbar .session-strip{gap:5px!important}
+}
