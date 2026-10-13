@@ -1,0 +1,39 @@
+/* v18 — archived AMS racing mockup accents for Engineer, Records and Setup Lab.
+   Cosmetic only. No chart order, sizing, map, replay or button-control changes. */
+#engineer .engineer-grid>.card,
+#engineer .engineer-ai-card,
+#engineer .engineer-priority-card{
+  background:linear-gradient(180deg,#121b26,#0b131c)!important;
+  border-bottom:1px solid #334557!important;
+}
+#engineer .engineer-influence>div{border-left:2px solid #466987!important}
+#engineer .engineer-influence>div:first-child{border-left-color:#d23444!important}
+#engineer .engineer-ai-card{border-top-color:#398ed3!important}
+#engineer .engineer-priority-card{border-top-color:#cfab65!important}
+#engineer .engineer-table th{border-bottom:1px solid #4c647d!important}
+#engineer .engineer-table tbody tr:nth-child(even){background:#101925!important}
+#records .ams-record-rankings>.card,
+#records .table-card{
+  background:linear-gradient(180deg,#111c27,#0c131d)!important;
+}
+#records .ams-record-table-wrap tbody tr:first-child td{
+  border-top:1px solid #bd974f!important;
+}
+#records .ams-record-table-wrap tbody tr:hover{
+  background:#192838!important;
+}
+#records .ams-record-filters{border-bottom:2px solid #31465d!important}
+#setup-lab .ams-premium-grid>.ams-concept-card{
+  background:linear-gradient(180deg,#111d28,#0a121b)!important;
+  border-bottom:1px solid #35495b!important;
+}
+#setup-lab .ams-concept-card>h3{
+  border-bottom:1px solid #415367!important;
+}
+#setup-lab .ams-setup-row{
+  border-left:2px solid #30465e!important;
+}
+#setup-lab .ams-setup-row output{
+  color:#e5c07b!important;
+  font-variant-numeric:tabular-nums!important;
+}
