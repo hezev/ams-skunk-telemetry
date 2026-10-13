@@ -1,0 +1,55 @@
+/* Dashboard > Engineer mockup finishing pass. No DOM changes or telemetry changes. */
+#dashboard,#engineer{--finish-line:#354354;--finish-red:#f04957;--finish-blue:#4ba4eb;--finish-gold:#d8b579}
+#dashboard>.titlebar,#engineer>.titlebar{background:linear-gradient(90deg,#1b111a 0%,#111923 60%,#0d121a 100%)!important;border-left:3px solid var(--finish-red)!important;padding:9px 12px!important;gap:12px!important;align-items:center!important}
+#dashboard>.titlebar h1,#engineer>.titlebar h1{font-size:clamp(17px,1.65vw,23px)!important;font-weight:800!important;letter-spacing:1.05px!important;text-transform:uppercase!important;line-height:1.15!important;margin:0!important}
+#dashboard>.titlebar p,#engineer>.titlebar p{font-size:10px!important;letter-spacing:.2px!important;line-height:1.35!important;margin-top:3px!important;opacity:.85}
+#dashboard .title-actions,#engineer .analysis-actions{gap:5px!important;align-items:center!important}
+#dashboard .session-clock{background:#0c141d!important;border:1px solid #3a4a5d!important;padding:5px 10px!important;border-radius:0!important}
+#dashboard>.metrics,#engineer>.metrics{gap:3px!important;align-items:stretch!important}
+#dashboard>.metrics>.metric,#engineer>.metrics>.metric{background:linear-gradient(180deg,#171f2b,#0c121b)!important;border:1px solid #364353!important;border-top:2px solid #45546a!important;padding:8px 10px!important;min-width:0!important}
+#dashboard>.metrics>.metric:first-child,#engineer>.metrics>.metric:first-child{border-top-color:var(--finish-red)!important}
+#dashboard>.metrics>.metric:nth-child(3),#engineer>.metrics>.metric:nth-child(3){border-top-color:var(--finish-blue)!important}
+#dashboard>.metrics>.metric>span,#engineer>.metrics>.metric>span{font-size:9px!important;letter-spacing:.95px!important;text-transform:uppercase!important;color:#a9bacd!important}
+#dashboard>.metrics>.metric>strong,#engineer>.metrics>.metric>strong{font-size:clamp(18px,1.9vw,26px)!important;line-height:1.15!important;white-space:nowrap!important}
+#dashboard .layout-main{grid-template-columns:minmax(0,1.8fr) minmax(335px,.92fr)!important;gap:3px!important}
+#dashboard .layout-main>.card{overflow:hidden;min-width:0!important;padding:6px!important}
+#dashboard .layout-main>.card:first-child{border-top:2px solid var(--finish-red)!important}
+#dashboard .layout-main>.card:nth-child(2){border-top:2px solid var(--finish-blue)!important}
+#dashboard .layout-main>.card:first-child .track-stage{min-height:clamp(360px,53vh,680px)!important;background:radial-gradient(ellipse at 50% 45%,#182738 0%,#0b121b 72%)!important}
+#dashboard .track-source{background:#101a25db!important;color:#c8d8e7!important;font-size:10px!important}
+#dashboard .gauges{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important}
+#dashboard .gauges>div{border-left:2px solid #425c79!important;padding:8px 9px!important;min-width:0!important}
+#dashboard .gauges>div:first-child{border-left-color:var(--finish-red)!important}
+#dashboard .gauges strong{font-size:clamp(18px,2vw,29px)!important;line-height:1.2!important}
+#dashboard .gauges span,#dashboard .inputs span{font-size:10px!important;text-transform:uppercase!important;letter-spacing:.5px!important}
+#dashboard .inputs{margin:6px 0!important}
+#dashboard .inputs>div{min-height:22px!important;gap:6px!important}
+#dashboard .inputs .bar{height:7px!important;border:1px solid #3b4a5d!important;background:#0a1018!important}
+#dashboard .layout-main>.card:nth-child(2) .chart-wrap{height:128px!important;min-height:128px!important}
+#dashboard .dashboard-lower{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important}
+#dashboard .dashboard-lower>.card{border-top:2px solid #526079!important;padding:7px!important;min-width:0}
+#dashboard .dashboard-lower>.card:first-child{border-top-color:var(--finish-red)!important}
+#dashboard .dashboard-lower>.card:nth-child(3){border-top-color:var(--finish-blue)!important}
+#dashboard .dashboard-lower>.card>.card-title{background:#18212c!important;display:block!important;margin:-2px -2px 6px!important;padding:5px 7px!important;letter-spacing:.6px!important}
+#dashboard .tyres,#dashboard .dynamics-grid,#dashboard .strategy,#dashboard .sector-times{gap:3px!important}
+#engineer .engineer-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr)!important;gap:3px!important}
+#engineer .engineer-grid>.card{padding:7px!important;min-width:0!important}
+#engineer .engineer-grid>.card:first-child{border-top:2px solid var(--finish-red)!important}
+#engineer .engineer-grid>.card:nth-child(2){border-top:2px solid var(--finish-blue)!important}
+#engineer .engineer-verdict{background:#101a25!important;border-left:3px solid var(--finish-red)!important;padding:9px 11px!important;line-height:1.45!important;min-height:60px!important}
+#engineer .engineer-influence>div{background:#101722!important;padding:8px!important;border:1px solid #344050!important;min-width:0}
+#engineer .engineer-influence>div span,#engineer .engineer-facts span,#engineer .engineer-setup-kpi span{font-size:10px!important;letter-spacing:.3px!important}
+#engineer .engineer-facts>div,#engineer .engineer-setup-kpi>div{background:#0e1620!important;border:1px solid #344050!important;padding:8px!important}
+#engineer .engineer-facts strong,#engineer .engineer-setup-kpi strong{font-variant-numeric:tabular-nums;font-size:18px!important}
+#engineer .engineer-priority-card{border-top:2px solid var(--finish-gold)!important}
+#engineer .engineer-ai-card{border-top:2px solid var(--finish-blue)!important}
+#engineer .engineer-ai-output{background:#101824!important;border:1px solid #37485a!important;padding:10px!important;line-height:1.5!important}
+#engineer .engineer-ai-question{gap:4px!important;margin-top:5px!important}
+#engineer .engineer-ai-question input{background:#0a1119!important;border:1px solid #45556b!important;border-radius:0!important}
+#engineer .engineer-table{font-variant-numeric:tabular-nums;width:100%!important}
+#engineer .engineer-table th{background:#1c2836!important;color:#d9e6f3!important;font-size:10px!important;padding:7px!important;white-space:nowrap!important}
+#engineer .engineer-table td{font-size:11px!important;padding:6px!important;border-bottom:1px solid #2e3a48!important}
+#engineer>.table-card{overflow-x:auto!important;border-top:2px solid var(--finish-gold)!important}
+@media(max-width:1160px){#dashboard .layout-main{grid-template-columns:1fr!important}#dashboard .layout-main>.card:first-child .track-stage{min-height:320px!important}#dashboard .dashboard-lower{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:880px){#engineer .engineer-grid{grid-template-columns:1fr!important}}
+@media(max-width:640px){#dashboard>.titlebar,#engineer>.titlebar{padding:7px!important}#dashboard .dashboard-lower{grid-template-columns:1fr!important}#dashboard .gauges strong{font-size:20px!important}#dashboard>.metrics>.metric>strong,#engineer>.metrics>.metric>strong{font-size:18px!important}}
