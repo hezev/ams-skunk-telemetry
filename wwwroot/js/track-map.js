@@ -4,6 +4,7 @@ window.AMSTrack = {
   index:null,
   raceStudioManifest:null,
   activeEntry:null,
+  officialCorners:null,
   activePath:null,
   centerline:[],
   reference:null,
@@ -631,6 +632,7 @@ window.AMSTrack = {
       const identity=this.telemetryTrackIdentity(trackName,configHint,telemetry);
       const entry=await this.resolve(identity.trackName,identity.configHint,identity.trackId);
       this.activeEntry=entry;
+      this.officialCorners=null;
       const estimatedLength=this.estimateLapLength(telemetry);
 
       // Prefer a GPS reference only when it is compatible with the exact
@@ -691,6 +693,7 @@ window.AMSTrack = {
           :"";
         status.textContent=["iRacing",id,layout,heading].filter(Boolean).join(" · ")||this.reference.name||trackName;
       }
+      await this.loadOfficialCorners(base);
       this.renderDashboardCompareMap();
       requestAnimationFrame(()=>this.setPosition(this.progress));
       return {entry,reference:null};
@@ -1309,7 +1312,62 @@ window.AMSTrack = {
     return {angle,sign:Math.sign(angle)};
   },
 
+  // Official iRacing numbered turns: SVG labels are in the same coordinates
+  // as active.svg. Never use labels from another layout or unvalidated mapping.
+  async loadOfficialCorners(base){
+    this.officialCorners=null;
+    if(this.reference?.source!=="iRacing artwork"||!this.centerline?.length)return;
+    const count=Number(this.activeEntry?.cornersPerLap);
+    if(!Number.isInteger(count)||count<1||count>60)return;
+    try{
+      const res=await fetch(base+"/turns.svg",{cache:"force-cache"});
+      if(!res.ok)return;
+      const doc=new DOMParser().parseFromString(await res.text(),"image/svg+xml");
+      if(doc.querySelector("parsererror"))return;
+      const labels=[];
+      for(const el of doc.querySelectorAll("text")){
+        const raw=(el.textContent||"").replace(/\s/g,"").trim();
+        if(!/^\d{1,2}$/.test(raw))continue;
+        const number=Number(raw),transform=el.getAttribute("transform")||"";
+        const m=transform.match(/translate\(\s*([-+\d.eE]+)[\s,]+([-+\d.eE]+)/);
+        // Supported labels have an absolute translate() and numeric text.
+        if(!m||number<1||number>count)continue;
+        const x=Number(m[1]),y=Number(m[2]);
+        if(Number.isFinite(x)&&Number.isFinite(y))labels.push({number,x,y});
+      }
+      if(labels.length!==count||new Set(labels.map(x=>x.number)).size!==count)return;
+      labels.sort((a,b)=>a.number-b.number);
+      if(labels.some((x,i)=>x.number!==i+1))return;
+      const pts=this.centerline;
+      const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+      const diag=Math.hypot(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys))||1;
+      const mapped=labels.map(l=>{
+        let best=Infinity,index=-1;
+        for(let i=0;i<pts.length;i++){
+          const d=(pts[i].x-l.x)**2+(pts[i].y-l.y)**2;
+          if(d<best){best=d;index=i;}
+        }
+        return {...l,p:index/pts.length,distance:Math.sqrt(best)};
+      });
+      if(mapped.some(x=>x.distance>diag*.22))return;
+      // Validate that the numbered turns progress in the same direction as the
+      // calibrated lap, permitting a single wrap at start/finish.
+      const steps=mapped.map((x,i)=>((mapped[(i+1)%count].p-x.p+1)%1));
+      if(steps.some(d=>d<.003||d>.27)||Math.abs(steps.reduce((a,b)=>a+b,0)-1)>.06)return;
+      this.officialCorners=mapped.map((x,i)=>{
+        const before=steps[(i+count-1)%count],after=steps[i];
+        const half=Math.min(.018,before*.38,after*.38);
+        const metric=this.cornerMetric(x.p);
+        return {index:x.number,p:x.p,sign:metric.sign,direction:metric.sign>0?"Direita":metric.sign<0?"Esquerda":"—",
+          entry:Math.max(0,x.p-half),exit:Math.min(1,x.p+half),
+          official:true,label:"Curva "+x.number};
+      }).filter(x=>x.exit>x.entry);
+      if(this.officialCorners.length!==count)this.officialCorners=null;
+    }catch(err){this.officialCorners=null;console.warn("AMS official turn labels:",err);}
+  },
+
   detectCorners(){
+    if(this.officialCorners?.length)return this.officialCorners;
     if(this.centerline.length<50)return [];
     const candidates=[];
     const count=320;
