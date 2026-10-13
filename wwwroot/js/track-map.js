@@ -1241,6 +1241,8 @@ window.AMSTrack = {
       html+='<path class="trajectory-line trajectory-ref ghost" d="'+pathR+'"></path>';
       html+='<path id="trajectoryProgressRef" class="trajectory-line trajectory-ref progress" d="'+pathR+'"></path>';
     }
+    html+='<circle id="trajectoryMarkerA" class="ams-lap-marker ams-lap-marker-a" r="6" visibility="hidden"></circle>';
+    if(ref)html+='<circle id="trajectoryMarkerRef" class="ams-lap-marker ams-lap-marker-ref" r="5" visibility="hidden"></circle>';
     svg.innerHTML=html;
 
     requestAnimationFrame(()=>this.setTrajectoryPosition(this.progress));
@@ -1269,6 +1271,12 @@ window.AMSTrack = {
     };
 
     const pa=update("A",data.a),pr=update("Ref",data.ref);
+    const marker=(id,point)=>{
+      const el=document.getElementById(id);if(!el)return;
+      if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)){el.setAttribute("visibility","hidden");return;}
+      el.setAttribute("cx",point.x);el.setAttribute("cy",point.y);el.setAttribute("visibility","visible");
+    };
+    marker("trajectoryMarkerA",pa);marker("trajectoryMarkerRef",pr);
     const progressText=document.getElementById("trajectoryProgressText");
     if(progressText)progressText.textContent=(p*100).toFixed(1)+"%";
 
@@ -1641,6 +1649,12 @@ window.AMSTrack = {
 
     update("compareFocusProgressA",data.a,pA);
     update("compareFocusProgressRef",data.ref,pR);
+    const marker=(id,pt)=>{
+      const el=document.getElementById(id);if(!el)return;
+      if(!pt||!Number.isFinite(pt.x)||!Number.isFinite(pt.y)){el.setAttribute("visibility","hidden");return;}
+      el.setAttribute("cx",pt.x);el.setAttribute("cy",pt.y);el.setAttribute("visibility","visible");
+    };
+    marker("compareLapMarkerA",pa);marker("compareLapMarkerRef",pr);
 
     const metersPerUnit=this.viewUnitsToMeters();
     let separation=null;
