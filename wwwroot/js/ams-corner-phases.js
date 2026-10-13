@@ -5,8 +5,9 @@
 const root=document.getElementById("compare");if(!root)return;
 const pane=document.createElement("article");pane.className="ams-work-card ams-phase-panel";
 const heading=document.createElement("h3");heading.textContent="Corner Phases · Entry / Apex / Exit";
-const status=document.createElement("p");status.className="ams-event-hint";status.textContent="A aguardar comparação de voltas compatíveis com geometria de pista.";
+const status=document.createElement("p");status.className="ams-event-hint";status.textContent="Seleciona duas voltas para analisar as curvas.";
 const chooser=document.createElement("select");chooser.className="ams-control ams-phase-select";chooser.setAttribute("aria-label","Selecionar curva");
+const emptyOption=document.createElement("option");emptyOption.value="";emptyOption.textContent="Seleciona duas voltas";chooser.append(emptyOption);
 const chart=document.createElement("div");chart.className="ams-phase-grid";
 const disclaimer=document.createElement("p");disclaimer.className="ams-event-hint";disclaimer.textContent="Apex estimado por velocidade mínima, direção e proximidade à curva geométrica. Não equivale ao apex físico confirmado por GPS.";
 pane.append(heading,status,chooser,chart,disclaimer);
@@ -53,6 +54,7 @@ const show=index=>{
 chooser.addEventListener("change",()=>show(Number(chooser.value)));
 document.addEventListener("ams-compare-data",e=>{
  dataset=[];chooser.replaceChildren();chart.replaceChildren();
+ const waiting=document.createElement("option");waiting.value="";waiting.textContent="Sem curvas disponíveis";chooser.append(waiting);
  const {lapA,lapB,circuit}=e.detail||{},track=window.AMSTrack,analysis=window.AMSAnalysis;
  if(!lapA?.samples?.length||!lapB?.samples?.length||!analysis?.segmentStats){status.textContent="Dados de comparação insuficientes.";return;}
  const corners=track?.detectCorners?.()||[];
