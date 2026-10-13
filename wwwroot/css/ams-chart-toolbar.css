@@ -1,0 +1,14 @@
+/* Compare chart toolbar, square condensed UI. */
+#compare .ams-chart-toolbar{order:4;display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap;padding:4px 6px;margin:2px 0 0;background:#171c27;border:1px solid #3b4554}
+#compare .ams-chart-toolbar>strong{font-size:10px;letter-spacing:1.2px;color:#d6b26d}
+#compare .ams-chart-toolbar-actions{display:flex;flex-wrap:wrap;gap:3px}
+#compare .ams-channel-toggle,#compare .ams-channel-reset{font-size:10px;font-weight:700;letter-spacing:.6px;border:1px solid #4c5a6c;background:#111925;color:#a9b9c9;padding:5px 10px;cursor:pointer}
+#compare .ams-channel-toggle.selected{background:#3a1e29;color:#fff;border-color:#d33b4b}
+#compare .ams-channel-reset{border-color:#52617b;color:#d8b36c}
+#compare .ams-channel-toggle:focus-visible,#compare .ams-channel-reset:focus-visible{outline:2px solid #d8b36c}
+#compare .compare-telemetry-grid>.card[hidden]{display:none!important}
+#compare .compare-telemetry-grid{order:5!important;grid-template-columns:repeat(2,minmax(0,1fr))}
+#compare .compare-telemetry-grid .compare-wide{grid-column:1/-1}
+#compare>.ams-enhancement-grid{order:6}
+#compare>.ams-work-card{order:7}
+@media(max-width:680px){#compare .ams-chart-toolbar{align-items:flex-start}#compare .compare-telemetry-grid{grid-template-columns:1fr}#compare .compare-telemetry-grid .compare-wide{grid-column:auto}}
