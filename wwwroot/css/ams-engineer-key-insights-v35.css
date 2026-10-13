@@ -1,0 +1,47 @@
+/* v35: engineer mockup reference — dominant analytical map / Key Insights / AI chat.
+   Overrides presentation rules only; no chart heights, telemetry algorithms or map fitting touched. */
+#engineer .engineer-mockup-layout{
+  grid-template-columns:minmax(0,1.45fr) minmax(265px,.95fr) minmax(290px,1fr)!important;
+  gap:6px!important;align-items:start!important;
+}
+#engineer .engineer-mockup-insights-column .engineer-key-insights{
+  padding:0!important;margin:0!important;min-width:0!important;
+  background:#0b1520!important;border:1px solid #334658!important;
+  border-top:2px solid #3993d2!important;
+}
+#engineer .engineer-key-insights-body{padding:5px;display:flex;flex-direction:column;gap:4px}
+#engineer .engineer-key-insights-body>.engineer-finding-card{
+ min-width:0!important;border:1px solid #324458!important;background:#101b27!important;padding:0!important;
+}
+#engineer .engineer-key-insights-body>.engineer-finding-card:nth-child(1){border-left:2px solid #2aaf82!important}
+#engineer .engineer-key-insights-body>.engineer-finding-card:nth-child(2){border-left:2px solid #ec5665!important}
+#engineer .engineer-key-insights-body>.engineer-finding-card:nth-child(3){border-left:2px solid #399bdf!important}
+#engineer .engineer-key-insights-body .card-head{padding:5px 7px!important;min-height:24px!important}
+#engineer .engineer-key-insights-body .card-title{font-size:11px!important}
+#engineer .engineer-key-insights-body .engineer-finding-list{padding:2px 6px 5px!important;min-height:36px!important}
+#engineer .engineer-key-insights-body .engineer-finding-row{padding:5px 3px!important}
+#engineer .engineer-key-insights-body .engineer-finding-row strong{font-size:10px!important}
+#engineer .engineer-key-insights-body .engineer-finding-row span{font-size:10px!important}
+#engineer .engineer-mockup-insights-column .engineer-grid{margin-top:0!important}
+#engineer .engineer-map-stage{height:clamp(340px,34vw,535px)!important;background:radial-gradient(ellipse at center,#111f2c,#070d14 76%)!important;overflow:hidden}
+#engineer .engineer-map-legend{position:absolute;bottom:7px;left:7px;display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:6px 8px;border:1px solid #33485c;background:#08121eea;color:#b8c9db;font-size:9px;pointer-events:none}
+#engineer .engineer-map-legend[hidden]{display:none!important}
+#engineer .engineer-map-legend span{font-weight:800}
+#engineer .engineer-map-legend .gain{color:#23bd81}
+#engineer .engineer-map-legend .mid{color:#e9b947}
+#engineer .engineer-map-legend .loss{color:#ee4b5b}
+#engineer .engineer-bottom-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin-bottom:7px}
+#engineer .engineer-bottom-grid .engineer-scorecard-card{border-top:2px solid #3998d3!important}
+#engineer .engineer-bottom-grid .engineer-scorecard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+#engineer .engineer-bottom-grid .engineer-scorecard>div{min-width:0}
+@media(max-width:1180px){
+ #engineer .engineer-mockup-layout{grid-template-columns:minmax(0,1.15fr) minmax(260px,1fr)!important}
+ #engineer .engineer-mockup-ai-column{grid-column:1 / -1!important}
+ #engineer .engineer-map-stage{height:340px!important}
+}
+@media(max-width:780px){
+ #engineer .engineer-mockup-layout{grid-template-columns:minmax(0,1fr)!important}
+ #engineer .engineer-mockup-ai-column{grid-column:auto!important}
+ #engineer .engineer-map-stage{height:290px!important}
+ #engineer .engineer-bottom-grid .engineer-scorecard{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
