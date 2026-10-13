@@ -50,6 +50,7 @@
   <link rel="stylesheet" href="css/ams-mockup-session-frame-v29.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-reference-v33.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-insights-v34.css?v=20261013-1">
+  <link rel="stylesheet" href="css/ams-engineer-key-insights-v35.css?v=20261013-1">
 </head>
 <body>
 
@@ -418,7 +419,7 @@
         <div class="engineer-mockup-map-column">
       <article class="card engineer-track-card">
         <div class="card-head"><div><div class="card-title">Track Analysis</div><div class="trajectory-subtitle">Traçado de referência carregado · sessão selecionada</div></div><span id="engineerMapStatus" class="chip">SEM TRAÇADO</span></div>
-        <div class="engineer-map-stage"><svg id="engineerTrackSvg" viewBox="0 0 1000 600" aria-label="Traçado da pista selecionada"></svg><p id="engineerMapEmpty">Seleciona uma sessão com um mapa de pista validado para visualizar o traçado.</p></div>
+        <div class="engineer-map-stage"><svg id="engineerTrackSvg" viewBox="0 0 1000 600" aria-label="Traçado e zonas de perda de tempo da sessão"></svg><p id="engineerMapEmpty">Seleciona e analisa uma sessão com mapa validado para visualizar o traçado.</p><div class="engineer-map-legend" id="engineerMapLegend" hidden>Perda vs. melhor segmento <span class="gain">Menor</span><span class="mid">Intermédia</span><span class="loss">Maior</span></div></div>
       </article>
 
       <article class="card engineer-priority-card">
@@ -434,6 +435,14 @@
 
         </div>
         <div class="engineer-mockup-insights-column">
+          <div class="engineer-key-insights card">
+            <div class="card-head"><div class="card-title">Key Insights</div><span class="chip">THIS SESSION</span></div>
+            <div class="engineer-key-insights-body">
+              <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Strengths</div><span class="chip">EVIDENCE</span></div><div id="engineerStrengths" class="engineer-finding-list">Analisa uma sessão para identificar zonas consistentes.</div></article>
+              <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Weaknesses</div><span class="chip">EVIDENCE</span></div><div id="engineerWeaknesses" class="engineer-finding-list">Aguarda dados da sessão.</div></article>
+              <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Suggested Drills</div><span class="chip">NEXT STINT</span></div><div id="engineerDrills" class="engineer-finding-list">As recomendações baseiam-se nas prioridades analisadas.</div></article>
+            </div>
+          </div>
       <div class="engineer-grid">
         <article class="card">
           <div class="card-head">
@@ -492,10 +501,7 @@
         </div>
       </div>
 
-      <div class="engineer-performance-grid">
-        <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Strengths</div><span class="chip">EVIDENCE</span></div><div id="engineerStrengths" class="engineer-finding-list">Analisa uma sessão para identificar zonas consistentes.</div></article>
-        <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Weaknesses</div><span class="chip">EVIDENCE</span></div><div id="engineerWeaknesses" class="engineer-finding-list">Aguarda dados da sessão.</div></article>
-        <article class="card engineer-finding-card"><div class="card-head"><div class="card-title">Suggested Drills</div><span class="chip">NEXT STINT</span></div><div id="engineerDrills" class="engineer-finding-list">As recomendações baseiam-se nas prioridades analisadas.</div></article>
+      <div class="engineer-bottom-grid">
         <article class="card engineer-scorecard-card"><div class="card-head"><div class="card-title">Driver Scorecard</div><span class="chip">SESSION</span></div><div class="engineer-scorecard"><div><span>Consistency</span><strong id="engineerScoreConsistency">—</strong></div><div><span>Lap variance σ</span><strong id="engineerScoreVariance">—</strong></div><div><span>Driver influence</span><strong id="engineerScoreDriver">—</strong></div><div><span>Zones analysed</span><strong id="engineerScoreZones">—</strong></div></div></article>
       </div>
 
@@ -595,7 +601,7 @@
 
 <script src="js/config.js?v=20261007-11"></script>
 <script src="js/analysis.js?v=20261007-11"></script>
-<script src="js/engineer.js?v=20261013-34"></script>
+<script src="js/engineer.js?v=20261013-35"></script>
 <script src="js/engineering-ui.js?v=20261007-11"></script>
 <script src="js/charts.js?v=20261007-11"></script>
 <script src="js/track-map.js?v=20261013-32"></script>
@@ -615,7 +621,7 @@
 <script src="js/ams-chart-toolbar.js?v=20261013-1"></script>
 <script src="js/ams-telemetry-expand.js?v=20261013-1"></script>
 <script src="js/ams-map-empty-states.js?v=20261013-1"></script>
-  <script src="js/ams-engineer-reference-v33.js?v=20261013-1"></script>
-  <script src="js/ams-engineer-insights-v34.js?v=20261013-1"></script>
+  <script src="js/ams-engineer-reference-v33.js?v=20261013-35"></script>
+  <script src="js/ams-engineer-insights-v34.js?v=20261013-35"></script>
 </body>
 </html>
