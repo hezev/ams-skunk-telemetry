@@ -36,7 +36,7 @@
     '<div class="ams-premium-grid">'+
     card('1. Setup Sheet','<label class="ams-label" for="setupName">Nome do setup</label><input id="setupName" class="ams-control" maxlength="70" value="GT3 Baseline" />'+makeSetupControls()+'<div class="ams-visual-tabs"><button id="setupReset" class="ams-secondary" type="button">Repor</button><button id="setupSave" class="ams-primary" type="button">Guardar localmente</button></div><p id="setupMessage" class="ams-muted" role="status"></p>')+
     card('2. Setup Comparison','<p class="ams-concept-note">Diferenças reais dos parâmetros relativamente ao setup de referência. Não são previsões de tempo por volta.</p><div class="ams-premium-list" id="setupCompare" aria-live="polite"></div>') +
-    card('3. My Tune Catalog','<div id="setupCatalog" class="ams-premium-list"></div>'+note('Perfis guardados neste navegador. Ainda não sincronizados com Supabase.')+'<button id="setupExport" class="ams-secondary" type="button">Exportar JSON</button>')+
+    card('3. My Tune Catalog','<div id="setupCatalog" class="ams-premium-list"></div>'+note('Perfis guardados neste navegador. Ainda não sincronizados com Supabase.')+'<div class="ams-visual-tabs"><button id="setupExport" class="ams-secondary" type="button">Exportar JSON</button><button id="setupImport" class="ams-secondary" type="button">Importar JSON</button><input id="setupImportFile" type="file" accept="application/json,.json" hidden></div>')+
     '</div>');
   // Safe navigation: the existing application only registered listeners for original nav items.
   nav.addEventListener('click',e=>{
@@ -89,5 +89,28 @@
   $('#setupExport').addEventListener('click',()=>{
     const data=JSON.stringify(readSetups(),null,2);const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download='ams-setups.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  });
+  $('#setupImport').addEventListener('click',()=>$('#setupImportFile').click());
+  $('#setupImportFile').addEventListener('change',async e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    try{
+      if(file.size>256000)throw new Error('Ficheiro demasiado grande (máximo 256 KB).');
+      const parsed=JSON.parse(await file.text());
+      if(!Array.isArray(parsed)||parsed.length>30)throw new Error('Catálogo inválido ou com mais de 30 setups.');
+      const validated=parsed.map(item=>{
+        if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>70||!item.parameters||typeof item.parameters!=='object')throw new Error('Estrutura de setup inválida.');
+        const values={};
+        for(const [name,min,max,,step] of setupDefinitions){
+          const n=item.parameters[name];
+          if(typeof n!=='number'||!Number.isFinite(n)||n<min||n>max||Math.abs((n-min)/step-Math.round((n-min)/step))>0.00001)throw new Error('Parâmetro inválido: '+name);
+          values[name]=n;
+        }
+        return {name:item.name.trim(),parameters:values,savedAt:typeof item.savedAt==='string'&&Number.isFinite(Date.parse(item.savedAt))?item.savedAt:new Date().toISOString()};
+      });
+      const merged=[...readSetups(),...validated].slice(-30);
+      localStorage.setItem(setupKey,JSON.stringify(merged));
+      refreshSetup();$('#setupMessage').textContent=validated.length+' setups importados com sucesso.';
+    }catch(err){$('#setupMessage').textContent='Importação rejeitada: '+(err.message||'JSON inválido');}
+    finally{e.target.value='';}
   });refreshSetup();renderComparison();
 })();
