@@ -19,26 +19,9 @@
     el.innerHTML='<div class="titlebar"><div><h1>'+title+'</h1><p>'+subtitle+'</p></div></div>'+body;
     content.appendChild(el);return el;
   };
-  // Additive visual concept ribbons only — no fake live performance metrics.
-  const dash=$('#dashboard .titlebar');
-  if(dash){
-    const wrap=document.createElement('div');wrap.className='ams-compare-strip';
-    wrap.innerHTML=kpis([['Race Control','LIVE / REPLAY','ams-red'],['Monitorização','Pilotos e circuitos','ams-blue'],['Incidentes','Disponibilidade variável','ams-gold'],['Estratégia','Dados de sessão','']]);
-    dash.after(wrap);
-    const title=$('#dashboard h1');if(title)title.textContent='Race Control Command Center';
-  }
-  const compare=$('#compare .titlebar');
-  if(compare){
-    const wrap=document.createElement('div');wrap.className='ams-compare-strip';
-    wrap.innerHTML=kpis([['A vs referência','Comparação','ams-red'],['Setores','Análise','ams-blue'],['Trajectory Coach','Ativo','ams-gold'],['Corner Explorer','Por curva',''],['Replay','Sincronizado','ams-blue']]);
-    compare.after(wrap);const title=$('#compare h1');if(title)title.textContent='Lap Compare & Corner Explorer';
-  }
-  const engineer=$('#engineer .titlebar');
-  if(engineer){
-    const title=$('#engineer h1');if(title)title.textContent='Session Intelligence & AI Engineer';
-    const bar=document.createElement('div');bar.className='ams-compare-strip';bar.innerHTML=kpis([['Engineer Verdict','Baseado em evidência','ams-red'],['Lap Consistency','Análise da sessão','ams-blue'],['Development','Recomendações','ams-gold'],['AI Engineer','Assistente contextual','']]);
-    engineer.after(bar);
-  }
+  // Keep actionable original headings; decorative status ribbons have been retired.
+  const titles=[['dashboard','Race Control Command Center'],['compare','Lap Compare & Corner Explorer'],['engineer','Session Intelligence & AI Engineer']];
+  titles.forEach(([id,title])=>{const h=document.querySelector('#'+id+' .titlebar h1');if(h)h.textContent=title;});
   // Strategy: illustrative UI only. Estimated values are intentionally not fabricated.
   section('strategy','Race Strategy','Combustível · gestão de stint · planeamento de corrida',
     kpis([['Fuel on board','—'],['Consumption','—'],['Laps remaining','—'],['Pit window','A calcular','ams-gold']])+
