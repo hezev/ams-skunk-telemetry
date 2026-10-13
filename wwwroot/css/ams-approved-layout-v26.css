@@ -1,0 +1,33 @@
+/* v26 — second composition pass from the four approved AMS Skunk mockup PNGs.
+   No telemetry graph ordering/height, expand button sizing, GPS, replay, data or JS changes. */
+#dashboard .layout-main>.card,#engineer .engineer-grid>.card,#compare>.compare-focus-card{min-width:0!important;overflow:hidden}
+#dashboard .layout-main>.card:first-child{background:#080f16!important}
+#dashboard .layout-main>.card:nth-child(2){background:#0d1722!important}
+#dashboard .layout-main>.card .card-head{display:flex!important;justify-content:space-between!important;align-items:center!important}
+#dashboard .track-stage{border:1px solid #31485a!important}
+#dashboard .gauges>div{min-width:0!important;padding:6px 8px!important}
+#dashboard .gauges>div small{font-size:9px!important;color:#8298ac!important}
+#dashboard .dashboard-lower>.card{min-width:0!important}
+#dashboard .tyres{gap:3px!important}
+#dashboard .tyre{background:#101a24!important}
+#dashboard .tyre strong{font-variant-numeric:tabular-nums!important}
+#compare .compare-focus-card .card-head{gap:8px!important;align-items:center!important}
+#compare .trajectory-toolbar{gap:5px!important}
+#compare .compare-focus-hud>div{padding:6px 8px!important}
+#compare .compare-focus-coach{border-top:1px solid #304254!important;color:#bacddd!important}
+#compare .compare-replay-row{background:#111a25!important;gap:7px!important}
+#compare .compare-telemetry-grid>.card{min-width:0!important}
+#engineer .engineer-verdict{font-size:12px!important;line-height:1.48!important;padding:10px!important}
+#engineer .engineer-influence{gap:5px!important}
+#engineer .engineer-influence>div{min-width:0!important}
+#engineer .engineer-facts{gap:4px!important}
+#engineer .engineer-priorities{line-height:1.45!important}
+#engineer .engineer-ai-output{font-size:12px!important;line-height:1.5!important}
+#engineer .engineer-ai-question{gap:5px!important}
+#engineer .engineer-table{font-variant-numeric:tabular-nums!important}
+#setup-lab .ams-premium-grid>*{min-width:0!important}
+#setup-lab .ams-concept-card{overflow:hidden!important}
+#setup-lab .ams-setup-row{min-width:0!important}
+#setup-lab .ams-setup-row output{font-variant-numeric:tabular-nums!important}
+@media(max-width:1100px){#compare .trajectory-toolbar{flex-wrap:wrap!important}}
+@media(max-width:720px){#engineer .engineer-ai-question{flex-wrap:wrap!important}#compare .compare-focus-hud{max-width:100%!important}}
