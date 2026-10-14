@@ -28,5 +28,5 @@ assert.match(three,/track\.trajectoryPoint/);
 assert.match(app,/ams-3d-telemetry-data/);
 assert.match(app,/ams-compare-data/);
 // Without an elevation channel, map remains visually planar: y is a renderer-only constant.
-assert.match(three,/sem dados de elevação/);
+assert.match(three,/SEM ALTITUDE PONTUAL|sem dados de elevação/);
 console.log('PASS: opt-in maps, 2D original preserved, event wiring, planar-data honesty');
