@@ -205,10 +205,11 @@ class Engine{
   if(!Number.isFinite(span)||span<1e-5)return null;
   const scale=120/span,cx=(minX+maxX)/2,cy=(minY+maxY)/2;
   const profile=track.elevationProfile;
-  const hasElevation=!!profile&&profile.heights?.length===raw.length&&
-   Number.isFinite(profile.minimumM)&&Number.isFinite(profile.maximumM);
   const metresPerUnit=track.viewUnitsToMeters?.();
-  const heightFactor=hasElevation&&finite(metresPerUnit)&&metresPerUnit>0?
+  const hasElevation=!!profile&&profile.heights?.length===raw.length&&
+   Number.isFinite(profile.minimumM)&&Number.isFinite(profile.maximumM)&&
+   finite(metresPerUnit)&&metresPerUnit>0;
+  const heightFactor=hasElevation?
    scale/metresPerUnit*this.view.reliefScale:0;
   const altAt=p=>{
    if(!hasElevation||!finite(p))return 0;
@@ -312,6 +313,8 @@ class Engine{
   // Width is illustrative when only a centerline is available.
   const roadW=finite(meterRatio)&&meterRatio>0?clamp(13/meterRatio*ctx.scale,1.7,5):3;
   const roadColor=new T.Color(0x465563),edgeColor=new T.Color(0x99b8c6);
+  // Subtle near-road shoulder is illustrative, not a surveyed landscape mesh.
+  this.makeRibbon(pts,roadW+10,-1.05,new T.Color(0x192d30),true);
   this.makeRibbon(pts,roadW+1.4,-.18,edgeColor,true);
   const altitudeColours=data.hasElevation?pts.map(p=>{
    const maxHeight=Math.max(.001,data.profile.maximumM-data.profile.minimumM);
