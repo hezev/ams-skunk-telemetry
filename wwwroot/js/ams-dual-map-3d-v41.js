@@ -118,7 +118,7 @@ class Engine{
   this.scene.add(new T.HemisphereLight(0xcce5ff,0x304459,2));
   const sun=new T.DirectionalLight(0xffffff,1.5);sun.position.set(-100,140,65);this.scene.add(sun);
   this.grid=new T.GridHelper(160,20,0x2e526b,0x183041);this.grid.position.y=-1.15;this.scene.add(this.grid);
-  this.model=null;this.markers={};this.drag=null;this.followTarget=null;this.followForward=null;this.followReady=false;this.canvas=this.renderer.domElement;
+  this.model=null;this.markers={};this.drag=null;this.followTarget=null;this.followForward=null;this.followLook=null;this.followReady=false;this.canvas=this.renderer.domElement;
   const canvas=this.canvas;
   canvas.addEventListener('pointerdown',e=>{
    if(e.button!==0&&e.pointerType==='mouse')return;
@@ -151,6 +151,30 @@ class Engine{
   this.camera.position.set(r*Math.sin(p)*Math.cos(a),r*Math.cos(p),r*Math.sin(p)*Math.sin(a));
   this.camera.lookAt(0,0,0);this.camera.updateProjectionMatrix();
  }
+ // Smooth chase view: forward direction comes from the same validated replay
+ // trajectory used to move the 2D car dot. No independent animation clock.
+ followCamera(snap=false){
+  if(this.view.cameraMode==='free')return;
+  if(!this.followTarget){this.updateCamera();return;}
+  const T=this.T,point=this.followTarget,dir=this.followForward||new T.Vector3(1,0,0);
+  const radius=this.distance;
+  const heli=this.view.cameraMode==='heli';
+  const backward=heli?radius*.12:radius*.43;
+  const rise=heli?radius*.58:radius*.28;
+  const desired=new T.Vector3(
+   point.x-dir.x*backward,
+   point.y+rise,
+   point.z-dir.z*backward
+  );
+  const ahead=heli?4:11;
+  const lookAt=new T.Vector3(point.x+dir.x*ahead,point.y+1.2,point.z+dir.z*ahead);
+  const alpha=snap||!this.followReady?1:.095;
+  this.camera.position.lerp(desired,alpha);
+  if(!this.followLook)this.followLook=lookAt.clone();
+  else this.followLook.lerp(lookAt,alpha);
+  this.camera.lookAt(this.followLook);
+  this.followReady=true;
+ }
  resize(){
   const rect=this.view.overlay.getBoundingClientRect();
   const w=Math.floor(rect.width),h=Math.floor(rect.height);
@@ -170,7 +194,7 @@ class Engine{
     else node.material?.dispose?.();
    });
   }
-  this.model=null;this.markers={};this.followTarget=null;this.followForward=null;this.followReady=false;
+  this.model=null;this.markers={};this.followTarget=null;this.followForward=null;this.followLook=null;this.followReady=false;
  }
  geometryContext(){
   const raw=track.centerline;
@@ -315,7 +339,21 @@ class Engine{
    const point=track.trajectoryPoint(fit?.points,finite(p)?p:0);
    if(!point){marker.visible=false;continue;}
    marker.visible=true;marker.position.copy(this.model.toWorld(point,2.1));
+   if(name==='a'){
+    const before=track.trajectoryPoint(fit.points,clamp(p-.003,0,1));
+    const after=track.trajectoryPoint(fit.points,clamp(p+.003,0,1));
+    this.followTarget=marker.position.clone();
+    if(before&&after){
+     const a=this.model.toWorld(before),b=this.model.toWorld(after);
+     const forward=new this.T.Vector3(b.x-a.x,0,b.z-a.z);
+     if(forward.lengthSq()>1e-8)this.followForward=forward.normalize();
+    }
+   }
   }
+  if(!this.markers.a||!this.markers.a.visible){
+   this.followTarget=null;this.followReady=false;
+  }
+  this.followCamera();
  }
  render(){this.renderer.render(this.scene,this.camera);}
 }
