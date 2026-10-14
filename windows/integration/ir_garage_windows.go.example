@@ -1,0 +1,67 @@
+//go:build windows
+
+// Copy this file into the CURRENT AMS Telemetry Windows source tree only after
+// verifying its CloudSync, Recorder, SDK feed and SessionID structures.
+package main
+
+import (
+ "context"
+ "strings"
+ "time"
+ "ams.telemetry/desktop/garagecapture"
+)
+var irGarageObserver=garagecapture.NewObserver()
+
+// In the native iRacing 33ms polling loop, AFTER successful decode, call:
+//    meta := irSessionMeta(buf)
+//    f.publish("iracing", decoded, meta)
+//    observeIRacingGarage(buf, meta)
+// The existing irSessionMeta's WeekendInfo key list must include SessionID and
+// SubSessionID for snapshots before the lap recorder starts.
+func observeIRacingGarage(buf []byte,meta map[string]string) {
+ if cloud==nil||meta==nil{return}
+ cloud.mu.RLock()
+ linked,pilotID:=cloud.linked,cloud.userID
+ cloud.mu.RUnlock()
+ if !linked||pilotID==""{return}
+ track,car:=strings.TrimSpace(meta["track"]),strings.TrimSpace(meta["car"])
+ if track==""||car==""{return}
+ session:=""
+ if recorder!=nil{
+  recorder.mu.Lock()
+  if recorder.current!=nil&&
+   strings.EqualFold(recorder.current.Track,track)&&
+   strings.EqualFold(recorder.current.Car,car){
+   session=recorder.current.SessionID
+  }
+  recorder.mu.Unlock()
+ }
+ if session==""{
+  sessionID:=strings.TrimSpace(meta["SessionID"])
+  if sessionID==""{return}
+  session="iracing:"+sessionID
+  if sub:=strings.TrimSpace(meta["SubSessionID"]);sub!=""{session+="/"+sub}
+ }
+ cap,ok,e:=irGarageObserver.Observe(buf,track,car,session,time.Now())
+ if e!=nil||!ok{return}
+ // Network communication MUST NOT delay the SDK's 33ms polling loop.
+ go sendIRacingGarage(cap)
+}
+func sendIRacingGarage(cap garagecapture.Capture){
+ if cloud==nil{return}
+ cloud.mu.RLock()
+ linked,pilotID,access,endpoint,key:=cloud.linked,cloud.userID,cloud.token,cloud.site,cloud.publicKey
+ cloud.mu.RUnlock()
+ if !linked||pilotID==""||access==""{return}
+ u:=garagecapture.Uploader{Endpoint:endpoint,PublishableKey:key}
+ ctx,cancel:=context.WithTimeout(context.Background(),25*time.Second)
+ defer cancel()
+ e:=u.Upload(ctx,pilotID,access,cap)
+ if e!=nil&&strings.Contains(e.Error(),"HTTP 401"){
+  if cloud.refresh()==nil{
+   cloud.mu.RLock();access=cloud.token;cloud.mu.RUnlock()
+   e=u.Upload(ctx,pilotID,access,cap)
+  }
+ }
+ if e==nil{irGarageObserver.MarkUploaded(cap.ID)}
+}
