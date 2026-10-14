@@ -67,7 +67,7 @@ function createView(id,stage,header){
    status.textContent='3D indisponível neste navegador. A vista 2D continua funcional.';
    console.warn('AMS map 3D fallback:',error);
    // Give users the error message, but always restore their original 2D map.
-   view.active=false;view.stage.classList.remove('ams-map3d-active');btn2.setAttribute('aria-pressed','true');btn3.setAttribute('aria-pressed','false');
+   view.active=false;view.stage.classList.remove('ams-map3d-active');overlay.hidden=true;btn2.setAttribute('aria-pressed','true');btn3.setAttribute('aria-pressed','false');
    if(view.raf)cancelAnimationFrame(view.raf);view.raf=0;
   }
  };
@@ -240,7 +240,7 @@ class Engine{
   if(first&&next){
    const ang=Math.atan2(next.z-first.z,next.x-first.x);
    const startMesh=new T.Mesh(new T.BoxGeometry(roadW+1.6,.1,.6),new T.MeshBasicMaterial({color:0xf1f8ff}));
-   startMesh.position.copy(first);startMesh.position.y=.15;startMesh.rotation.y=-ang;this.root.add(startMesh);
+   startMesh.position.copy(first);startMesh.position.y=.15;startMesh.rotation.y=-ang+Math.PI/2;this.root.add(startMesh);
   }
   const obj=this.view.id==='telemetry'?track.trajectoryCompare:track.focusedCompare;
   if(this.view.id==='telemetry'){
