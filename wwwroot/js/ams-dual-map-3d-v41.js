@@ -141,7 +141,7 @@ class Engine{
  }
  resetCamera(){
   this.azimuth=.65;this.polar=.85;
-  this.distance=this.view.cameraMode==='drone'?125:this.view.cameraMode==='heli'?205:180;
+  this.distance=this.view.cameraMode==='drone'?72:this.view.cameraMode==='heli'?155:180;
   this.followReady=false;
   if(this.view.cameraMode==='free')this.updateCamera();
   else this.followCamera(true);
@@ -283,8 +283,18 @@ class Engine{
  }
  marker(name,color,radius){
   const T=this.T;
-  const geo=new T.SphereGeometry(radius,14,12);
-  const m=new T.Mesh(geo,new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.35,metalness:.05,roughness:.25}));
+  // Low-poly car marker, explicitly generic (not a fabricated car model).
+  const m=new T.Group();
+  const paint=new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.2,metalness:.3,roughness:.45});
+  const dark=new T.MeshStandardMaterial({color:0x15202e,metalness:.18,roughness:.56});
+  const body=new T.Mesh(new T.BoxGeometry(radius*1.4,radius*.43,radius*2.7),paint);
+  body.position.y=radius*.46;m.add(body);
+  const cabin=new T.Mesh(new T.BoxGeometry(radius*1.1,radius*.40,radius*1.13),dark);
+  cabin.position.y=radius*.92;cabin.position.z=-radius*.12;m.add(cabin);
+  const spoiler=new T.Mesh(new T.BoxGeometry(radius*1.65,radius*.09,radius*.28),paint);
+  spoiler.position.y=radius*.89;spoiler.position.z=radius*1.04;m.add(spoiler);
+  const glow=new T.Mesh(new T.SphereGeometry(radius*.44,10,8),new T.MeshBasicMaterial({color}));
+  glow.position.y=radius*1.7;m.add(glow);
   m.visible=false;this.root.add(m);this.markers[name]=m;return m;
  }
  rebuild(){
@@ -303,7 +313,12 @@ class Engine{
   const roadW=finite(meterRatio)&&meterRatio>0?clamp(13/meterRatio*ctx.scale,1.7,5):3;
   const roadColor=new T.Color(0x465563),edgeColor=new T.Color(0x99b8c6);
   this.makeRibbon(pts,roadW+1.4,-.18,edgeColor,true);
-  this.makeRibbon(pts,roadW,.03,roadColor,true);
+  const altitudeColours=data.hasElevation?pts.map(p=>{
+   const maxHeight=Math.max(.001,data.profile.maximumM-data.profile.minimumM);
+   const fraction=clamp(p.y/Math.max(.001,maxHeight*data.heightFactor),0,1);
+   return new T.Color().setHSL(.60-fraction*.51,.45,.34+fraction*.18);
+  }):null;
+  this.makeRibbon(pts,roadW,.03,roadColor,true,altitudeColours);
   const first=pts[0],next=pts[6]||pts[1];
   if(first&&next){
    const ang=Math.atan2(next.z-first.z,next.x-first.x);
@@ -338,10 +353,15 @@ class Engine{
    const marker=this.markers[name];if(!marker)continue;
    const point=track.trajectoryPoint(fit?.points,finite(p)?p:0);
    if(!point){marker.visible=false;continue;}
-   marker.visible=true;marker.position.copy(this.model.toWorld(point,2.1));
+   marker.visible=true;marker.position.copy(this.model.toWorld(point,1.05));
+   const before=track.trajectoryPoint(fit.points,clamp(p-.003,0,1));
+   const after=track.trajectoryPoint(fit.points,clamp(p+.003,0,1));
+   if(before&&after){
+    const a=this.model.toWorld(before),b=this.model.toWorld(after);
+    const forward=new this.T.Vector3(b.x-a.x,0,b.z-a.z);
+    if(forward.lengthSq()>1e-8)marker.rotation.y=Math.atan2(forward.x,forward.z);
+   }
    if(name==='a'){
-    const before=track.trajectoryPoint(fit.points,clamp(p-.003,0,1));
-    const after=track.trajectoryPoint(fit.points,clamp(p+.003,0,1));
     this.followTarget=marker.position.clone();
     if(before&&after){
      const a=this.model.toWorld(before),b=this.model.toWorld(after);
