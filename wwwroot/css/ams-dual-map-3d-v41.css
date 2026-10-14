@@ -18,3 +18,10 @@
 #compare #compareFocusStage.ams-map3d-active>.compare-mini-map{display:none!important}
 #compare #compareFocusStage.ams-map3d-active>.compare-focus-hud{z-index:5;pointer-events:none}
 @media(max-width:690px){#telemetry .ams-map3d-toggle,#compare .ams-map3d-toggle{margin-left:0}#telemetry .ams-map3d-toggle button,#compare .ams-map3d-toggle button{padding:5px 9px}#telemetry .ams-map3d-controls{bottom:32px}#telemetry .ams-map3d-hint,#compare .ams-map3d-hint{font-size:8px}}
+
+/* v42: cinematic follow controls, compact even on narrow telemetry cards. */
+#telemetry .ams-map3d-controls,#compare .ams-map3d-controls{max-width:calc(100% - 16px);padding:4px;background:#071522bc;border:1px solid #254961;border-radius:3px;backdrop-filter:blur(5px)}
+#telemetry .ams-map3d-controls label,#compare .ams-map3d-controls label{display:flex;align-items:center;gap:5px;font-size:10px;color:#cde2f3;background:#0b1b28ee;border:1px solid #355572;padding:3px 5px}
+#telemetry .ams-map3d-controls select,#compare .ams-map3d-controls select{background:#132f45!important;color:#f1f8ff!important;border:1px solid #497ca3!important;max-width:185px;min-width:76px;font-size:10px;padding:4px 3px}
+#telemetry .ams-map3d-hint,#compare .ams-map3d-hint{white-space:normal;font-size:9px;color:#a7bfd2}
+@media(max-width:690px){#telemetry .ams-map3d-controls,#compare .ams-map3d-controls{right:5px;left:5px;max-width:calc(100% - 10px)}#telemetry .ams-map3d-controls select,#compare .ams-map3d-controls select{max-width:125px}#telemetry .ams-map3d-controls label,#compare .ams-map3d-controls label{font-size:9px}}
