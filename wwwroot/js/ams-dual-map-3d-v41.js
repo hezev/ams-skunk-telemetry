@@ -219,7 +219,10 @@ class Engine{
    return (a+(b-a)*f-profile.minimumM)*heightFactor;
   };
   return {pts:raw,scale,cx,cy,span,hasElevation,profile,heightFactor,altAt,
-   toWorld:(p,offset=0)=>new this.T.Vector3((p.x-cx)*scale,altAt(p.p)+offset,(p.y-cy)*scale)};
+   // Use the same *geometry station* as the road, not lap clock/progress.
+   // A GPS trajectory has q (closest road station), which can differ from p.
+   toWorld:(p,offset=0)=>new this.T.Vector3((p.x-cx)*scale,
+    altAt(finite(p.q)?p.q:p.p)+offset,(p.y-cy)*scale)};
  }
  makeRibbon(points,width,height,color,close=false,colors=null){
   const T=this.T;
@@ -254,7 +257,7 @@ class Engine{
   const mat=new T.MeshBasicMaterial({side:T.DoubleSide,vertexColors:true,depthWrite:true});
   const mesh=new T.Mesh(g,mat);this.root.add(mesh);return mesh;
  }
- showTrajectory(fit,solid,lap){
+ showTrajectory(fit,solid,lap,verticalOffset=.06){
   const pts=fit?.points;
   if(!validPts(pts)||!this.model)return;
   const T=this.T,ctx=this.model,c=ctx.toWorld;
@@ -280,7 +283,9 @@ class Engine{
     this.empty(channel==='speed'?'VELOCIDADE · escala relativa aos valores reais da volta':channel==='brake'?'TRAVAGEM · canal real':'ACELERADOR · canal real');
    }else this.empty('Canal selecionado sem amostras suficientes · trajetória normal');
   }
-  this.makeRibbon(path,.52,1.03,new T.Color(solid),false,colors);
+  // Road surface is +.03; these lines sit just .03–.04 above asphalt.
+  // Vertical exaggeration affects both road and trace equally via toWorld.
+  this.makeRibbon(path,.52,verticalOffset,new T.Color(solid),false,colors);
  }
  marker(name,color,radius){
   const T=this.T;
@@ -330,13 +335,13 @@ class Engine{
   }
   const obj=this.view.id==='telemetry'?track.trajectoryCompare:track.focusedCompare;
   if(this.view.id==='telemetry'){
-   this.showTrajectory(obj?.ref,0x3494df,viewers.telemetry.currentLap?.ref);
-   this.showTrajectory(obj?.a,0xf33c56,viewers.telemetry.currentLap?.lap);
+   this.showTrajectory(obj?.ref,0x3494df,viewers.telemetry.currentLap?.ref,.068);
+   this.showTrajectory(obj?.a,0xf33c56,viewers.telemetry.currentLap?.lap,.06);
    if(obj?.a?.points?.length)this.marker('a',0xff4259,1.65);
    if(obj?.ref?.points?.length)this.marker('ref',0x3baaff,1.4);
   }else{
-   this.showTrajectory(obj?.ref,0x399df7,obj?.lapRef);
-   this.showTrajectory(obj?.a,0xf3435b,obj?.lapA);
+   this.showTrajectory(obj?.ref,0x399df7,obj?.lapRef,.068);
+   this.showTrajectory(obj?.a,0xf3435b,obj?.lapA,.06);
    if(obj?.a?.points?.length)this.marker('a',0xff4259,1.65);
    if(obj?.ref?.points?.length)this.marker('ref',0x3baaff,1.4);
   }
@@ -347,6 +352,16 @@ class Engine{
      :'SEM ALTITUDE PONTUAL · pista plana · '+source+' · não inventamos relevo'));
   this.resize();this.moveCars();this.render();
  }
+ // Map replay progress p -> the local *road* station q before asking for
+ // elevation; trajectoryPoint() intentionally returns only p/x/y for the 2D
+ // renderer and must not be changed.
+ surfacePoint(fit,progress,offset=0){
+  const point=track.trajectoryPoint(fit?.points,progress);
+  if(!point||!this.model)return null;
+  const mapped=track.mappedProgress?.(fit?.sync,progress);
+  const station=finite(mapped)?mapped:progress;
+  return this.model.toWorld({...point,q:station},offset);
+ }
  moveCars(){
   if(!this.model)return;
   const obj=this.view.id==='telemetry'?track.trajectoryCompare:track.focusedCompare;
@@ -356,18 +371,22 @@ class Engine{
    const marker=this.markers[name];if(!marker)continue;
    const point=track.trajectoryPoint(fit?.points,finite(p)?p:0);
    if(!point){marker.visible=false;continue;}
-   marker.visible=true;marker.position.copy(this.model.toWorld(point,1.05));
+   const ground=this.surfacePoint(fit,p,.085);
+   if(!ground){marker.visible=false;continue;}
+   marker.visible=true;marker.position.copy(ground);
    const before=track.trajectoryPoint(fit.points,clamp(p-.003,0,1));
    const after=track.trajectoryPoint(fit.points,clamp(p+.003,0,1));
    if(before&&after){
-    const a=this.model.toWorld(before),b=this.model.toWorld(after);
+    const a=this.surfacePoint(fit,clamp(p-.003,0,1));
+    const b=this.surfacePoint(fit,clamp(p+.003,0,1));
     const forward=new this.T.Vector3(b.x-a.x,0,b.z-a.z);
     if(forward.lengthSq()>1e-8)marker.rotation.y=Math.atan2(forward.x,forward.z);
    }
    if(name==='a'){
     this.followTarget=marker.position.clone();
     if(before&&after){
-     const a=this.model.toWorld(before),b=this.model.toWorld(after);
+     const a=this.surfacePoint(fit,clamp(p-.003,0,1));
+     const b=this.surfacePoint(fit,clamp(p+.003,0,1));
      const forward=new this.T.Vector3(b.x-a.x,0,b.z-a.z);
      if(forward.lengthSq()>1e-8)this.followForward=forward.normalize();
     }
