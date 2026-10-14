@@ -7,6 +7,7 @@ window.AMSTrack = {
   officialCorners:null,
   activePath:null,
   centerline:[],
+  elevationProfile:null, // 3D-only: track altitude aligned to validated GPS centerline, never used by 2D
   reference:null,
   trajectoryCompare:null,
   focusedCompare:null,
@@ -544,6 +545,38 @@ window.AMSTrack = {
     return out;
   },
 
+  // Vertical profile for opt-in 3D only. Identical closed distance stations to
+  // resampleClosed(), matching GPS reference geometry without phase shifts.
+  // Never fabricate a height from TrackAltitude (single venue altitude).
+  resampleGpsElevation(points,count=2400,source=""){
+    if(!Array.isArray(points)||points.length<24)return null;
+    const valid=points.filter(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)&&Number.isFinite(p?.alt));
+    if(valid.length<points.length*.98)return null;
+    let cleaned=[...valid];
+    if(cleaned.length>2&&this.distance(cleaned[0],cleaned.at(-1))<.000001)cleaned.pop();
+    const values=cleaned.map(p=>p.alt);
+    // The source encodes missing altitude as 0. Reject predominantly missing
+    // profiles and improbable single-point elevations.
+    if(values.filter(v=>v!==0).length<values.length*.9)return null;
+    const min=Math.min(...values),max=Math.max(...values);
+    if(min< -600||max>9000||max-min<.7)return null;
+    const seg=[],cum=[0];let total=0;
+    for(let i=0;i<cleaned.length;i++){
+      const d=this.distance(cleaned[i],cleaned[(i+1)%cleaned.length]);
+      seg.push(d);total+=d;cum.push(total);
+    }
+    if(total<=0)return null;
+    const heights=[];let j=0;
+    for(let k=0;k<count;k++){
+      const target=total*k/count;
+      while(j<seg.length-1&&cum[j+1]<target)j++;
+      const a=cleaned[j],b=cleaned[(j+1)%cleaned.length];
+      const t=Math.max(0,Math.min(1,(target-cum[j])/(seg[j]||1)));
+      heights.push(a.alt+(b.alt-a.alt)*t);
+    }
+    return {heights,minimumM:min,maximumM:max,source:String(source||"RaceStudio 3 GPS altitude"),count};
+  },
+
   makeGpsProjection(gps){
     const valid=(gps||[])
       .map(p=>({lat:Number(p?.lat),lon:Number(p?.lon)}))
@@ -587,6 +620,7 @@ window.AMSTrack = {
     const stack=document.getElementById("trackVectorStack");
     if(!host||!stack)return false;
 
+    this.elevationProfile=null;
     this.gpsProjection=this.makeGpsProjection(data?.gps_points);
     this.yawOffset=0;
     this.artworkCalibration=null;
@@ -596,6 +630,13 @@ window.AMSTrack = {
     if(projected.length<3)return false;
 
     this.centerline=this.resampleClosed(projected,2400);
+    // GPS points include alt_m in the RaceStudio dataset. Preserve precisely
+    // the same start, direction and distance spacing as centerline.
+    const projectedAltitude=(data?.gps_points||[]).map(p=>{
+      const xy=this.gpsProjection.project(Number(p?.lat),Number(p?.lon));
+      return {x:xy.x,y:xy.y,alt:p?.alt_m===null?NaN:Number(p?.alt_m)};
+    }).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+    this.elevationProfile=this.resampleGpsElevation(projectedAltitude,this.centerline.length,data?.altitude_source);
     this.activePath=null;
     this.reference={
       source:"RaceStudio 3 GPS",
@@ -626,6 +667,7 @@ window.AMSTrack = {
   },
 
   async load(trackName,configHint="",telemetry=null){
+    this.elevationProfile=null;
     const status=document.getElementById("trackSource");
     try{
       if(status)status.textContent="A localizar referência…";
@@ -698,6 +740,7 @@ window.AMSTrack = {
       requestAnimationFrame(()=>this.setPosition(this.progress));
       return {entry,reference:null};
     }catch(err){
+      this.elevationProfile=null;
       this.centerline=[];
       if(status)status.textContent="Mapa indisponível";
       console.warn("AMS track map:",err);
