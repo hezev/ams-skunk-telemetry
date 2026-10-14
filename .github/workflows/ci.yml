@@ -27,6 +27,8 @@ jobs:
           node --check wwwroot/js/ams-dual-map-3d-v41.js
           node --check wwwroot/js/app.js
           node scripts/3d-map-safety-smoke.mjs
+          node scripts/3d-elevation-drone-smoke.mjs
+          node --check wwwroot/js/track-map.js
 
       - name: Validate concept module JavaScript
         run: |
