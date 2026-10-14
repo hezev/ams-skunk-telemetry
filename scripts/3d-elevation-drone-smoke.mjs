@@ -48,8 +48,9 @@ const begin=script.indexOf(' geometryContext(){');
 const finish=script.indexOf(' makeRibbon(',begin);
 assert.ok(begin>=0&&finish>begin,'geometryContext not found');
 const geometry=script.slice(begin,finish).trim().replace(/^geometryContext\(\)\{/,'').replace(/\}\s*$/,'');
-const geometryFn=new Function('track','finite', 'return function geometryContext(){'+geometry+'}')(
- t,v=>typeof v==='number'&&Number.isFinite(v)
+const geometryFn=new Function('track','finite','validPts', 'return function geometryContext(){'+geometry+'}')(
+ t,v=>typeof v==='number'&&Number.isFinite(v),
+ arr=>Array.isArray(arr)&&arr.length>=8&&arr.every(p=>typeof p?.x==='number'&&Number.isFinite(p.x)&&typeof p?.y==='number'&&Number.isFinite(p.y))
 );
 t.centerline=line;
 t.reference={source:'test track',lengthM:4000};
