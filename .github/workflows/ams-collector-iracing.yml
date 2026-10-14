@@ -1,0 +1,40 @@
+name: AMS Collector iRacing CI
+
+on:
+  pull_request:
+    paths:
+      - 'collector/**'
+      - '.github/workflows/ams-collector-iracing.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'collector/**'
+      - '.github/workflows/ams-collector-iracing.yml'
+
+jobs:
+  capture-and-crossbuild:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: collector/go.mod
+          cache: false
+      - name: Parser and offline archive tests
+        run: go test -race ./... -count=1
+      - name: Windows x64 executable build
+        shell: bash
+        run: |
+          mkdir -p dist
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o dist/AMSCollector.exe ./cmd/amscollector
+          test -s dist/AMSCollector.exe
+      - name: Archive unsigned developer build
+        uses: actions/upload-artifact@v4
+        with:
+          name: AMSCollector-iRacing-Windows-unsigned
+          path: collector/dist/AMSCollector.exe
+          if-no-files-found: error
+          retention-days: 14
