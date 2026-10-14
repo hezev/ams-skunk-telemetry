@@ -1,0 +1,30 @@
+name: iRacing Garage Capture Go CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/iracing-garage-capture.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'windows/**'
+      - '.github/workflows/iracing-garage-capture.yml'
+
+jobs:
+  sdk-capture-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: windows/go.mod
+          cache: false
+      - name: Parse/deduplicate/upload tests
+        run: go test ./garagecapture -race -count=1
+      - name: Windows amd64 cross-build
+        run: GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build ./garagecapture
