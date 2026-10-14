@@ -16,5 +16,5 @@
 #telemetry .ams-map3d-hint,#compare .ams-map3d-hint{position:absolute;left:8px;right:8px;bottom:5px;text-align:left;font-size:9px;color:#94afc3;text-shadow:0 1px 2px #000;pointer-events:none;z-index:2}
 #telemetry #telemetryMapFirst .trajectory-stage.ams-map3d-active>svg,#compare #compareFocusStage.ams-map3d-active>#compareFocusSvg{visibility:hidden}
 #compare #compareFocusStage.ams-map3d-active>.compare-mini-map{display:none!important}
-#compare #compareFocusStage.ams-map3d-active>.compare-focus-hud{position:relative;z-index:5;pointer-events:none}
+#compare #compareFocusStage.ams-map3d-active>.compare-focus-hud{z-index:5;pointer-events:none}
 @media(max-width:690px){#telemetry .ams-map3d-toggle,#compare .ams-map3d-toggle{margin-left:0}#telemetry .ams-map3d-toggle button,#compare .ams-map3d-toggle button{padding:5px 9px}#telemetry .ams-map3d-controls{bottom:32px}#telemetry .ams-map3d-hint,#compare .ams-map3d-hint{font-size:8px}}
