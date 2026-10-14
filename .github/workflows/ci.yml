@@ -22,6 +22,12 @@ jobs:
       - name: Engineering telemetry smoke test
         run: node scripts/smoke-test.mjs
 
+      - name: Preserve 2D map and validate 3D opt-in
+        run: |
+          node --check wwwroot/js/ams-dual-map-3d-v41.js
+          node --check wwwroot/js/app.js
+          node scripts/3d-map-safety-smoke.mjs
+
       - name: Validate concept module JavaScript
         run: |
           node --check wwwroot/js/ams-concepts.js

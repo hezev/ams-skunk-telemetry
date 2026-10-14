@@ -448,6 +448,9 @@
     AMSTrack.renderAnalysisMap(state.analysisResult.minisectors||[],events);
     AMSTrack.renderTrajectoryCompare(state.analysisLap,state.analysisRef);
     AMSTrack.renderTrajectoryCoaching(state.analysisLap,state.analysisRef);
+    // Optional 3D visualization consumes the same validated track/trajectories;
+    // keep the 2D map implementation and replay state completely unchanged.
+    document.dispatchEvent(new CustomEvent("ams-3d-telemetry-data",{detail:{lap:state.analysisLap,ref:state.analysisRef}}));
     renderAnalysisCursor(0);
   }
 
@@ -656,6 +659,7 @@
     setText("compareNote",compatible?"Mesma combinação · A laranja / referência azul":"Pista/carro/simulador diferentes");
     if(!compatible){
       state.compareLapA=null;state.compareLapB=null;
+      document.dispatchEvent(new CustomEvent("ams-compare-data",{detail:{lapA:null,lapB:null}}));
       setText("compareFocusStatus","INCOMPATÍVEL");
       return;
     }

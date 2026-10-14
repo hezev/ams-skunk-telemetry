@@ -1,0 +1,20 @@
+/* AMS v41. Progressive enhancement: original 2D elements untouched, visible by default. */
+#telemetry .ams-map3d-toggle,#compare .ams-map3d-toggle{display:inline-flex;align-items:center;gap:2px;padding:2px;background:#081725;border:1px solid #355169;border-radius:3px;margin-left:auto;white-space:nowrap;vertical-align:middle}
+#telemetry .ams-map3d-toggle button,#compare .ams-map3d-toggle button{font-size:10px;font-weight:850;letter-spacing:.5px;cursor:pointer;padding:6px 12px;background:transparent;color:#a9c1d4;border:1px solid transparent;border-radius:2px;min-height:26px}
+#telemetry .ams-map3d-toggle button[aria-pressed="true"],#compare .ams-map3d-toggle button[aria-pressed="true"]{background:#245b80;border-color:#539bc5;color:#fff}
+#telemetry .ams-map3d-toggle button:focus-visible,#compare .ams-map3d-toggle button:focus-visible{outline:2px solid #54b8ff;outline-offset:1px}
+#telemetry #telemetryMapFirst .trajectory-stage,#compare #compareFocusStage{position:relative}
+#telemetry .ams-map3d-overlay,#compare .ams-map3d-overlay{position:absolute;inset:0;z-index:3;overflow:hidden;background:#07111a}
+#telemetry .ams-map3d-overlay[hidden],#compare .ams-map3d-overlay[hidden]{display:none!important}
+#telemetry .ams-map3d-canvas,#compare .ams-map3d-canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
+#telemetry .ams-map3d-canvas:active,#compare .ams-map3d-canvas:active{cursor:grabbing}
+#telemetry .ams-map3d-status,#compare .ams-map3d-status{position:absolute;top:7px;left:8px;right:8px;max-width:calc(100% - 16px);padding:5px 7px;background:#07121eea;color:#b8d6ec;border:1px solid #2e5168;border-left:2px solid #30a2dd;font-size:9px;letter-spacing:.28px;line-height:1.35;pointer-events:none;z-index:2}
+#telemetry .ams-map3d-controls,#compare .ams-map3d-controls{position:absolute;bottom:29px;right:8px;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:5px;z-index:3;max-width:calc(100% - 16px)}
+#telemetry .ams-map3d-controls button,#compare .ams-map3d-controls button{background:#12334aeb;border:1px solid #469aca;border-radius:2px;padding:6px 9px;font-weight:800;font-size:10px;color:#d9f4ff;cursor:pointer}
+#telemetry .ams-map3d-controls label{font-size:9px;color:#b4cee0;background:#0b1b28db;padding:3px 5px;border:1px solid #2d4b64}
+#telemetry .ams-map3d-controls select{border:1px solid #487a9d;color:#e7f7ff;background:#112a3f;padding:4px;font-size:10px;min-width:0}
+#telemetry .ams-map3d-hint,#compare .ams-map3d-hint{position:absolute;left:8px;right:8px;bottom:5px;text-align:left;font-size:9px;color:#94afc3;text-shadow:0 1px 2px #000;pointer-events:none;z-index:2}
+#telemetry #telemetryMapFirst .trajectory-stage.ams-map3d-active>svg,#compare #compareFocusStage.ams-map3d-active>#compareFocusSvg{visibility:hidden}
+#compare #compareFocusStage.ams-map3d-active>.compare-mini-map{display:none!important}
+#compare #compareFocusStage.ams-map3d-active>.compare-focus-hud{z-index:5;pointer-events:none}
+@media(max-width:690px){#telemetry .ams-map3d-toggle,#compare .ams-map3d-toggle{margin-left:0}#telemetry .ams-map3d-toggle button,#compare .ams-map3d-toggle button{padding:5px 9px}#telemetry .ams-map3d-controls{bottom:32px}#telemetry .ams-map3d-hint,#compare .ams-map3d-hint{font-size:8px}}
