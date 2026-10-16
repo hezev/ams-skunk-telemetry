@@ -388,3 +388,5 @@ window.AMSCharts = {
     this.draw(document.getElementById("dashboardChart"),"speed");
   }
 };
+// Redraw canvas legends whenever the user switches language.
+document.addEventListener('ams:languagechange',()=>window.AMSCharts?.scheduleDraw?.());
