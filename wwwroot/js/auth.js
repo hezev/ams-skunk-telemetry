@@ -1,4 +1,5 @@
 window.AMSAuth = {
+  tr(pt,en){return window.AMSi18n?.getLanguage?.()==="en"?en:pt;},
   user:null,
   session:null,
 
@@ -53,7 +54,7 @@ window.AMSAuth = {
       body:JSON.stringify({email,password})
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||"Falha ao criar conta.");
+    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||this.tr("Falha ao criar conta.","Unable to create account."));
     if(data.access_token){
       data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
       this.user=data.user||null;
@@ -69,7 +70,7 @@ window.AMSAuth = {
       method:"POST",headers:this.headers(),body:JSON.stringify({email,password})
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||"Falha no login.");
+    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||this.tr("Falha no login.","Sign-in failed."));
     data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
     this.user=data.user||null;
     this.save(data);
@@ -80,12 +81,12 @@ window.AMSAuth = {
   },
 
   async refresh(){
-    if(!this.session?.refresh_token) throw new Error("Sessão expirada.");
+    if(!this.session?.refresh_token) throw new Error(this.tr("Sessão expirada.","Session expired."));
     const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/token?grant_type=refresh_token",{
       method:"POST",headers:this.headers(),body:JSON.stringify({refresh_token:this.session.refresh_token})
     });
     const data=await res.json();
-    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||"Sessão expirada.");
+    if(!res.ok) throw new Error(data.msg||data.error_description||data.message||this.tr("Sessão expirada.","Session expired."));
     data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
     this.user=data.user||this.user;
     this.save(data);
@@ -142,7 +143,7 @@ window.AMSAuth = {
     if(this.user){
       if(loginBtn) loginBtn.hidden=true;
       if(userBox) userBox.hidden=false;
-      if(userName) userName.textContent=this.user.user_metadata?.pilot_name||this.user.user_metadata?.display_name||this.user.email?.split("@")[0]||"Piloto";
+      if(userName) userName.textContent=this.user.user_metadata?.pilot_name||this.user.user_metadata?.display_name||this.user.email?.split("@")[0]||this.tr("Piloto","Driver");
     }else{
       if(loginBtn) loginBtn.hidden=false;
       if(userBox) userBox.hidden=true;
@@ -172,7 +173,7 @@ window.AMSAuth = {
       const email=document.getElementById("loginEmail").value.trim();
       const password=document.getElementById("loginPassword").value;
       if(!email || !password){
-        if(error) error.textContent="Indica email e password para criar a conta.";
+        if(error) error.textContent=this.tr("Indica email e password para criar a conta.","Enter your email and password to create an account.");
         return;
       }
       try{
@@ -181,7 +182,7 @@ window.AMSAuth = {
           modal?.classList.remove("open");
           form?.reset();
         }else if(error){
-          error.textContent="Conta criada. Confirma o email e depois inicia sessão.";
+          error.textContent=this.tr("Conta criada. Confirma o email e depois inicia sessão.","Account created. Confirm your email, then sign in.");
         }
       }catch(err){
         if(error) error.textContent=err.message;
@@ -193,11 +194,11 @@ window.AMSAuth = {
       if(error) error.textContent="";
       const submit=form.querySelector('button[type="submit"]');
       try{
-        if(submit){submit.disabled=true;submit.textContent="A entrar…";}
+        if(submit){submit.disabled=true;submit.textContent=this.tr("A entrar…","Signing in…");}
         await this.login(document.getElementById("loginEmail").value.trim(),document.getElementById("loginPassword").value);
         modal?.classList.remove("open"); form.reset();
       }catch(err){ if(error) error.textContent=err.message; }
-      finally{ if(submit){submit.disabled=false;submit.textContent="Entrar";} }
+      finally{ if(submit){submit.disabled=false;submit.textContent=this.tr("Entrar","Sign in");} }
     });
 
     this.startPersistence();
