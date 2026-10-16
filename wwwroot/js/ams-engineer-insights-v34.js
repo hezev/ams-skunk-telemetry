@@ -1,10 +1,11 @@
 /* Engineer v34: panels populated only from an analyzed real session report. */
 window.AMSEngineerMockupPanels={
  render(report){
+  const tr=(pt,en)=>window.AMSi18n?.getLanguage?.()==="en"?en:pt;
   const set=(id,value)=>{const n=document.getElementById(id);if(n)n.textContent=value;};
   const fill=(id,rows,empty)=>{const host=document.getElementById(id);if(!host)return;host.replaceChildren();if(!rows.length){host.textContent=empty;return;}for(const z of rows){const item=document.createElement('div');item.className='engineer-finding-row';const title=document.createElement('strong'),detail=document.createElement('span');title.textContent=z.title;detail.textContent=z.note;item.append(title,detail);host.append(item);}};
   if(!report?.ok){
-    for(const id of ["engineerStrengths","engineerWeaknesses","engineerDrills"])fill(id,[],"Analisa uma sessão para obter evidência.");
+    for(const id of ["engineerStrengths","engineerWeaknesses","engineerDrills"])fill(id,[],tr("Analisa uma sessão para obter evidência.","Analyze a session to see evidence."));
     for(const id of ["engineerScoreConsistency","engineerScoreVariance","engineerScoreDriver","engineerScoreZones"])set(id,"—");
     return;
   }
