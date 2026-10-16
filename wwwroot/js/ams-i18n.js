@@ -121,6 +121,25 @@ Object.assign(dict,{
 "Status":["Estado","Status"],
 "Save changes":["Guardar alterações","Save changes"]
 });
+Object.assign(dict,{
+"Live Track Map":["Mapa da corrida em direto","Live Track Map"],
+"Race Time":["Tempo de corrida","Race Time"],
+"Leader Gap":["Diferença para o líder","Leader Gap"],
+"Cars":["Carros","Cars"],
+"Flag":["Bandeira","Flag"],
+"Pos":["Pos.","Pos"],
+"Cls":["Classe","Cls"],
+"Last":["Última","Last"],
+"Best":["Melhor","Best"],
+"Gap":["Diferença","Gap"],
+"Stint":["Stint","Stint"],
+"▶ Simular com volta gravada":["▶ Simular com volta gravada","▶ Simulate from recorded lap"],
+"Timing live quando disponível; replay de uma volta gravada para validação do painel":["Tempos em direto quando disponíveis; reprodução de uma volta gravada para validar o painel","Live timing when available; replay a recorded lap to validate the display"],
+"A carregar mapa da pista…":["A carregar mapa da pista…","Loading track map…"],
+"SUPABASE LIVE":["SUPABASE EM DIRETO","SUPABASE LIVE"],
+"SEM LIVE CLOUD":["SEM DADOS EM DIRETO","NO LIVE DATA"],
+"LIVE CLOUD NÃO CONFIGURADO":["LIVE CLOUD NÃO CONFIGURADO","LIVE CLOUD NOT CONFIGURED"]
+});
 const aliases=new Map();Object.entries(dict).forEach(([key,pair])=>{aliases.set(key,pair);aliases.set(pair[0],pair);aliases.set(pair[1],pair);});
 const langIndex=()=>current==='pt'?0:1;
 let current=(localStorage.getItem(KEY)||((navigator.language||'').toLowerCase().startsWith('pt')?'pt':'en'));if(!['pt','en'].includes(current))current='pt';
