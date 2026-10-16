@@ -13,10 +13,10 @@ window.AMSEngineerMockupPanels={
   const fmt=n=>Number.isFinite(n)?((n>=0?'+':'')+n.toFixed(3)+'s'):'—';
   const positive=[...zones].filter(z=>z.avgLoss>0.003).sort((a,b)=>b.avgLoss-a.avgLoss).slice(0,3);
   const steady=[...zones].filter(z=>Number.isFinite(z.timeSd)&&z.confidence>=45).sort((a,b)=>a.timeSd-b.timeSd).slice(0,3);
-  fill('engineerStrengths',steady.map(z=>({title:z.label||'Zona',note:'Variação temporal σ '+z.timeSd.toFixed(3)+'s · confiança '+z.confidence+'%'})),'Sem evidência suficiente de zonas consistentes.');
-  fill('engineerWeaknesses',positive.map(z=>({title:z.label||'Zona',note:'Perda média '+fmt(z.avgLoss)+' · '+(z.diagnosis||'por determinar')})),'Sem perdas relevantes confirmadas nas zonas analisadas.');
+  fill('engineerStrengths',steady.map(z=>({title:z.label||tr('Zona','Zone'),note:tr('Variação temporal σ ','Time variation σ ')+z.timeSd.toFixed(3)+'s · '+tr('confiança ','confidence ')+z.confidence+'%'})),tr('Sem evidência suficiente de zonas consistentes.','Not enough evidence of consistent zones.'));
+  fill('engineerWeaknesses',positive.map(z=>({title:z.label||'Zona',note:tr('Perda média ','Average loss ')+fmt(z.avgLoss)+' · '+(z.diagnosis||tr('por determinar','undetermined'))})),tr('Sem perdas relevantes confirmadas nas zonas analisadas.','No significant losses confirmed in the analyzed zones.'));
   const priorities=Array.isArray(report.priorities)?report.priorities.slice(0,3):[];
-  fill('engineerDrills',priorities.map(p=>({title:p.label||'Prioridade',note:p.advice||'Sem recomendação específica'})),'Não foram identificadas prioridades suficientes para sugerir exercícios.');
+  fill('engineerDrills',priorities.map(p=>({title:p.label||tr('Prioridade','Priority'),note:p.advice||tr('Sem recomendação específica','No specific recommendation')})),tr('Não foram identificadas prioridades suficientes para sugerir exercícios.','Not enough priorities identified to suggest drills.'));
   set('engineerScoreConsistency',Number.isFinite(report.consistency)?report.consistency+'/100':'—');
   set('engineerScoreVariance',Number.isFinite(report.lapStdDev)?report.lapStdDev.toFixed(3)+'s':'—');
   set('engineerScoreDriver',Number.isFinite(report.driverShare)?(report.driverShare*100).toFixed(0)+'%':'—');
