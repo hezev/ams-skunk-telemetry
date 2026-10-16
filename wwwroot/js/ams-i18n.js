@@ -239,6 +239,32 @@ Object.assign(dict,{
 "SESSÃO / REPLAY":["SESSÃO / REPLAY","SESSION / REPLAY"],
 "Sem sessão live":["Sem sessão em direto","No live session"]
 });
+Object.assign(dict,{
+  "Strategy": [
+    "Estratégia",
+    "Strategy"
+  ],
+  "Setup Lab": [
+    "Laboratório de Setup",
+    "Setup Lab"
+  ],
+  "Telemetry Platform": [
+    "Plataforma de Telemetria",
+    "Telemetry Platform"
+  ],
+  "live summary": [
+    "resumo em direto",
+    "live summary"
+  ],
+  "Live race positions on track": [
+    "Posições dos pilotos em direto na pista",
+    "Live race positions on track"
+  ],
+  "Language / Idioma": [
+    "Idioma",
+    "Language"
+  ]
+});
 const aliases=new Map();Object.entries(dict).forEach(([key,pair])=>{aliases.set(key,pair);aliases.set(pair[0],pair);aliases.set(pair[1],pair);});
 const langIndex=()=>current==='pt'?0:1;
 let current=(localStorage.getItem(KEY)||((navigator.language||'').toLowerCase().startsWith('pt')?'pt':'en'));if(!['pt','en'].includes(current))current='pt';

@@ -1,4 +1,5 @@
 window.AMSRealtime = {
+  tr(pt,en){return window.AMSi18n?.getLanguage?.()==="en"?en:pt;},
   phase:0,
   elapsed:1114,
   mode:"offline",
@@ -127,7 +128,7 @@ window.AMSRealtime = {
         row,p,
         pos:Number(get(p,"position","overallPosition","overall_position")) || i+1,
         cls:Number(get(p,"classPosition","class_position")) || null,
-        name:get(p,"driverName","driver_name","name") || (row.pilot_id===AMSAuth.user?.id?"Tu":"AMS Pilot"),
+        name:get(p,"driverName","driver_name","name") || (row.pilot_id===AMSAuth.user?.id?this.tr("Tu","You"):this.tr("Piloto AMS","AMS Driver")),
         number:get(p,"carNumber","car_number","number") || "",
         lap:get(p,"lap","lapNumber","lap_number") ?? "—",
         last:get(p,"lastLap","last_lap","lastLapTime","last_lap_time"),
@@ -181,14 +182,14 @@ window.AMSRealtime = {
         document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:fresh}}));
 
         const c=document.getElementById("connectionText");
-        if(c) c.textContent="SUPABASE LIVE";
+        if(c) c.textContent=this.tr("SUPABASE EM DIRETO","SUPABASE LIVE");
 
         const top=document.querySelector(".live-badge");
-        if(top) top.title="Dados cloud AMS Telemetry";
+        if(top) top.title=this.tr("Dados em direto AMS Telemetry","Live AMS Telemetry data");
       }else{
         this.mode="offline";
         this.liveRows=[];
-        this.clearRealData("SEM LIVE CLOUD");
+        this.clearRealData(this.tr("SEM DADOS EM DIRETO","NO LIVE DATA"));
         document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:[]}}));
       }
     }catch(err){
@@ -197,7 +198,7 @@ window.AMSRealtime = {
       const msg=String(err?.message||err||"Erro Supabase");
       if(msg.includes("ams_live_sessions") && /not find|does not exist|relation/i.test(msg)){
         this.liveCloudAvailable=false;
-        this.clearRealData("LIVE CLOUD NÃO CONFIGURADO");
+        this.clearRealData(this.tr("LIVE CLOUD NÃO CONFIGURADO","LIVE CLOUD NOT CONFIGURED"));
       }else{
         this.clearRealData("CLOUD: "+msg.slice(0,48));
       }

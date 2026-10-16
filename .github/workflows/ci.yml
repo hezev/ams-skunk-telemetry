@@ -19,6 +19,15 @@ jobs:
           node-version: '22'
       - name: Build
         run: dotnet build --configuration Release
+      - name: Check bilingual JavaScript and integration
+        run: |
+          node --check wwwroot/js/ams-i18n.js
+          node --check wwwroot/js/auth.js
+          node --check wwwroot/js/realtime.js
+          node --check wwwroot/js/ams-live-pitwall-map.js
+          node --check wwwroot/js/ai-engineer.js
+          node scripts/i18n-smoke.mjs
+
       - name: Engineering telemetry smoke test
         run: node scripts/smoke-test.mjs
 

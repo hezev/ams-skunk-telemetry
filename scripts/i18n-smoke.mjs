@@ -1,0 +1,18 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read=p=>fs.readFileSync(p,'utf8');
+const html=read('wwwroot/index.html');
+const i18n=read('wwwroot/js/ams-i18n.js');
+const auth=read('wwwroot/js/auth.js');
+const realtime=read('wwwroot/js/realtime.js');
+const pitwall=read('wwwroot/js/ams-live-pitwall-map.js');
+assert.match(html,/ams-i18n\.js/, 'i18n must be included');
+assert.match(html,/ams-live-pitwall-map\.js/, 'live map must be included');
+assert.match(i18n,/ams:languagechange/, 'locale change event missing');
+assert.match(i18n,/Português|português|Portuguese/, 'PT locale missing');
+assert.match(i18n,/English/, 'EN locale missing');
+assert.match(i18n,/const aliases=new Map/, 'translation mapping missing');
+assert.match(auth,/this\.tr\(/, 'auth state translation missing');
+assert.match(realtime,/this\.tr\(/, 'live state translation missing');
+assert.match(pitwall,/ams-pitwall-replay-position/, 'replay marker event missing');
+console.log('PT/EN static integration checks passed');
