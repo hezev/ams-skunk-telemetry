@@ -53,5 +53,14 @@ function render(rows){
 window.AMSLiveMap={render,clear(){render([]);}};
 document.addEventListener('ams:languagechange',()=>render(window.AMSRealtime?.liveRows||[]));
 document.addEventListener('ams-live-update',e=>render(e.detail?.rows||[]));
+document.addEventListener('ams-pitwall-replay-position',e=>{
+ const d=e.detail||{},progress=Number(d.progress);
+ if(!Number.isFinite(progress))return;
+ render([{pilot_id:d.pilotId,circuit:d.circuit,sample:{
+   position:Math.max(0,Math.min(1,progress))*100,
+   driverName:d.driver||'Replay'
+ }}]);
+ message(tr('Replay · posição do piloto','Replay · driver position'));
+});
 render([]);
 })();
