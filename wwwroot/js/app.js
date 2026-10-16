@@ -498,6 +498,13 @@
     setText("replayPositionText",Number.isFinite(pos)?pos.toFixed(1)+"%":(ratio*100).toFixed(1)+"%");
     AMSCharts.setExternalCursor(progress);
     AMSTrack.setAnalysisPosition(progress);
+    document.dispatchEvent(new CustomEvent("ams-pitwall-replay-position",{detail:{
+      progress,
+      pilotId:d.pilot_id,
+      driver:pilotName(d.pilot_id),
+      car:d.car||"",
+      circuit:d.circuit||""
+    }}));
     renderAnalysisCursor(progress);
   }
 
