@@ -507,6 +507,7 @@ Object.assign(dict,{
     "Setup Lab"
   ]
 });
+Object.assign(dict,{"I. SETUP SHEET":["I. FOLHA DE SETUP","I. SETUP SHEET"],"II. RECOMMENDATION ENGINE":["II. MOTOR DE RECOMENDAÇÃO","II. RECOMMENDATION ENGINE"]});
 const aliases=new Map();Object.entries(dict).forEach(([key,pair])=>{aliases.set(key,pair);aliases.set(pair[0],pair);aliases.set(pair[1],pair);});
 const langIndex=()=>current==='pt'?0:1;
 let current=(localStorage.getItem(KEY)||((navigator.language||'').toLowerCase().startsWith('pt')?'pt':'en'));if(!['pt','en'].includes(current))current='pt';
