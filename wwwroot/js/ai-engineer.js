@@ -23,21 +23,22 @@ window.AMSAIEngineer={
       evidence_rows:rows
     };
   },
+  tr(pt,en){return window.AMSi18n?.getLanguage?.()==="en"?en:pt;},
   async ask(question=""){
     const output=document.getElementById("engineerAiOutput"),status=document.getElementById("engineerAiStatus");
     const brief=document.getElementById("engineerAiBtn"),ask=document.getElementById("engineerAskBtn");
     const report=this.report();
     if(!report.ok){
-      if(output)output.textContent="Analisa primeiro uma sessão no Virtual Performance Engineer.";
-      if(status)status.textContent="SEM RELATÓRIO";
+      if(output)output.textContent=this.tr("Analisa primeiro uma sessão no Virtual Performance Engineer.","Analyze a session in Virtual Performance Engineer first.");
+      if(status)status.textContent=this.tr("SEM RELATÓRIO","NO REPORT");
       return;
     }
     if(brief)brief.disabled=true;if(ask)ask.disabled=true;
-    if(output)output.textContent="A analisar a evidência da sessão…";
-    if(status)status.textContent="AI · A ANALISAR";
+    if(output)output.textContent=this.tr("A analisar a evidência da sessão…","Analyzing session evidence…");
+    if(status)status.textContent=this.tr("AI · A ANALISAR","AI · ANALYZING");
     try{
       const sessionToken=await AMSAuth.token();
-      if(!sessionToken)throw new Error("Sessão de login necessária.");
+      if(!sessionToken)throw new Error(this.tr("Sessão de login necessária.","Please sign in to continue."));
       const data=await AMSSupabase.request("/functions/v1/virtual-engineer",{
         token:sessionToken,method:"POST",
         body:{report,question:String(question||"").trim(),context:{
@@ -45,12 +46,12 @@ window.AMSAIEngineer={
           session:document.getElementById("engineerSessionSelect")?.selectedOptions?.[0]?.textContent||"—"
         }}
       });
-      if(output)output.textContent=data?.text||"Sem resposta do Virtual Engineer.";
-      if(status)status.textContent=(data?.model||"AI")+" · CONCLUÍDO";
+      if(output)output.textContent=data?.text||this.tr("Sem resposta do Virtual Engineer.","No response from Virtual Engineer.");
+      if(status)status.textContent=(data?.model||"AI")+this.tr(" · CONCLUÍDO"," · COMPLETE");
     }catch(err){
       const msg=String(err?.message||err);
-      if(output)output.textContent=(msg.includes("OPENAI_API_KEY")||msg.includes("AI_NOT_CONFIGURED"))?"A integração AI está instalada, mas falta configurar a chave da API no backend.":"Não foi possível gerar o briefing: "+msg;
-      if(status)status.textContent="AI INDISPONÍVEL";
+      if(output)output.textContent=(msg.includes("OPENAI_API_KEY")||msg.includes("AI_NOT_CONFIGURED"))?this.tr("A integração AI está instalada, mas falta configurar a chave da API no backend.","AI integration is installed, but the backend API key has not been configured."):this.tr("Não foi possível gerar o briefing: ","Could not generate the briefing: ")+msg;
+      if(status)status.textContent=this.tr("AI INDISPONÍVEL","AI UNAVAILABLE");
     }finally{
       if(brief)brief.disabled=false;if(ask)ask.disabled=false;
     }
