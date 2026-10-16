@@ -265,6 +265,248 @@ Object.assign(dict,{
     "Language"
   ]
 });
+Object.assign(dict,{
+  "Setup Sheet": [
+    "Ficha de setup",
+    "Setup Sheet"
+  ],
+  "Recommendation Engine": [
+    "Motor de recomendações",
+    "Recommendation Engine"
+  ],
+  "Tune Catalog": [
+    "Catálogo de afinações",
+    "Tune Catalog"
+  ],
+  "SIMULATED IMPACT": [
+    "IMPACTO SIMULADO",
+    "SIMULATED IMPACT"
+  ],
+  "AERODYNAMICS": [
+    "AERODINÂMICA",
+    "AERODYNAMICS"
+  ],
+  "BRAKES & TYRES": [
+    "TRAVÕES E PNEUS",
+    "BRAKES & TYRES"
+  ],
+  "SUSPENSION": [
+    "SUSPENSÃO",
+    "SUSPENSION"
+  ],
+  "Rear wing": [
+    "Asa traseira",
+    "Rear wing"
+  ],
+  "Brake bias": [
+    "Repartição de travagem",
+    "Brake bias"
+  ],
+  "Front pressure": [
+    "Pressão dianteira",
+    "Front pressure"
+  ],
+  "Rear pressure": [
+    "Pressão traseira",
+    "Rear pressure"
+  ],
+  "Front ride height": [
+    "Altura dianteira",
+    "Front ride height"
+  ],
+  "Rear ride height": [
+    "Altura traseira",
+    "Rear ride height"
+  ],
+  "Front ARB": [
+    "Barra estabilizadora dianteira",
+    "Front ARB"
+  ],
+  "Rear ARB": [
+    "Barra estabilizadora traseira",
+    "Rear ARB"
+  ],
+  "BASELINE VS CURRENT SETUP": [
+    "REFERÊNCIA VS SETUP ATUAL",
+    "BASELINE VS CURRENT SETUP"
+  ],
+  "GT3 Baseline": [
+    "Referência GT3",
+    "GT3 Baseline"
+  ],
+  "COMPARAÇÃO DE SNAPSHOTS REAIS": [
+    "COMPARAÇÃO DE REGISTOS REAIS",
+    "REAL SNAPSHOT COMPARISON"
+  ],
+  "Track-Specific": [
+    "Específico da pista",
+    "Track-Specific"
+  ],
+  "Driving Style": [
+    "Estilo de condução",
+    "Driving Style"
+  ],
+  "Conditions": [
+    "Condições",
+    "Conditions"
+  ],
+  "Race Strategy": [
+    "Estratégia de corrida",
+    "Race Strategy"
+  ],
+  "Lap time (est.)": [
+    "Tempo de volta (est.)",
+    "Lap time (est.)"
+  ],
+  "Top speed": [
+    "Velocidade máxima",
+    "Top speed"
+  ],
+  "Braking stability": [
+    "Estabilidade na travagem",
+    "Braking stability"
+  ],
+  "Rotation": [
+    "Rotação",
+    "Rotation"
+  ],
+  "Traction": [
+    "Tração",
+    "Traction"
+  ],
+  "Tyre wear": [
+    "Desgaste dos pneus",
+    "Tyre wear"
+  ],
+  "My Setups": [
+    "Os meus setups",
+    "My Setups"
+  ],
+  "Community": [
+    "Comunidade",
+    "Community"
+  ],
+  "AMS Official": [
+    "Oficial AMS",
+    "AMS Official"
+  ],
+  "Garagem Real · iRacing": [
+    "Garagem Real · iRacing",
+    "Real Garage · iRacing"
+  ],
+  "Importar CarSetup JSON": [
+    "Importar CarSetup JSON",
+    "Import CarSetup JSON"
+  ],
+  "Guardar setup": [
+    "Guardar setup",
+    "Save setup"
+  ],
+  "Exportar JSON": [
+    "Exportar JSON",
+    "Export JSON"
+  ],
+  "Importar JSON": [
+    "Importar JSON",
+    "Import JSON"
+  ],
+  "Editar layout": [
+    "Editar layout",
+    "Edit layout"
+  ],
+  "Live Car Data": [
+    "Dados do carro em direto",
+    "Live Car Data"
+  ],
+  "RPM + Shift RPM": [
+    "RPM + RPM de mudança",
+    "RPM + Shift RPM"
+  ],
+  "Steering Torque": [
+    "Binário da direção",
+    "Steering Torque"
+  ],
+  "Lateral / Longitudinal G": [
+    "G lateral / longitudinal",
+    "Lateral / Longitudinal G"
+  ],
+  "Fuel Use / Hour": [
+    "Consumo de combustível / hora",
+    "Fuel Use / Hour"
+  ],
+  "Tyre Temperatures FL / FR / RL / RR": [
+    "Temperaturas pneus DD / DE / TD / TE",
+    "Tyre Temperatures FL / FR / RL / RR"
+  ],
+  "Water / Oil / Track / Air Temperature": [
+    "Temperatura água / óleo / pista / ar",
+    "Water / Oil / Track / Air Temperature"
+  ],
+  "Yaw / Pitch / Roll Rates": [
+    "Velocidades de guinada / arfagem / rolamento",
+    "Yaw / Pitch / Roll Rates"
+  ],
+  "Brake Bias": [
+    "Repartição de travagem",
+    "Brake Bias"
+  ],
+  "TC / ABS": [
+    "TC / ABS",
+    "TC / ABS"
+  ],
+  "Clutch": [
+    "Embraiagem",
+    "Clutch"
+  ],
+  "Humidity / Wind": [
+    "Humidade / Vento",
+    "Humidity / Wind"
+  ],
+  "Oil Pressure / Voltage": [
+    "Pressão de óleo / Tensão",
+    "Oil Pressure / Voltage"
+  ],
+  "Gain / Loss Map": [
+    "Mapa de ganho / perda",
+    "Gain / Loss Map"
+  ],
+  "Cumulative Time Delta": [
+    "Delta de tempo acumulado",
+    "Cumulative Time Delta"
+  ],
+  "Virtual Sectors · 3 × distance": [
+    "Setores virtuais · 3 × distância",
+    "Virtual Sectors · 3 × distance"
+  ],
+  "Minisectors": [
+    "Minissetores",
+    "Minisectors"
+  ],
+  "Braking / Acceleration Points": [
+    "Pontos de travagem / aceleração",
+    "Braking / Acceleration Points"
+  ],
+  "TELEMETRY GRID": [
+    "GRELHA DE TELEMETRIA",
+    "TELEMETRY GRID"
+  ],
+  "ENGINEERING OVERVIEW": [
+    "VISÃO GERAL DE ENGENHARIA",
+    "ENGINEERING OVERVIEW"
+  ],
+  "ANALYSIS TABLES": [
+    "TABELAS DE ANÁLISE",
+    "ANALYSIS TABLES"
+  ],
+  "0 de 8 parâmetros alterados face à referência": [
+    "0 de 8 parâmetros alterados face à referência",
+    "0 of 8 parameters changed from reference"
+  ],
+  "Setup Lab": [
+    "Laboratório de Setup",
+    "Setup Lab"
+  ]
+});
 const aliases=new Map();Object.entries(dict).forEach(([key,pair])=>{aliases.set(key,pair);aliases.set(pair[0],pair);aliases.set(pair[1],pair);});
 const langIndex=()=>current==='pt'?0:1;
 let current=(localStorage.getItem(KEY)||((navigator.language||'').toLowerCase().startsWith('pt')?'pt':'en'));if(!['pt','en'].includes(current))current='pt';
