@@ -686,6 +686,9 @@
 
   async function compare(){
     stopCompareReplay();
+    const chosen=state.laps.find(l=>String(l.id)===String(q("#compareLapA")?.value));
+    const ownBest=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&l.simulator===chosen?.simulator&&l.circuit===chosen?.circuit&&l.car===chosen?.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms))[0];
+    if(ownBest&&q("#compareLapA"))q("#compareLapA").value=ownBest.id;
     await refreshCommunityReference();
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
     const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
