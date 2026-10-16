@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
+  const state={compareBest:null,laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
 
   async function coachFlag(token){
     try{
@@ -204,16 +204,49 @@
     const options=state.laps.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
     for(const id of ["telemetryLapSelect","compareLapA","compareLapB"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
     if(state.selectedId){const t=q("#telemetryLapSelect");if(t)t.value=state.selectedId;}
+    const own=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&Number(l.lap_time_ms)>0);
+    own.sort((a,b)=>Number(a.lap_time_ms)-Number(b.lap_time_ms));
     const a=q("#compareLapA"),b=q("#compareLapB");
-    if(a&&state.laps[0])a.value=state.laps[0].id;
-    if(b&&state.laps[1])b.value=state.laps[1].id;
+    if(a){a.innerHTML=own.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");if(own[0])a.value=own[0].id;}
+    if(b)b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
+    void refreshCommunityReference();
     fillReferenceSelector();
     fillEngineerSessionSelector();
+  }
+
+  async function refreshCommunityReference(){
+    const a=q("#compareLapA"),b=q("#compareLapB");
+    const own=state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id);
+    if(!b)return;
+    b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
+    if(!own){b.innerHTML='<option value="">Sem volta do piloto</option>';return;}
+    const token=await AMSAuth.token();if(!token)return;
+    try{
+      // RLS permits the pilot's own best laps and explicitly shared community laps.
+      const qparams=new URLSearchParams({select:"id,pilot_id,simulator,circuit,car,lap_time_ms,shared",simulator:"eq."+own.simulator,circuit:"eq."+own.circuit,car:"eq."+own.car,order:"lap_time_ms.asc",limit:"1"});
+      const results=await AMSSupabase.request("/rest/v1/ams_best_laps?"+qparams,{token});
+      const first=results?.find(l=>Number(l.lap_time_ms)>0);
+      state.compareBest=first||null;
+      if(first){
+        b.innerHTML=`<option value="best:${first.id}">${fmtLap(first.lap_time_ms)} · ${first.shared?"Community":"Best lap"} · ${own.circuit} · ${own.car}</option>`;
+      }else{
+        // Own-lap fallback avoids manufacturing a reference when no shared record exists.
+        const candidates=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&l.simulator===own.simulator&&l.circuit===own.circuit&&l.car===own.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms));
+        b.innerHTML=candidates[0]?`<option value="${candidates[0].id}">${fmtLap(candidates[0].lap_time_ms)} · Personal best</option>`:'<option value="">Sem referência disponível</option>';
+      }
+    }catch(err){console.warn("AMS Compare community reference:",err);b.innerHTML='<option value="">Referência indisponível</option>';}
   }
 
   async function detail(id){
     if(!id)return null;
     if(state.cache.has(id))return state.cache.get(id);
+    if(String(id).startsWith("best:")){
+      const token=await AMSAuth.token();if(!token)return null;
+      const rows=await AMSSupabase.request("/rest/v1/ams_best_laps?"+new URLSearchParams({select:"id,pilot_id,simulator,circuit,car,lap_time_ms,completed_at,telemetry",id:"eq."+String(id).slice(5),limit:"1"}),{token});
+      const best=rows?.[0]||null;
+      if(best)state.cache.set(id,best);
+      return best;
+    }
     const token=await AMSAuth.token(); if(!token)return null;
     let d=null;
     if(state.isCoach){
@@ -653,6 +686,7 @@
 
   async function compare(){
     stopCompareReplay();
+    await refreshCommunityReference();
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
     const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
 
@@ -724,6 +758,7 @@
   q("#zoomEnd")?.addEventListener("input",e=>setZoomWindow(q("#zoomStart")?.value||0,e.target.value));
   q("#zoomResetBtn")?.addEventListener("click",()=>setZoomWindow(0,100));
   q("#compareBtn")?.addEventListener("click",compare);
+  q("#compareLapA")?.addEventListener("change",()=>void refreshCommunityReference());
   q("#compareReplayBtn")?.addEventListener("click",startCompareReplay);
   q("#compareReplayToggle")?.addEventListener("click",startCompareReplay);
   q("#compareReplaySeek")?.addEventListener("input",e=>seekCompare(e.target.value));
