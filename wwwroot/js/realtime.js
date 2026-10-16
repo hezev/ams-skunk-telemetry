@@ -178,6 +178,7 @@ window.AMSRealtime = {
         this.applySample(own);
         AMSTrack.renderCars(fresh,AMSAuth.user.id);
         this.renderCloudTiming(fresh);
+        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:fresh}}));
 
         const c=document.getElementById("connectionText");
         if(c) c.textContent="SUPABASE LIVE";
@@ -188,6 +189,7 @@ window.AMSRealtime = {
         this.mode="offline";
         this.liveRows=[];
         this.clearRealData("SEM LIVE CLOUD");
+        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:[]}}));
       }
     }catch(err){
       this.mode="offline";
@@ -201,6 +203,7 @@ window.AMSRealtime = {
       }
       const c=document.getElementById("connectionText");
       if(c)c.title=msg;
+      document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:[]}}));
       console.warn("AMS Supabase live:",err);
     }finally{
       this.polling=false;
