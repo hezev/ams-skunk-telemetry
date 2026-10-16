@@ -35,6 +35,11 @@ window.AMSCharts = {
     pressure: {unit:"",series:[["oilPressure","Oil Pressure","#ffd329"],["voltage","Voltage","#22a8ff"]]}
   },
 
+  translateLabel(label){
+    if(window.AMSi18n?.getLanguage?.()!=="pt")return label;
+    const labels={Speed:"Velocidade",Throttle:"Acelerador",Brake:"Travão",Shift:"Troca",Gear:"Mudança",Steering:"Direção",Torque:"Binário",Fuel:"Combustível","Fuel/h":"Combustível/h",Water:"Água",Oil:"Óleo",Track:"Pista",Air:"Ar",Yaw:"Guinada",Pitch:"Inclinação",Roll:"Rolamento",Clutch:"Embraiagem",Bias:"Repartição","Humidity %":"Humidade %",Wind:"Vento","Oil Pressure":"Pressão de óleo",Voltage:"Tensão","Lat G":"G lateral","Long G":"G longitudinal"};
+    return labels[label]||label;
+  },
   pos(sample,index,total){
     const p=Number(sample?._p);
     if(Number.isFinite(p)) return Math.max(0,Math.min(1,p));
@@ -208,8 +213,8 @@ window.AMSCharts = {
   drawLegend(ctx,plot,spec){
     let x=plot.left;const y=plot.top+14;ctx.font="10px Segoe UI";ctx.textAlign="left";
     for(const [,label,color] of spec.series){
-      ctx.fillStyle=color;ctx.fillRect(x,y-8,12,2);ctx.fillStyle="#b8c0ca";ctx.fillText(label,x+16,y-4);
-      x+=ctx.measureText(label).width+42;
+      ctx.fillStyle=color;ctx.fillRect(x,y-8,12,2);ctx.fillStyle="#b8c0ca";ctx.fillText(this.translateLabel(label),x+16,y-4);
+      x+=ctx.measureText(this.translateLabel(label)).width+42;
     }
     if(this.reference.length){
       ctx.strokeStyle="#dbe2ea";ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,y-7);ctx.lineTo(x+16,y-7);ctx.stroke();ctx.setLineDash([]);
@@ -383,3 +388,5 @@ window.AMSCharts = {
     this.draw(document.getElementById("dashboardChart"),"speed");
   }
 };
+// Redraw canvas legends whenever the user switches language.
+document.addEventListener('ams:languagechange',()=>window.AMSCharts?.scheduleDraw?.());
