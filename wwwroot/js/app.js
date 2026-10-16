@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={compareBest:null,laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
+  const state={compareBest:null,compareOwnBests:[],laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
 
   async function coachFlag(token){
     try{
@@ -214,9 +214,20 @@
     fillEngineerSessionSelector();
   }
 
+  async function loadComparePersonalBests(token){
+    try{
+      const rows=await AMSSupabase.getBestLaps(token,AMSAuth.user?.id);
+      state.compareOwnBests=(rows||[]).filter(l=>Number(l.lap_time_ms)>0);
+      const a=q("#compareLapA");
+      if(!a||!state.compareOwnBests.length)return;
+      a.innerHTML=state.compareOwnBests.map(l=>`<option value="best:${l.id}">${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
+      await refreshCommunityReference();
+    }catch(err){console.warn("AMS Compare personal bests:",err);}
+  }
+
   async function refreshCommunityReference(){
     const a=q("#compareLapA"),b=q("#compareLapB");
-    const own=state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id);
+    const own=state.compareOwnBests.find(l=>`best:${l.id}`===String(a?.value))||state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id);
     if(!b)return;
     b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
     if(!own){b.innerHTML='<option value="">Sem volta do piloto</option>';return;}
@@ -686,9 +697,9 @@
 
   async function compare(){
     stopCompareReplay();
-    const chosen=state.laps.find(l=>String(l.id)===String(q("#compareLapA")?.value));
-    const ownBest=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&l.simulator===chosen?.simulator&&l.circuit===chosen?.circuit&&l.car===chosen?.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms))[0];
-    if(ownBest&&q("#compareLapA"))q("#compareLapA").value=ownBest.id;
+    const chosen=state.compareOwnBests.find(l=>`best:${l.id}`===String(q("#compareLapA")?.value))||state.laps.find(l=>String(l.id)===String(q("#compareLapA")?.value));
+    const ownBest=(state.compareOwnBests.length?state.compareOwnBests:state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id)).filter(l=>l.simulator===chosen?.simulator&&l.circuit===chosen?.circuit&&l.car===chosen?.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms))[0];
+    if(ownBest&&q("#compareLapA"))q("#compareLapA").value=state.compareOwnBests.includes(ownBest)?`best:${ownBest.id}`:ownBest.id;
     await refreshCommunityReference();
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
     const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
@@ -741,6 +752,7 @@
       state.laps=await visibleLaps(token,state.isCoach);
       state.pilots=await visiblePilots(token,state.isCoach);
       renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+      await loadComparePersonalBests(token);
       publishSetupSessions();
       await loadPublicRecords(token);
       if(state.laps.length)await selectLap(state.laps[0].id);
