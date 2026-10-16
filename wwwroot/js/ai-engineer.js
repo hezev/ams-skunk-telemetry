@@ -41,9 +41,10 @@ window.AMSAIEngineer={
       if(!sessionToken)throw new Error(this.tr("Sessão de login necessária.","Please sign in to continue."));
       const data=await AMSSupabase.request("/functions/v1/virtual-engineer",{
         token:sessionToken,method:"POST",
-        body:{report,question:String(question||"").trim(),context:{
+        body:{report,question:String(question||"").trim(),language:window.AMSi18n?.getLanguage?.()==="en"?"en":"pt-PT",context:{
           simulator:this.text("simName"),circuit:this.text("trackName"),car:this.text("carName"),
-          session:document.getElementById("engineerSessionSelect")?.selectedOptions?.[0]?.textContent||"—"
+          session:document.getElementById("engineerSessionSelect")?.selectedOptions?.[0]?.textContent||"—",
+          response_language:window.AMSi18n?.getLanguage?.()==="en"?"English":"Portuguese (Portugal)"
         }}
       });
       if(output)output.textContent=data?.text||this.tr("Sem resposta do Virtual Engineer.","No response from Virtual Engineer.");
