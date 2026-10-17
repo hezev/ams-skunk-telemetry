@@ -29,6 +29,8 @@ internal sealed class MainForm : Form
         Height = 25,
         Padding = new Padding(10, 0, 0, 0)
     };
+    private string currentLanguage = "pt";
+    private string rawStatus = "À procura do simulador | inicia sessão para sincronizar com o site";
     private readonly TelemetryPipeline telemetry = new();
     private readonly MobileService mobile = new();
     private readonly string dataFolder = Path.Combine(
@@ -56,10 +58,34 @@ internal sealed class MainForm : Form
         if (IsDisposed || !IsHandleCreated) return;
         try
         {
-            if (InvokeRequired) BeginInvoke(() => { if (!IsDisposed) { statusLabel.Text = message; PostToUI(new { kind = "ams.desktop.sim.status", message }); } });
+            if (InvokeRequired) BeginInvoke(() => { if (!IsDisposed) { rawStatus = message; statusLabel.Text = TranslateStatus(message); PostToUI(new { kind = "ams.desktop.sim.status", message = TranslateStatus(message) }); } });
             else { statusLabel.Text = message; PostToUI(new { kind = "ams.desktop.sim.status", message }); }
         }
         catch (InvalidOperationException) { }
+    }
+
+    private string TranslateStatus(string message)
+    {
+        if (currentLanguage != "en") return message;
+        string output = message;
+        var labels = new (string Portuguese, string English)[]
+        {
+            ("À procura do simulador", "Looking for simulator"),
+            ("inicia sessão para sincronizar com o site", "sign in to sync with the website"),
+            ("À espera de simulador", "Waiting for simulator"),
+            ("ligado | aquisição local em curso", "connected | local telemetry capture running"),
+            ("Erro de aquisição:", "Capture error:"),
+            ("Erro de gravação local:", "Local recording error:"),
+            ("Sem acesso à gravação:", "Recording access denied:"),
+            ("Mobile indisponível:", "Mobile unavailable:"),
+            ("Sessão terminada: sincronização suspensa", "Signed out: synchronization paused"),
+            ("Sessão ligada: sincronização disponível", "Signed in: synchronization ready"),
+            ("Sem ligação ao Supabase:", "Supabase connection unavailable:"),
+            ("Timeout na sincronização cloud", "Cloud synchronization timeout")
+        };
+        foreach (var (portuguese, english) in labels)
+            output = output.Replace(portuguese, english, StringComparison.Ordinal);
+        return output;
     }
 
     private static readonly string Bridge = """
@@ -81,6 +107,15 @@ internal sealed class MainForm : Form
             setTimeout(sendSession, 3000);
           });
           setInterval(sendSession, 60_000);
+          function sendLanguage() {
+            window.chrome?.webview?.postMessage({
+              kind: 'ams.desktop.language',
+              language: window.AMSi18n?.getLanguage?.() || 'pt'
+            });
+          }
+          document.addEventListener('ams:languagechange', sendLanguage);
+          document.addEventListener('DOMContentLoaded', () => setTimeout(sendLanguage, 300));
+
           document.addEventListener("DOMContentLoaded", () => {
             const css = document.createElement('link');
             css.rel = 'stylesheet'; css.href = 'desktop/ams-v6-desktop.css';
@@ -140,6 +175,16 @@ internal sealed class MainForm : Form
                     if (root.ValueKind != JsonValueKind.Object ||
                         !root.TryGetProperty("kind", out var kind)) return;
                     var action = kind.GetString();
+                    if (action == "ams.desktop.language")
+                    {
+                        if (root.TryGetProperty("language", out var selected))
+                        {
+                            var language = selected.GetString();
+                            if (language is "pt" or "en") currentLanguage = language;
+                            statusLabel.Text = TranslateStatus(rawStatus);
+                        }
+                        return;
+                    }
                     if (action == "ams.desktop.obs.test")
                     {
                         bool reachable = false;
