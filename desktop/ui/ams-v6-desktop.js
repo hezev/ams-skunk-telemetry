@@ -2,8 +2,12 @@
 (()=>{
 "use strict";
 if(!window.chrome?.webview||document.getElementById("amsV6Settings"))return;
+const v6English = Object.freeze({"Settings":"Settings","SETTINGS":"SETTINGS","Definições e ligações · Mobile, conta, unidades, OBS, privacidade e atualizações.":"Settings and connections · Mobile, account, units, OBS, privacy and updates.","Diagnóstico":"Diagnostics","Conta AMS":"AMS Account","Unidades":"Units","Vídeo / OBS":"Video / OBS","Privacidade":"Privacy","Atualizações":"Updates","À espera de simulador":"Waiting for simulator","EMPARELHAMENTO AMSPORTS MOBILE":"AMSPORTS MOBILE PAIRING","O telemóvel ou tablet recebe a telemetria diretamente deste programa pela rede local. A aplicação não necessita de coletor.":"Your phone or tablet receives telemetry directly from this program over the local network. No separate collector is needed.","LER QR CODE":"SCAN QR CODE","QR de emparelhamento AMSports Mobile":"AMSports Mobile pairing QR code","Ativa o serviço e liga o PC à rede local para gerar o QR":"Enable the service and connect the PC to your local network to generate a QR code.","SERVIÇO":"SERVICE","Ativo":"Active","Desativado":"Disabled","Rede local · SSE":"Local network · SSE","IP LOCAL":"LOCAL IP","Mesmo Wi-Fi do PC":"Same Wi-Fi network as the PC","PORTA":"PORT","6 dígitos":"6 digits","DISPOSITIVOS":"DEVICES","Ligados agora":"Currently connected","PROTOCOLO":"PROTOCOL","Compatível com Android":"Android compatible","Alternativa manual":"Manual alternative","Aguardando serviço local":"Waiting for local service","Desativar mobile":"Disable mobile","Ativar mobile":"Enable mobile","Gerar novo PIN":"Generate new PIN","Atualizar":"Refresh","Abrir AMSports Mobile no Android e ligar à mesma rede Wi-Fi.":"Open AMSports Mobile on Android and connect to the same Wi-Fi network.","Ler QR ou introduzir IP, porta e PIN na aplicação.":"Scan the QR code or enter the IP, port and PIN in the app.","Confirmar ligação e iniciar o simulador para receber dados reais.":"Confirm the connection and launch the simulator to receive real data.","DIAGNÓSTICO DE LIGAÇÕES":"CONNECTION DIAGNOSTICS","Estado real do serviço local e da ligação à conta AMS.":"Current status of the local service and AMS account connection.","SIMULADOR":"SIMULATOR","Origem de telemetria":"Telemetry source","CONTA AMS":"AMS ACCOUNT","Desligada":"Disconnected","Autenticação Supabase":"Supabase authentication","MOBILE":"MOBILE","SSE · rede local":"SSE · local network","Sessões Android":"Android sessions","Verificar novamente":"Check again","Verificações":"Checks","A gravação de telemetria continua localmente. A sincronização Cloud requer conta autenticada e ligação à Internet.":"Telemetry recording continues locally. Cloud sync requires a signed-in account and an internet connection.","Versão da aplicação: 6.0.0 · motor de aquisição iRacing integrado · outros simuladores em migração.":"App version: 6.0.0 · iRacing data acquisition built in · other simulators being migrated.","CONTA AMS E CLOUD":"AMS ACCOUNT AND CLOUD","Identidade partilhada com o portal skunk.pt. Nunca é utilizada uma chave de administração dentro da aplicação.":"Your identity is shared with the skunk.pt portal. Administrator keys are never used in this application.","Sem sessão":"Not signed in","Piloto autenticado":"Authenticated driver","SYNC CLOUD":"CLOUD SYNC","Disponível":"Available","Aguarda login":"Waiting for sign-in","Autorização RLS":"RLS authorization","ARQUIVO LOCAL":"LOCAL ARCHIVE","Canais completos guardados no PC":"Full channels stored on this PC","VÍDEO":"VIDEO","Local":"Local","Não é enviado à Cloud":"Not uploaded to the Cloud","Consultar conta":"View account","Abrir conta / LOGIN":"Open account / SIGN IN","UNIDADES E FORMATAÇÃO":"UNITS AND FORMATTING","Esta opção modifica indicadores visuais da aplicação. Os dados brutos gravados permanecem nas unidades originais.":"This option changes the app's displayed measurements. Recorded raw data remains in its original units.","Métrico · km/h · °C":"Metric · km/h · °C","Imperial · mph · °F":"Imperial · mph · °F","Nesta versão o seletor aplica-se aos indicadores de Live suportados. A conversão de todos os gráficos ainda está em desenvolvimento.":"For now, this setting applies to supported Live indicators. Converting all charts is still in development.","Integração local com OBS Studio para associar vídeo às sessões.":"Local OBS Studio integration to associate videos with sessions.","ENDEREÇO":"ADDRESS","MODO":"MODE","Ligação no mesmo PC":"Connection on the same PC","A gravação automática e sincronização de clips ainda não foram migradas. Nenhum vídeo é enviado à Cloud.":"Automatic recording and clip synchronization have not been migrated yet. No video is uploaded to the Cloud.","Testar ligação OBS":"Test OBS connection","Mantemos o controlo de acesso no Supabase e o emparelhamento Mobile restrito à rede local.":"We enforce access controls in Supabase and restrict Mobile pairing to your local network.","TELEMETRIA LOCAL":"LOCAL TELEMETRY","Gravação no PC":"Stored on PC","Os canais completos do SDK são mantidos localmente.":"Complete SDK channels are stored locally.","CLOUD AMS":"AMS CLOUD","Conta autenticada":"Signed-in account","As voltas e o Live são sincronizados usando a identidade do piloto.":"Laps and Live data are synced under the driver's identity.","DISPOSITIVOS MOBILE":"MOBILE DEVICES","Em transmissão":"Broadcasting","Desativados":"Disabled","PIN de seis dígitos; não expor em redes públicas.":"Six-digit PIN; do not expose it on public networks.","Os clips não são enviados automaticamente.":"Clips are not uploaded automatically.","Desativar transmissão Mobile":"Disable Mobile streaming","Abrir definições Mobile":"Open Mobile settings","VERSÃO E ATUALIZAÇÕES":"VERSION AND UPDATES","A aplicação v6 é uma evolução independente do programa anterior.":"Version 6 is a separate evolution of the previous Windows app.","VERSÃO":"VERSION","Windows 64-bit · preview":"Windows 64-bit · preview","Esta versão não ativa o antigo atualizador Go. O canal de atualização autenticado terá de ser migrado e testado antes da distribuição pública.":"This version does not enable the old Go updater. The authenticated update channel must be migrated and tested before public release.","Abrir versões no GitHub":"Open GitHub releases","Pilotos e permissões":"Drivers and permissions","Equipa":"Team","Resumo do arquivo":"Archive summary","O acesso a pilotos e treinadores depende de permissões reais do Supabase. Não apresentamos equipas simuladas.":"Access for drivers and coaches depends on actual Supabase permissions. No simulated teams are displayed.","Os pilotos disponíveis para esta conta aparecem na tabela abaixo, conforme as regras de acesso.":"Drivers accessible to this account are listed below, according to access policies.","A carregar voltas...":"Loading laps...","Sem login":"Not signed in","Piloto · ":"Driver · ","Inicia sessão AMS para carregar os dados":"Sign in to AMS to load your data","Inicia sessão para consultar o arquivo.":"Sign in to view your archive."," voltas disponíveis · melhor tempo ":" laps available · best time ","Não foi possível consultar o arquivo: ":"Unable to load archive: ","OBS detetado: ":"OBS detected: ","OBS indisponível: ":"OBS unavailable: ","Erro":"Error"});
+const lang=()=>window.AMSi18n?.getLanguage?.()||'pt';
+const t=(value)=>lang()==='en'&&typeof value==='string'?(v6English[value]??value):value;
+const statusLabel=(value)=>{const v=String(value??''); if(lang()!=='en')return v; return v.replace('À espera de simulador','Waiting for simulator').replace('ligado | aquisição local em curso','connected | local capture running').replace('iRacing ligado | aquisição local em curso','iRacing connected | local capture running').replace('Sem ligação ao Supabase','Supabase connection unavailable').replace('Erro de aquisição','Capture error').replace('Erro de gravação local','Local recording error').replace('Sessão terminada: sincronização suspensa','Signed out: sync suspended').replace('Sessão ligada: sincronização disponível','Signed in: sync available');};
 const $=(s,root=document)=>root.querySelector(s);
-const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
+const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=t(text);return n};
 const btn=(label,handler,accent=false)=>{const b=el("button","v6-btn"+(accent?" primary":""),label);b.type="button";b.addEventListener("click",handler);return b};
 const info=(label,val,subtitle)=>{const box=el("div","v6-stat");box.append(el("span","v6-muted",label),el("strong","v6-number",val),el("small","v6-muted",subtitle||""));return box};
 const card=(title,description)=>{const box=el("article","v6-card");box.append(el("h3","",title));if(description)box.append(el("p","v6-muted",description));return box};
@@ -11,7 +15,7 @@ const native=(kind,props={})=>window.chrome.webview.postMessage(Object.assign({k
 const state={mobile:null,sim:"À espera de simulador",lastCloud:"",tab:"AMSports Mobile",unit:localStorage.getItem("ams.v6.units")||"metric"};
 const tabs=["AMSports Mobile","Diagnóstico","Conta AMS","Unidades","Vídeo / OBS","Privacidade","Atualizações"];
 const nav=$("#mainNav");
-const settingsButton=el("button","","Settings");
+const settingsButton=el("button","",lang()==="pt"?"Definições":"Settings");
 settingsButton.type="button";settingsButton.dataset.view="amsV6Settings";nav.append(settingsButton);
 const view=el("section","view v6-settings-view");view.id="amsV6Settings";
 view.append(el("div","v6-title","SETTINGS"),el("p","v6-subtitle","Definições e ligações · Mobile, conta, unidades, OBS, privacidade e atualizações."));
@@ -61,7 +65,7 @@ function renderMobile(){
 function renderDiagnostics(){
   const a=card("DIAGNÓSTICO DE LIGAÇÕES","Estado real do serviço local e da ligação à conta AMS.");
   const m=mobileState(),grid=el("div","v6-stats-grid");
-  grid.append(info("SIMULADOR",state.sim,"Origem de telemetria"),info("CONTA AMS",AMSAuth.user?.email||"Desligada","Autenticação Supabase"),
+  grid.append(info("SIMULADOR",statusLabel(state.sim),"Origem de telemetria"),info("CONTA AMS",AMSAuth.user?.email||"Desligada","Autenticação Supabase"),
     info("MOBILE",m.enabled?"Ativo":"Desativado","SSE · rede local"),info("DISPOSITIVOS",m.clients||0,"Sessões Android"));
   a.append(grid,btn("Verificar novamente",()=>native("mobile.status")));body.append(a);
   const b=card("Verificações","A gravação de telemetria continua localmente. A sincronização Cloud requer conta autenticada e ligação à Internet.");
@@ -112,33 +116,41 @@ function renderUpdates(){
   el("p","v6-muted","Esta versão não ativa o antigo atualizador Go. O canal de atualização autenticado terá de ser migrado e testado antes da distribuição pública."));
  const b=btn("Abrir versões no GitHub",()=>window.open("https://github.com/hezev/ams-skunk-telemetry/releases","_blank"));a.append(b);body.append(a);
 }
+function translateTeamCards(){
+ const panel=$("#v6TeamCards");if(!panel)return;
+ panel.querySelectorAll("h3").forEach(e=>{const original=e.dataset.v6Origin||(e.dataset.v6Origin=e.textContent);e.textContent=t(original);});
+ panel.querySelectorAll("p.v6-muted").forEach(e=>{const txt=e.dataset.v6Origin||(e.dataset.v6Origin=e.textContent);if(e.id!=="v6TeamPilot")e.textContent=t(txt);});
+ const label=$("#v6TeamLogin");if(label)label.textContent=t("Abrir conta / LOGIN");
+ const summary=document.querySelector(".v6-team-summary h3");if(summary)summary.textContent=t("Resumo do arquivo");
+}
 const team=$("#team");
 if(team){
  const title=team.querySelector(".titlebar");
  if(title)title.insertAdjacentHTML("afterend",'<div class="v6-team-grid" id="v6TeamCards"><article class="v6-card"><h3>Conta AMS</h3><strong id="v6TeamAccount">—</strong><p class="v6-muted" id="v6TeamPilot">—</p></article><article class="v6-card"><h3>Pilotos e permissões</h3><p class="v6-muted">O acesso a pilotos e treinadores depende de permissões reais do Supabase. Não apresentamos equipas simuladas.</p><button class="v6-btn primary" type="button" id="v6TeamLogin">Abrir conta / LOGIN</button></article><article class="v6-card"><h3>Equipa</h3><p class="v6-muted">Os pilotos disponíveis para esta conta aparecem na tabela abaixo, conforme as regras de acesso.</p></article></div><article class="v6-card v6-team-summary"><h3>Resumo do arquivo</h3><p id="v6TeamArchive" class="v6-muted">A carregar voltas...</p></article>');
  $("#v6TeamLogin")?.addEventListener("click",()=>$("#loginBtn")?.click());
+ translateTeamCards();
 }
 async function teamRefresh(){
  if(!team)return;
- const u=AMSAuth.user;$("#v6TeamAccount").textContent=u?.email||"Sem login";
- $("#v6TeamPilot").textContent=u?"Piloto · "+(u.user_metadata?.pilot_name||u.email):"Inicia sessão AMS para carregar os dados";
- if(!u){$("#v6TeamArchive").textContent="Inicia sessão para consultar o arquivo.";return;}
+ const u=AMSAuth.user;$("#v6TeamAccount").textContent=u?.email||t("Sem login");
+ $("#v6TeamPilot").textContent=u?t("Piloto · ")+(u.user_metadata?.pilot_name||u.email):t("Inicia sessão AMS para carregar os dados");
+ if(!u){$("#v6TeamArchive").textContent=t("Inicia sessão para consultar o arquivo.");return;}
  try{
    const token=await AMSAuth.token();if(!token)return;
    const laps=await AMSSupabase.getLaps(token,u.id)||[];
    const valid=laps.map(x=>Number(x.lap_time_ms)).filter(Number.isFinite);
    const best=valid.length?Math.min(...valid):null;
    const formatted=best==null?"—":(Math.floor(best/60000)+":"+(best%60000/1000).toFixed(3).padStart(6,"0"));
-   $("#v6TeamArchive").textContent=laps.length+" voltas disponíveis · melhor tempo "+formatted;
- }catch(e){$("#v6TeamArchive").textContent="Não foi possível consultar o arquivo: "+String(e.message||e);}
+   $("#v6TeamArchive").textContent=laps.length+t(" voltas disponíveis · melhor tempo ")+formatted;
+ }catch(e){$("#v6TeamArchive").textContent=t("Não foi possível consultar o arquivo: ")+String(e.message||e);}
 }
 document.addEventListener("ams-auth-changed",()=>{teamRefresh();if(view.classList.contains("active"))render();});
 document.querySelector('[data-view="team"]')?.addEventListener("click",()=>setTimeout(teamRefresh,100));
 window.chrome.webview.addEventListener("message",e=>{
  const msg=e.data||{};
  if(msg.kind==="ams.desktop.mobile.status"){state.mobile=msg.state;if(view.classList.contains("active"))render();}
- if(msg.kind==="ams.desktop.obs.status")alert(msg.reachable?"OBS detetado: "+msg.detail:"OBS indisponível: "+msg.detail);
- if(msg.kind==="ams.desktop.mobile.error")alert("AMSports Mobile: "+(msg.message||"Erro"));
+ if(msg.kind==="ams.desktop.obs.status")alert(t(msg.reachable?"OBS detetado: ":"OBS indisponível: ")+msg.detail);
+ if(msg.kind==="ams.desktop.mobile.error")alert("AMSports Mobile: "+(msg.message||t("Erro")));
  if(msg.kind==="ams.desktop.sim.status"){state.sim=msg.message||state.sim;if(view.classList.contains("active")&&state.tab==="Diagnóstico")render();}
 });
 const initialSet=window.AMSRealtime?.set;
@@ -150,5 +162,12 @@ if(initialSet&&!window.AMSRealtime._v6Wrapped){
   return initialSet.call(this,id,v);
  };
 }
+document.addEventListener("ams:languagechange",()=>{
+ settingsButton.textContent=lang()==="pt"?"Definições":"Settings";
+ view.querySelector(".v6-subtitle").textContent=t("Definições e ligações · Mobile, conta, unidades, OBS, privacidade e atualizações.");
+ translateTeamCards();
+ if(view.classList.contains("active"))render();
+ teamRefresh();
+});
 native("mobile.status");syncUnitLabel();teamRefresh();
 })();
