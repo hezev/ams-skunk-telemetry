@@ -7,7 +7,7 @@ namespace AMSSkunkTelemetry.Desktop;
 /// <summary>Snapshot da fonte simulador. "Channels" conserva todas as variáveis disponibilizadas pelo SDK.</summary>
 internal sealed record SimSnapshot(
     string Simulator, string Circuit, string Car, string SessionKey, int Tick,
-    DateTimeOffset CapturedAt, IReadOnlyDictionary<string, object?> Channels,
+    DateTimeOffset CapturedAt, string SessionInfo, IReadOnlyDictionary<string, object?> Channels,
     IReadOnlyList<Dictionary<string, object?>> Drivers);
 
 internal interface ISimulatorAdapter : IDisposable
@@ -46,7 +46,8 @@ internal sealed class IRacingAdapter : ISimulatorAdapter
                 view = memory.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
             }
 
-            if (view.Capacity < 112 || (view.ReadInt32(4) & 1) == 0) return false;
+            if (view.Capacity < 112) return false;
+            if ((view.ReadInt32(4) & 1) == 0) { Reset(); return false; }
             int count = view.ReadInt32(24), variableOffset = view.ReadInt32(28);
             int buffers = view.ReadInt32(32), bufferLength = view.ReadInt32(36);
             if (count <= 0 || count > 4096 || buffers < 1 || buffers > 4 ||
@@ -78,6 +79,7 @@ internal sealed class IRacingAdapter : ISimulatorAdapter
                     ParseSessionInfo();
                 }
                 lastSessionUpdate = update;
+                lastTick = -1;
             }
 
             // Escolher o buffer com tick mais recente; nunca publicar a mesma amostra duas vezes.
@@ -123,7 +125,7 @@ internal sealed class IRacingAdapter : ISimulatorAdapter
             lastTick = tick;
             var pit = BuildDrivers(values);
             snapshot = new SimSnapshot(Name, circuit, car,
-                sessionKey, tick, DateTimeOffset.UtcNow, values, pit);
+                sessionKey, tick, DateTimeOffset.UtcNow, sessionInfo, values, pit);
             return true;
         }
         catch (FileNotFoundException) { Reset(); return false; }
