@@ -24,8 +24,11 @@ if ($manifest.Package.Identity.Version -ne "6.0.0.0") { throw "Expected Store ve
 python scripts/build_store_assets.py
 $out = Join-Path $root $OutputDirectory
 New-Item -Path $out -ItemType Directory -Force | Out-Null
-$stage = Join-Path $env:RUNNER_TEMP "ams-store-v6"
-if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) { $stage = Join-Path $out "stage" }
+if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP)) {
+  $stage = Join-Path $out "stage"
+} else {
+  $stage = Join-Path $env:RUNNER_TEMP "ams-store-v6"
+}
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item $stage -ItemType Directory -Force | Out-Null
 Copy-Item -Path (Join-Path $publish "*") -Destination $stage -Recurse -Force
