@@ -28,7 +28,9 @@
 .v6-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
 .v6-step{border:1px solid #2b3e50;background:#111d28;min-height:90px;padding:14px;display:flex;gap:11px;font-size:11px;color:#bdcfe2}
 .v6-step b{background:#bb213a;color:white;padding:5px 10px}
-.v6-team-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.v6-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.v6-team-grid .v6-card:first-child{grid-column:1 / -1;min-height:100px}
+.v6-team-grid .v6-card:not(:first-child){min-height:205px}
 .v6-team-grid .v6-card{min-height:160px;display:flex;flex-direction:column;align-items:flex-start}
 .v6-team-grid .v6-card .v6-btn{margin-top:auto}
 .v6-privacy{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
