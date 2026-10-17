@@ -92,6 +92,7 @@ internal sealed class FullFidelityRecorder : IDisposable
             stream = new FileStream(Path.Combine(root, file), FileMode.CreateNew, FileAccess.Write, FileShare.Read, 65_536);
             writer = new StreamWriter(new GZipStream(stream, CompressionLevel.Fastest, leaveOpen: true), new UTF8Encoding(false), 65_536);
             records = 0;
+            writer.WriteLine(JsonSerializer.Serialize(new { kind = "session-info", sample.Simulator, sample.Circuit, sample.Car, sample.SessionKey, sessionInfo = sample.SessionInfo }));
         }
         writer!.WriteLine(JsonSerializer.Serialize(new
         {
@@ -158,7 +159,7 @@ internal sealed class TelemetryPipeline : IDisposable
                     {
                         lastLive = snapshot.CapturedAt;
                         cloud.QueueLive(snapshot, sample);
-                        Status?.Invoke("iRacing ligado | Live Pit Wall ativo");
+                        Status?.Invoke("iRacing ligado | aquisição local em curso");
                     }
 
                     if (snapshot.SessionKey != lastSession)
