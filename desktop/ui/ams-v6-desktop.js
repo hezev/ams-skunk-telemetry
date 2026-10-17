@@ -82,13 +82,18 @@ function renderUnits(){
   btn("Imperial · mph · °F",()=>setUnits("imperial"),state.unit==="imperial"));a.append(row);
  a.append(el("p","v6-muted","Nesta versão o seletor aplica-se aos indicadores de Live suportados. A conversão de todos os gráficos ainda está em desenvolvimento."));body.append(a);
 }
-function setUnits(unit){state.unit=unit;localStorage.setItem("ams.v6.units",unit);render();}
+function syncUnitLabel(){
+ const label=$("#speed")?.parentElement?.querySelector("small");
+ if(label)label.textContent=state.unit==="imperial"?"mph":"km/h";
+}
+function setUnits(unit){state.unit=unit;localStorage.setItem("ams.v6.units",unit);syncUnitLabel();render();}
 function renderOBS(){
  const a=card("VÍDEO / OBS","Integração local com OBS Studio para associar vídeo às sessões.");
  const grid=el("div","v6-stats-grid");
  grid.append(info("ENDEREÇO","127.0.0.1:4455","OBS WebSocket v5"),info("MODO","Localhost","Ligação no mesmo PC"));
  a.append(grid);
- a.append(el("p","v6-muted","A gravação automática e a sincronização dos clips ainda não foram migradas do motor Go. Nenhum vídeo é enviado para a Cloud."));body.append(a);
+ const result=el("p","v6-muted","A gravação automática e sincronização de clips ainda não foram migradas. Nenhum vídeo é enviado à Cloud.");
+ a.append(btn("Testar ligação OBS",()=>native("obs.test"),true),result);body.append(a);
 }
 function renderPrivacy(){
  const a=card("PRIVACIDADE","Mantemos o controlo de acesso no Supabase e o emparelhamento Mobile restrito à rede local.");
@@ -132,6 +137,7 @@ document.querySelector('[data-view="team"]')?.addEventListener("click",()=>setTi
 window.chrome.webview.addEventListener("message",e=>{
  const msg=e.data||{};
  if(msg.kind==="ams.desktop.mobile.status"){state.mobile=msg.state;if(view.classList.contains("active"))render();}
+ if(msg.kind==="ams.desktop.obs.status")alert(msg.reachable?"OBS detetado: "+msg.detail:"OBS indisponível: "+msg.detail);
  if(msg.kind==="ams.desktop.mobile.error")alert("AMSports Mobile: "+(msg.message||"Erro"));
  if(msg.kind==="ams.desktop.sim.status"){state.sim=msg.message||state.sim;if(view.classList.contains("active")&&state.tab==="Diagnóstico")render();}
 });
@@ -144,5 +150,5 @@ if(initialSet&&!window.AMSRealtime._v6Wrapped){
   return initialSet.call(this,id,v);
  };
 }
-native("mobile.status");teamRefresh();
+native("mobile.status");syncUnitLabel();teamRefresh();
 })();
