@@ -199,7 +199,7 @@ internal sealed class MobileService : IAsyncDisposable
     private bool Authorize(HttpContext ctx)
     {
         // LAN-only access. Mobile needs a PIN, not a Supabase JWT.
-        ctx.Response.Headers.AccessControlAllowOrigin = "*";
+        ctx.Response.Headers["Access-Control-Allow-Origin"] = "*";
         ctx.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
         ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
         ctx.Response.Headers.CacheControl = "no-store";
