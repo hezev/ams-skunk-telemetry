@@ -10,6 +10,7 @@
     <ApplicationTitle>AMSports Skunk Telemetry v6.0</ApplicationTitle>
     
     <Version>6.0.0</Version>
+    <ApplicationIcon>assets/ams-v6.ico</ApplicationIcon>
     </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
