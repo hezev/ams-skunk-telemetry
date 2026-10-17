@@ -7,11 +7,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>AMS.Skunk.Telemetry</AssemblyName>
-    <ApplicationTitle>AMS Skunk Telemetry</ApplicationTitle>
-    <Version>0.1.0</Version>
-  </PropertyGroup>
+    <ApplicationTitle>AMSports Skunk Telemetry v6.0</ApplicationTitle>
+    
+    <Version>6.0.0</Version>
+    </PropertyGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <Content Include="ui/*" Link="wwwroot/desktop/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
     <Content Include="../wwwroot/**/*" Link="wwwroot/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
