@@ -56,8 +56,8 @@ internal sealed class MainForm : Form
         if (IsDisposed || !IsHandleCreated) return;
         try
         {
-            if (InvokeRequired) BeginInvoke(() => { if (!IsDisposed) statusLabel.Text = message; });
-            else statusLabel.Text = message;
+            if (InvokeRequired) BeginInvoke(() => { if (!IsDisposed) { statusLabel.Text = message; PostToUI(new { kind = "ams.desktop.sim.status", message }); } });
+            else { statusLabel.Text = message; PostToUI(new { kind = "ams.desktop.sim.status", message }); }
         }
         catch (InvalidOperationException) { }
     }
