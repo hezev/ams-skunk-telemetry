@@ -21,6 +21,33 @@ internal static class TelemetryFields
     internal static Dictionary<string, object?> Map(SimSnapshot s)
     {
         var v = s.Channels;
+        if (s.Simulator != "iRacing")
+        {
+            var data = new Dictionary<string, object?>
+            {
+                ["speed"] = N(v, "SpeedKph"),
+                ["rpm"] = N(v, "RPM"),
+                ["gear"] = N(v, "Gear"),
+                ["throttle"] = N(v, "Throttle"),
+                ["brake"] = N(v, "Brake"),
+                ["steer"] = N(v, "SteerDeg"),
+                ["fuel"] = N(v, "FuelLitres"),
+                ["gLat"] = N(v, "LatG"),
+                ["gLong"] = N(v, "LongG"),
+                ["tyreFL"] = N(v, "TyreFL"), ["tyreFR"] = N(v, "TyreFR"),
+                ["tyreRL"] = N(v, "TyreRL"), ["tyreRR"] = N(v, "TyreRR"),
+                ["tyrePressureFL"] = N(v, "PressureFL"), ["tyrePressureFR"] = N(v, "PressureFR"),
+                ["tyrePressureRL"] = N(v, "PressureRL"), ["tyrePressureRR"] = N(v, "PressureRR"),
+                ["positionOverall"] = N(v, "PositionOverall"),
+                ["_p"] = N(v, "LapDistPct"),
+                ["trackPositionPct"] = N(v, "LapDistPct") * 100,
+                ["lap"] = N(v, "Lap"),
+                ["lastLap"] = N(v, "LastLapTimeMs") / 1000,
+                ["airTemp"] = N(v, "AirTemp"),
+                ["trackTemp"] = N(v, "TrackTemp")
+            };
+            return data.Where(x=>x.Value is double f && double.IsFinite(f)).ToDictionary(x=>x.Key,x=>x.Value);
+        }
         double? track = N(v, "LapDistPct");
         int playerIdx = (int)(N(v, "PlayerCarIdx") ?? -1);
         var player = s.Drivers.FirstOrDefault(d => Convert.ToInt32(d["carIdx"]) == playerIdx);
@@ -115,7 +142,7 @@ internal sealed class FullFidelityRecorder : IDisposable
 /// <summary>Executa dentro do próprio .exe: captura SDK, conserva canais, cria voltas e publica live.</summary>
 internal sealed class TelemetryPipeline : IDisposable
 {
-    private readonly ISimulatorAdapter[] sources = [new IRacingAdapter()];
+    private readonly ISimulatorAdapter[] sources = [new IRacingAdapter(), new AssettoCorsaAdapter(), new F1UdpAdapter()];
     private readonly FullFidelityRecorder recorder = new();
     private readonly CloudPublisher cloud = new();
     private readonly CancellationTokenSource stop = new();
@@ -155,13 +182,15 @@ internal sealed class TelemetryPipeline : IDisposable
                         catch (UnauthorizedAccessException e) { recordingAvailable = false; Status?.Invoke("Sem acesso à gravação: " + e.Message); }
                     }
 
+                    if (snapshot.Simulator == "F1 24/25" && GetNumber(snapshot, "PacketId") != 6)
+                        continue; // Other UDP packet types remain in full-fidelity local archive.
                     var sample = TelemetryFields.Map(snapshot);
                     SampleCaptured?.Invoke(snapshot, sample);
                     if (snapshot.CapturedAt - lastLive >= TimeSpan.FromSeconds(1))
                     {
                         lastLive = snapshot.CapturedAt;
                         cloud.QueueLive(snapshot, sample);
-                        Status?.Invoke("iRacing ligado | aquisição local em curso");
+                        Status?.Invoke(snapshot.Simulator + " ligado | aquisição local em curso");
                     }
 
                     if (snapshot.SessionKey != lastSession)
@@ -171,10 +200,12 @@ internal sealed class TelemetryPipeline : IDisposable
                         lastSession = snapshot.SessionKey;
                     }
 
-                    int completed = (int)(GetNumber(snapshot, "LapCompleted") ?? -1);
+                    int completed = (int)(GetNumber(snapshot, "LapCompleted") ??
+                        (snapshot.Simulator == "Assetto Corsa" ? GetNumber(snapshot, "Lap") : null) ?? -1);
                     if (lastCompleted >= 0 && completed > lastCompleted)
                     {
-                        double duration = GetNumber(snapshot, "LapLastLapTime") ?? 0;
+                        double duration = GetNumber(snapshot, "LapLastLapTime") ??
+                            (GetNumber(snapshot, "LastLapTimeMs") / 1000.0) ?? 0;
                         if (duration >= 20 && duration <= 7200 && lap.Count >= 20)
                         {
                             // Limite da tabela AMS: 2 MiB na volta. Se necessário, reduzir amostras.
