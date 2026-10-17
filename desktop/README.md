@@ -1,33 +1,27 @@
-# AMS Skunk Telemetry — Windows Desktop (preview)
+# AMSports Skunk Telemetry v6.0 — Windows (pré-visualização)
 
-Aplicação Windows .NET 10/WinForms/WebView2. O MESMO programa inclui a interface web e os serviços nativos de aquisição de telemetria. Não utiliza o antigo coletor Windows, processos bridge ou um servidor local separado.
+Versão: **6.0.0**. Projeto desktop .NET 10 / WebView2 com interface local, gravação e serviços de aquisição integrados no próprio processo — sem coletor Windows ou servidor bridge separado.
 
-## Primeira integração direta: iRacing
-- Abre a memória partilhada nativa `Local\\IRSDKMemMapFileName`, lê o catálogo de variáveis e todos os canais exportados pela sessão iRacing, incluindo arrays `CarIdx*` (outros carros).
-- Grava localmente os canais brutos, em amostras com timestamps, comprimidos em `.jsonl.gz` em `%LOCALAPPDATA%\\AMS\\SkunkTelemetry\\Sessions`. Guarda o bloco de informação da sessão (YAML) junto à gravação. A utilização de disco cresce com a duração das sessões.
-- Normaliza os campos usados no Dashboard/Telemetry/Compare e Pit Wall. Campos que o simulador não publica ficam ausentes; não são inventados.
-- Publica um snapshot Live por segundo, com a grelha de participantes, em `public.ams_live_sessions` via REST Supabase usando o JWT do piloto autenticado e as policies RLS existentes.
-- Quando uma volta termina, envia uma série de telemetria reduzida e compatível com `public.ams_laps`, respeitando o limite de ~2 MiB por volta; os dados brutos completos permanecem localmente.
-- O website foi preparado para expandir `ams_live_sessions.drivers` em pontos de mapa e classificação, sem criar contas para os adversários.
+## Funcionalidades novas (v6)
+- Team e Settings desktop baseados no programa AMSports Telemetry v5.2.25.
+- Settings: AMSports Mobile (QR, PIN, IP, porta, dispositivos), Diagnóstico, Conta AMS, Unidades, Vídeo/OBS, Privacidade e Atualizações.
+- Mobile Android: serviço in-process Kestrel, `http://IP:PORT/stream?pin=PIN` com Server-Sent Events, portas 8181–8190. Desativado de fábrica; ativar em Settings > AMSports Mobile. A porta poderá precisar de regra de firewall.
+- iRacing: leitura nativa da memória IRSDK, todos os canais disponíveis, gravação completa em ficheiros locais comprimidos.
+- Assetto Corsa: integração inicial da memória physics/graphics/static.
+- F1 24/25: integração inicial via UDP 127.0.0.1:20777 e arquivo dos pacotes brutos, sem coletor externo.
+- Supabase: publicação Live em frequência reduzida e voltas concluídas a partir da conta autenticada, seguindo RLS.
+- Ícone .ico personalizado embutido no executável Windows; fonte do desenho em `scripts/build_v6_icon.py`.
 
-## Compilar no Windows
-1. Instalar .NET 10 SDK e Microsoft Edge WebView2 Runtime.
-2. `dotnet publish desktop/AMSSkunkTelemetry.Desktop.csproj -c Release -r win-x64 --self-contained true -o artifacts/windows`
-3. Executar `artifacts/windows/AMS.Skunk.Telemetry.exe`, entrar na conta de piloto, iniciar o iRacing.
-4. O GitHub Actions **Windows Desktop Preview** também produz um artefacto win-x64 descarregável em cada atualização desta branch.
+## Compilar (Windows)
+1. Instalar .NET SDK 10, Microsoft Edge WebView2 Runtime, Python 3 e Pillow.
+2. Da raiz do repositório, executar `python scripts/build_v6_icon.py`.
+3. Executar `dotnet publish desktop/AMSSkunkTelemetry.Desktop.csproj -c Release -r win-x64 --self-contained true -o artifacts/windows`.
+4. Abrir `artifacts/windows/AMS.Skunk.Telemetry.exe`.
+5. Em Settings > AMSports Mobile, ativar o serviço e ler o QR com o Android.
 
-## Arquitetura para outros simuladores
-`ISimulatorAdapter` é a interface de integração. Cada simulador requer um adaptador para o protocolo próprio (shared memory, UDP, plugins oficiais); não existe um protocolo único que publique todos os canais em todos os simuladores. O suporte nativo iRacing é o primeiro; outros simuladores ainda não estão implementados.
+O workflow **Windows Desktop Preview** gera o ZIP com executável e dependências, sem exigir compilação manual.
 
-## Limites desta preview (trabalho por validar)
-- Foi compilada por GitHub Actions, mas ainda não houve ensaio end-to-end numa instalação iRacing real. A integração deve ser testada com uma sessão do jogo.
-- Sem instalador assinado e atualizações automáticas nesta fase.
-- Se ficar offline, as gravações brutas permanecem no computador; o reenvio automático das voltas pendentes ainda não está implementado.
-- Não é enviado o stream bruto 60 Hz para a BD: o site recebe o Live agregado e as voltas reduzidas para a API atual. Upload futuro do stream bruto completo exigirá um bucket privado com partições, retenção e permissões adequadas.
-- Outros carros só têm as variáveis que o SDK realmente expõe (posição, volta, tempos, etc.); não existe acesso aos seus canais de pedal, temperatura de pneus, etc. caso o simulador não os forneça.
-- A tabela Live está protegida por RLS: cada piloto lê e publica o seu próprio registo. A visualização abrangente por treinadores necessita autorização explícita adequada na BD e ajuste da consulta do portal; não abrir a tabela a todos.
-- Links externos e OAuth podem exigir configuração do URI de callback específico para desktop. O login simples Supabase já existe na interface web.
-- Nunca expor `service_role` ou chaves secretas na aplicação.
+## Limites conhecidos
+Esta é uma preview compilável, ainda sem teste real end-to-end dos simuladores e Android. O OBS oferece apenas verificação do endpoint local; gravação automática não migrada. Unidades convertidas parcialmente. Gestão Team/Coach continua sujeita às políticas RLS existentes. Sem canal de atualização automática assinado nem instalador comercial nesta versão. Ver `docs/V6_0_DESKTOP_MIGRATION_AUDIT.md`.
 
-## Estado
-Código na branch `feature/windows-desktop-app` / PR #99. Não há publicação automática do site em produção nem merge até validação.
+Nunca embutir chave Supabase service_role ou segredos administrativos num cliente público. Não colocar o serviço Mobile diretamente na Internet.
