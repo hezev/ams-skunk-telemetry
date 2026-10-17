@@ -126,6 +126,7 @@ internal sealed class TelemetryPipeline : IDisposable
     private string lastSession = "";
     private bool recordingAvailable = true;
     internal event Action<string>? Status;
+    internal event Action<SimSnapshot, IReadOnlyDictionary<string, object?>>? SampleCaptured;
 
     internal TelemetryPipeline()
     {
@@ -155,6 +156,7 @@ internal sealed class TelemetryPipeline : IDisposable
                     }
 
                     var sample = TelemetryFields.Map(snapshot);
+                    SampleCaptured?.Invoke(snapshot, sample);
                     if (snapshot.CapturedAt - lastLive >= TimeSpan.FromSeconds(1))
                     {
                         lastLive = snapshot.CapturedAt;
