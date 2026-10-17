@@ -140,6 +140,22 @@ internal sealed class MainForm : Form
                     if (root.ValueKind != JsonValueKind.Object ||
                         !root.TryGetProperty("kind", out var kind)) return;
                     var action = kind.GetString();
+                    if (action == "ams.desktop.obs.test")
+                    {
+                        bool reachable = false;
+                        string detail;
+                        try
+                        {
+                            using var obs = new System.Net.WebSockets.ClientWebSocket();
+                            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                            await obs.ConnectAsync(new Uri("ws://127.0.0.1:4455"), timeout.Token);
+                            reachable = obs.State == System.Net.WebSockets.WebSocketState.Open;
+                            detail = reachable ? "OBS WebSocket acessível; autenticação e gravação ainda não configuradas." : "Sem ligação ao OBS.";
+                        }
+                        catch (Exception ex) { detail = ex.Message; }
+                        PostToUI(new { kind = "ams.desktop.obs.status", reachable, detail });
+                        return;
+                    }
                     if (action == "ams.desktop.mobile.status") { PostMobileStatus(); return; }
                     if (action == "ams.desktop.mobile.rotate") { mobile.RotatePin(); return; }
                     if (action == "ams.desktop.mobile.toggle")
