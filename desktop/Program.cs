@@ -30,13 +30,14 @@ internal sealed class MainForm : Form
         Padding = new Padding(10, 0, 0, 0)
     };
     private readonly TelemetryPipeline telemetry = new();
+    private readonly MobileService mobile = new();
     private readonly string dataFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AMS", "SkunkTelemetry", "WebView2");
 
     public MainForm()
     {
-        Text = "AMS Skunk Telemetry — Desktop";
+        Text = "AMSports Skunk Telemetry v6.0 | Racing Engineering";
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(1050, 650);
         WindowState = FormWindowState.Maximized;
@@ -44,8 +45,10 @@ internal sealed class MainForm : Form
         Controls.Add(browser);
         Controls.Add(statusLabel);
         telemetry.Status += UpdateStatus;
+        telemetry.SampleCaptured += (snapshot, sample) => mobile.Publish(snapshot, sample);
+        mobile.Changed += PostMobileStatus;
         Shown += async (_, _) => await InitializeAsync();
-        FormClosing += (_, _) => telemetry.Dispose();
+        FormClosing += (_, _) => { telemetry.Dispose(); mobile.DisposeAsync().AsTask().GetAwaiter().GetResult(); };
     }
 
     private void UpdateStatus(string message)
@@ -78,6 +81,14 @@ internal sealed class MainForm : Form
             setTimeout(sendSession, 3000);
           });
           setInterval(sendSession, 60_000);
+          document.addEventListener("DOMContentLoaded", () => {
+            const css = document.createElement('link');
+            css.rel = 'stylesheet'; css.href = 'desktop/ams-v6-desktop.css';
+            document.head.append(css);
+            const js = document.createElement('script');
+            js.src = 'desktop/ams-v6-desktop.js';
+            document.body.append(js);
+          });
         })();
         """;
 
@@ -92,6 +103,8 @@ internal sealed class MainForm : Form
 
         try
         {
+            try { await mobile.InitializeAsync(); }
+            catch (Exception ex) { UpdateStatus("Mobile indisponível: " + ex.Message); }
             Directory.CreateDirectory(dataFolder);
             var environment = await CoreWebView2Environment.CreateAsync(userDataFolder: dataFolder);
             await browser.EnsureCoreWebView2Async(environment);
@@ -117,7 +130,7 @@ internal sealed class MainForm : Form
                 e.Handled = true;
                 if (!IsLocalUrl(e.Uri)) OpenExternal(e.Uri);
             };
-            core.WebMessageReceived += (_, e) =>
+            core.WebMessageReceived += async (_, e) =>
             {
                 if (!IsLocalUrl(e.Source)) return;
                 try
@@ -125,8 +138,18 @@ internal sealed class MainForm : Form
                     using var data = JsonDocument.Parse(e.WebMessageAsJson);
                     var root = data.RootElement;
                     if (root.ValueKind != JsonValueKind.Object ||
-                        !root.TryGetProperty("kind", out var kind) ||
-                        kind.GetString() != "ams.desktop.session") return;
+                        !root.TryGetProperty("kind", out var kind)) return;
+                    var action = kind.GetString();
+                    if (action == "ams.desktop.mobile.status") { PostMobileStatus(); return; }
+                    if (action == "ams.desktop.mobile.rotate") { mobile.RotatePin(); return; }
+                    if (action == "ams.desktop.mobile.toggle")
+                    {
+                        bool enable = root.TryGetProperty("enabled", out var flag) && flag.ValueKind == JsonValueKind.True;
+                        try { await mobile.SetEnabledAsync(enable); }
+                        catch (Exception ex) { PostToUI(new { kind = "ams.desktop.mobile.error", message = ex.Message }); }
+                        return;
+                    }
+                    if (action != "ams.desktop.session") return;
                     string? user = root.TryGetProperty("userId", out var id) &&
                         id.ValueKind == JsonValueKind.String ? id.GetString() : null;
                     string? token = root.TryGetProperty("accessToken", out var access) &&
@@ -139,12 +162,26 @@ internal sealed class MainForm : Form
 
             await core.AddScriptToExecuteOnDocumentCreatedAsync(Bridge);
             browser.Source = new Uri(Home);
+            PostMobileStatus();
         }
         catch (Exception ex)
         {
             ShowError("Não foi possível iniciar o WebView2: " + ex.Message);
         }
     }
+
+    private void PostToUI(object value)
+    {
+        if (browser.CoreWebView2 is null || IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => PostToUI(value));
+            return;
+        }
+        try { browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(value)); }
+        catch (InvalidOperationException) { }
+    }
+    private void PostMobileStatus() => PostToUI(new { kind = "ams.desktop.mobile.status", state = mobile.Status() });
 
     private static bool IsLocalUrl(string? url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var parsed) &&
