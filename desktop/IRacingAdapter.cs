@@ -244,6 +244,8 @@ internal sealed class IRacingAdapter : ISimulatorAdapter
         view = null;
         memory = null;
         fields.Clear();
+        drivers.Clear();
+        circuit = car = sessionKey = sessionInfo = "";
         lastSessionUpdate = lastTick = -1;
     }
     public void Dispose() => Reset();
