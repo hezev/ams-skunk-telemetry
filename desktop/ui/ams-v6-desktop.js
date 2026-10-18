@@ -146,8 +146,42 @@ async function teamRefresh(){
 }
 document.addEventListener("ams-auth-changed",()=>{teamRefresh();if(view.classList.contains("active"))render();});
 document.querySelector('[data-view="team"]')?.addEventListener("click",()=>setTimeout(teamRefresh,100));
+
+/* Native iRacing metadata drives the existing AMS web map matching engine.
+   Search by TrackID/layout, then name. No invented GPS/layout if unmatched. */
+let lastMapKey="",lastMapAttempt=0,mapLoading=false;
+function mapMessage(message){
+ const el=document.getElementById("trackSource");if(el)el.textContent=message;
+}
+async function loadNativeTrack(msg){
+ if(!window.AMSTrack || !msg?.circuit)return;
+ const meta=msg.metadata||{}, key=[meta.TrackID||"",meta.TrackConfigName||"",msg.circuit].join("|");
+ const progress=Number(msg.progress);
+ if(Number.isFinite(progress)&&progress>=0&&progress<=1)AMSTrack.setPosition(progress);
+ if(mapLoading || (key===lastMapKey && Date.now()-lastMapAttempt<60_000))return;
+ lastMapKey=key;lastMapAttempt=Date.now();mapLoading=true;
+ try{
+   mapMessage("A procurar novo mapa · "+msg.circuit);
+   const index=await AMSTrack.getIndex();
+   const hint=meta.TrackConfigName||"", trackId=String(meta.TrackID||"");
+   const exact=trackId&&index.some(entry=>AMSTrack.entryTrackId(entry)===trackId);
+   const scores=index.map(entry=>AMSTrack.score(entry,msg.circuit,hint));
+   const top=Math.max(...scores,0);
+   if(!exact&&top<35){
+     mapMessage("Mapa não identificado: "+msg.circuit+(trackId?" · ID "+trackId:""));
+     return;
+   }
+   const samples=[{_capture:{metadata:meta},trackPositionPct:Number.isFinite(progress)?progress*100:null}];
+   const result=await AMSTrack.load(msg.circuit,hint,samples);
+   if(!result)mapMessage("Sem mapa compatível: "+msg.circuit+" · verificar layout/ID/GPS");
+ }catch(error){
+   mapMessage("Erro ao pesquisar pista: "+String(error?.message||error).slice(0,110));
+ }finally{mapLoading=false;}
+}
+
 window.chrome.webview.addEventListener("message",e=>{
  const msg=e.data||{};
+ if(msg.kind==="ams.desktop.track")loadNativeTrack(msg);
  if(msg.kind==="ams.desktop.mobile.status"){state.mobile=msg.state;if(view.classList.contains("active"))render();}
  if(msg.kind==="ams.desktop.obs.status")alert(t(msg.reachable?"OBS detetado: ":"OBS indisponível: ")+msg.detail);
  if(msg.kind==="ams.desktop.mobile.error")alert("AMSports Mobile: "+(msg.message||t("Erro")));
