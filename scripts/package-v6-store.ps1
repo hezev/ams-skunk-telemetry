@@ -19,7 +19,7 @@ if ($manifest.Package.Identity.Name -ne "AMSPORTSTelemetry.AMSportsTelemetry") {
 if ($manifest.Package.Identity.Publisher -ne "CN=FFB676D7-54C4-4A21-8C78-B6CD0EB2E799") {
     throw "Publisher identity differs from existing AMSports Partner Center listing."
 }
-if ($manifest.Package.Identity.Version -ne "6.0.0.0") { throw "Expected Store version 6.0.0.0." }
+if ($manifest.Package.Identity.Version -ne "6.0.1.0") { throw "Expected Store version 6.0.1.0." }
 
 python scripts/build_store_assets.py
 $out = Join-Path $root $OutputDirectory
@@ -39,7 +39,7 @@ $tool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Filter Mak
         Where-Object { $_.FullName -match '\\x64\\' } |
         Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
 if (-not $tool) { throw "Windows 10/11 SDK MakeAppx.exe (x64) was not found." }
-$msixName = "AMSports-Telemetry_6.0.0.0_x64.msix"
+$msixName = "AMSports-Telemetry_6.0.1.0_x64.msix"
 $msix = Join-Path $out $msixName
 if (Test-Path $msix) { Remove-Item $msix -Force }
 & $tool pack /d $stage /p $msix /o
@@ -65,7 +65,7 @@ $wrap = Join-Path $out "upload"
 if (Test-Path $wrap) { Remove-Item $wrap -Recurse -Force }
 New-Item $wrap -ItemType Directory | Out-Null
 Copy-Item $msix -Destination $wrap
-$upload = Join-Path $out "AMSports-Telemetry_6.0.0.0_x64.msixupload"
+$upload = Join-Path $out "AMSports-Telemetry_6.0.1.0_x64.msixupload"
 if (Test-Path $upload) { Remove-Item $upload -Force }
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
