@@ -16,7 +16,7 @@ internal static class IracingTrackIdentity
             var match = Regex.Match(info, @"(?m)^\s*" + Regex.Escape(key) + @":\s*(.*?)\s*$");
             if (match.Success)
             {
-                var value = match.Groups[1].Value.Trim(' ', '\\r', '\\n', '"', '\\'');
+                var value = match.Groups[1].Value.Trim().Trim('"', (char)39);
                 if (value.Length > 0) metadata[key] = value;
             }
         }
@@ -230,7 +230,7 @@ internal sealed class TelemetryPipeline : IDisposable
                     // sessions where the completed field is absent.
                     double? completedRaw = GetNumber(snapshot, "LapCompleted");
                     if (completedRaw is null && snapshot.Simulator == "iRacing")
-                        completedRaw = GetNumber(snapshot, "Lap") is double l ? l - 1 : null;
+                        completedRaw = GetNumber(snapshot, "Lap") is double lapValue ? lapValue - 1 : null;
                     if (snapshot.Simulator == "Assetto Corsa")
                         completedRaw ??= GetNumber(snapshot, "Lap") is double l ? l - 1 : null;
                     int completed = (int)(completedRaw ?? -1);
