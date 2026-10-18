@@ -251,12 +251,15 @@ internal sealed class MainForm : Form
 
     private void PostToUI(object value)
     {
-        if (browser.CoreWebView2 is null || IsDisposed) return;
+        if (IsDisposed || !IsHandleCreated) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => PostToUI(value));
+            try { BeginInvoke(() => PostToUI(value)); }
+            catch (InvalidOperationException) { }
             return;
         }
+        // WebView2 properties must be read on the WinForms UI thread only.
+        if (browser.CoreWebView2 is null) return;
         try { browser.CoreWebView2.PostWebMessageAsJson(JsonSerializer.Serialize(value)); }
         catch (InvalidOperationException) { }
     }
