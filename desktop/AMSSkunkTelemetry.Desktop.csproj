@@ -9,7 +9,7 @@
     <AssemblyName>AMS.Skunk.Telemetry</AssemblyName>
     <ApplicationTitle>AMSports Skunk Telemetry v6.0</ApplicationTitle>
     
-    <Version>6.0.0</Version>
+    <Version>6.0.1</Version>
     <ApplicationIcon>assets/ams-v6.ico</ApplicationIcon>
     </PropertyGroup>
   <ItemGroup>
