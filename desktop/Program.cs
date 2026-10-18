@@ -32,6 +32,8 @@ internal sealed class MainForm : Form
     private string currentLanguage = "pt";
     private string rawStatus = "À procura do simulador | inicia sessão para sincronizar com o site";
     private readonly TelemetryPipeline telemetry = new();
+    private string trackSessionKey = "";
+    private DateTimeOffset lastTrackAnnouncement = DateTimeOffset.MinValue;
     private readonly MobileService mobile = new();
     private readonly string dataFolder = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -47,7 +49,23 @@ internal sealed class MainForm : Form
         Controls.Add(browser);
         Controls.Add(statusLabel);
         telemetry.Status += UpdateStatus;
-        telemetry.SampleCaptured += (snapshot, sample) => mobile.Publish(snapshot, sample);
+        telemetry.SampleCaptured += (snapshot, sample) =>
+        {
+            mobile.Publish(snapshot, sample);
+            if (snapshot.Simulator != "iRacing") return;
+            string id = snapshot.SessionKey + "|" + snapshot.Circuit;
+            if (id == trackSessionKey && snapshot.CapturedAt - lastTrackAnnouncement < TimeSpan.FromSeconds(3))
+                return;
+            trackSessionKey = id;
+            lastTrackAnnouncement = snapshot.CapturedAt;
+            PostToUI(new
+            {
+                kind = "ams.desktop.track",
+                circuit = snapshot.Circuit,
+                metadata = IracingTrackIdentity.Metadata(snapshot),
+                progress = sample.TryGetValue("_p", out object? p) ? p : null
+            });
+        };
         mobile.Changed += PostMobileStatus;
         Shown += async (_, _) => await InitializeAsync();
         FormClosing += (_, _) => { telemetry.Dispose(); mobile.DisposeAsync().AsTask().GetAwaiter().GetResult(); };
