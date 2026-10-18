@@ -7,4 +7,8 @@
     <RootNamespace>AMSSkunkTelemetry</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- The desktop app is a separate Windows-only executable. -->
+    <Compile Remove="desktop/**/*.cs" />
+  </ItemGroup>
 </Project>

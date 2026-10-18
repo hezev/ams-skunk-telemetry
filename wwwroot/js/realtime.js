@@ -96,6 +96,10 @@ window.AMSRealtime = {
     if(row?.simulator) this.set("simName",row.simulator);
   },
 
+  html(v){
+    return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  },
+
   renderCloudTiming(rows){
     const body=document.getElementById("timingBody");
     if(!body || !Array.isArray(rows) || !rows.length) return;
@@ -126,7 +130,7 @@ window.AMSRealtime = {
       const p=row.sample||{};
       return {
         row,p,
-        pos:Number(get(p,"position","overallPosition","overall_position")) || i+1,
+        pos:Number(get(p,"positionOverall","position","overallPosition","overall_position")) || i+1,
         cls:Number(get(p,"classPosition","class_position")) || null,
         name:get(p,"driverName","driver_name","name") || (row.pilot_id===AMSAuth.user?.id?this.tr("Tu","You"):this.tr("Piloto AMS","AMS Driver")),
         number:get(p,"carNumber","car_number","number") || "",
@@ -146,7 +150,7 @@ window.AMSRealtime = {
       if(d.row.pilot_id===AMSAuth.user?.id) tr.classList.add("focus-row");
       const deltaNum=Number(d.delta);
       const deltaText=d.delta===null||d.delta===undefined?"—":(Number.isFinite(deltaNum)?((deltaNum>=0?"+":"")+deltaNum.toFixed(3)):String(d.delta));
-      tr.innerHTML=`<td><strong>${d.pos}</strong></td><td>${d.cls?"P"+d.cls:"—"}</td><td><strong>${d.name}</strong><br><small>${d.number?("#"+String(d.number).replace("#","")):""}</small></td><td>${d.row.car||"—"}</td><td>${d.lap}</td><td>${d.last!=null?lapText(d.last):"—"}</td><td>${d.best!=null?lapText(d.best):"—"}</td><td class="${Number.isFinite(deltaNum)?(deltaNum<=0?"green":"red"):""}">${deltaText}</td><td>${d.gap??"—"}</td><td>${d.fuel!=null?Number(d.fuel).toFixed(1)+" L":"—"}</td><td>${d.stint??"—"}</td>`;
+      tr.innerHTML=`<td><strong>${this.html(d.pos)}</strong></td><td>${this.html(d.cls?"P"+d.cls:"—")}</td><td><strong>${this.html(d.name)}</strong><br><small>${this.html(d.number?("#"+String(d.number).replace("#","")):"")}</small></td><td>${this.html(d.row.car||"—")}</td><td>${this.html(d.lap)}</td><td>${this.html(d.last!=null?lapText(d.last):"—")}</td><td>${this.html(d.best!=null?lapText(d.best):"—")}</td><td class="${Number.isFinite(deltaNum)?(deltaNum<=0?"green":"red"):""}">${this.html(deltaText)}</td><td>${this.html(d.gap??"—")}</td><td>${this.html(d.fuel!=null?Number(d.fuel).toFixed(1)+" L":"—")}</td><td>${this.html(d.stint??"—")}</td>`;
       body.appendChild(tr);
     }
   },
@@ -174,12 +178,26 @@ window.AMSRealtime = {
 
       if(fresh.length){
         this.mode="cloud";
-        this.liveRows=fresh;
+        // Driver grid published from a simulator is embedded in a single owner's
+        // live row. Expand for presentation ONLY, not for authentication/ownership.
+        const expanded=fresh.flatMap(row=>{
+          const ownIndex=Number(row?.sample?.carIdx);
+          const others=(Array.isArray(row.drivers)?row.drivers:[])
+            .filter(d=>d && Number.isFinite(Number(d.trackPositionPct)))
+            .filter(d=>!Number.isFinite(ownIndex)||Number(d.carIdx)!==ownIndex)
+            .map(d=>({
+              pilot_id:String(row.pilot_id)+":car:"+String(d.carIdx),
+              simulator:row.simulator,circuit:row.circuit,
+              car:d.carName||row.car,sample:d,updated_at:row.updated_at
+            }));
+          return [row,...others];
+        });
+        this.liveRows=expanded;
         const own=fresh.find(r=>r.pilot_id===AMSAuth.user.id)||fresh[0];
         this.applySample(own);
-        AMSTrack.renderCars(fresh,AMSAuth.user.id);
-        this.renderCloudTiming(fresh);
-        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:fresh}}));
+        AMSTrack.renderCars(expanded,AMSAuth.user.id);
+        this.renderCloudTiming(expanded);
+        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:expanded}}));
 
         const c=document.getElementById("connectionText");
         if(c) c.textContent=this.tr("SUPABASE EM DIRETO","SUPABASE LIVE");

@@ -1,0 +1,56 @@
+name: AMSports v6 Microsoft Store Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/windows-desktop-app]
+    paths:
+      - 'desktop/**'
+      - 'store/**'
+      - 'wwwroot/**'
+      - 'scripts/build_v6_icon.py'
+      - 'scripts/build_store_assets.py'
+      - 'scripts/package-v6-store.ps1'
+      - 'scripts/check-v6-i18n.mjs'
+      - '.github/workflows/windows-store-v6.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package-v6-store:
+    name: Package 6.0.0.0 x64 MSIXUPLOAD
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate PT and EN translations
+        run: |
+          node --check desktop/ui/ams-v6-desktop.js
+          node scripts/check-v6-i18n.mjs
+      - name: Generate Windows icon and Store tiles
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check Pillow==11.3.0
+          python scripts/build_v6_icon.py
+      - name: Publish .NET 10 desktop x64
+        shell: pwsh
+        run: dotnet publish desktop/AMSSkunkTelemetry.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o artifacts/windows
+      - name: Build Microsoft Store submission package
+        shell: pwsh
+        run: ./scripts/package-v6-store.ps1 -PublishDirectory artifacts/windows -OutputDirectory artifacts/store
+      - name: Upload Store packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: AMSports-Skunk-Telemetry-v6-Store-x64
+          path: |
+            artifacts/store/*.msix
+            artifacts/store/*.msixupload
+          retention-days: 30
+          if-no-files-found: error
