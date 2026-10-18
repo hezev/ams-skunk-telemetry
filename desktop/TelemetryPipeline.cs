@@ -170,6 +170,8 @@ internal sealed class TelemetryPipeline : IDisposable
     private readonly CancellationTokenSource stop = new();
     private readonly Task reader;
     private DateTimeOffset lastLive = DateTimeOffset.MinValue, lastLapSample = DateTimeOffset.MinValue;
+    private DateTimeOffset lastCaptureNotice = DateTimeOffset.MinValue;
+    private string lastCaptureSimulator = "";
     private readonly List<Dictionary<string, object?>> lap = [];
     private int lastCompleted = -1;
     private string lastSession = "";
@@ -212,7 +214,13 @@ internal sealed class TelemetryPipeline : IDisposable
                     {
                         lastLive = snapshot.CapturedAt;
                         cloud.QueueLive(snapshot, sample);
-                        Status?.Invoke(snapshot.Simulator + " ligado | aquisição local em curso");
+                        if (lastCaptureSimulator != snapshot.Simulator ||
+                            snapshot.CapturedAt - lastCaptureNotice > TimeSpan.FromSeconds(45))
+                        {
+                            lastCaptureNotice = snapshot.CapturedAt;
+                            lastCaptureSimulator = snapshot.Simulator;
+                            Status?.Invoke(snapshot.Simulator + " ligado | aquisição local em curso");
+                        }
                     }
 
                     string sessionIdentity = string.Join("|",snapshot.Simulator,snapshot.SessionKey,snapshot.Circuit,snapshot.Car);
