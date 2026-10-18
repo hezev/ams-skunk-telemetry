@@ -101,7 +101,7 @@ internal sealed class MobileService : IAsyncDisposable
         }
         return new { enabled = isOn, port = p, pin = secret, ips,
             clients = Volatile.Read(ref clients), pairing, qr,
-            simulator = "iRacing", mode = "SSE", version = "6.0.0" };
+            simulator = "iRacing", mode = "SSE", version = "6.0.1" };
     }
 
     internal async Task SetEnabledAsync(bool state)
