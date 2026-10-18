@@ -7,7 +7,7 @@ const css=read('wwwroot/css/ams-dual-map-3d-v41.css');
 const app=read('wwwroot/js/app.js');
 // Crucial: existing 2D SVG nodes, selectors, controls, diagrams and charts are untouched.
 for(const id of ['telemetryMapFirst','trajectoryCompareSvg','compareFocusStage','compareFocusSvg',
-  'compareMiniMapSvg','replaySeek','compareReplaySeek','compareFocusZoom']){
+  'compareMiniMapSvg','engineerReplaySeek','compareReplaySeek','compareFocusZoom']){
  assert.ok(html.includes('id="'+id+'"')||['trajectoryCompareSvg'].includes(id),'Missing original 2D node: '+id);
 }
 assert.match(html,/<script type="module" src="js\/ams-dual-map-3d-v41\.js/);

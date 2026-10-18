@@ -34,7 +34,7 @@ const mount=(viewId,title,subtitle,items)=>{
  const conn=$('#connectionText');if(conn)observer.observe(conn,{characterData:true,childList:true,subtree:true});
  sync();
 };
-mount('dashboard','Race Performance Snapshot','Mapa, classificação, replay e controlo de corrida continuam ligados às fontes AMS existentes.',[
+mount('dashboard','Race Performance Snapshot','Mapa, classificação e telemetria da sessão em direto.',[
  ['Best lap','bestLap'],['Last lap','lastLap'],['Race position','position'],['Class position','classPosition'],['Fuel','fuel'],['Remaining laps','fuelLaps']
 ]);
 mount('engineer','Engineer Evidence & Development','O veredito usa a análise de sessão existente. Os indicadores só são preenchidos após selecionar e analisar uma sessão.',[

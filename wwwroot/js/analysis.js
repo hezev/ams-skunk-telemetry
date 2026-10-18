@@ -4,10 +4,11 @@ window.AMSAnalysis = {
   prepareLap(detail){
     const raw=Array.isArray(detail?.telemetry)?detail.telemetry:[];
     const valid=raw.map((s,i)=>{
-      const p=Number(s?.position);
-      const t=Number(s?.t);
+      const p=Number.isFinite(Number(s?.position))?Number(s.position):Number(s?._p)*100;
+      const timeValue=[s?.t,s?.sessionTime,s?.session_time,s?.lapTime]
+        .map(Number).find(Number.isFinite);
       if(!Number.isFinite(p)) return null;
-      return {...s,_index:i,_p:this.clamp(p/100),_rawTime:Number.isFinite(t)?t:null};
+      return {...s,_index:i,_p:this.clamp(p/100),_rawTime:Number.isFinite(timeValue)?timeValue:null};
     }).filter(Boolean).sort((a,b)=>a._p-b._p);
 
     if(!valid.length) return {detail,samples:[],lapTimeSec:Number(detail?.lap_time_ms||0)/1000};

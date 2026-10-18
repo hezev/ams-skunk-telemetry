@@ -28,7 +28,9 @@ window.AMSAIEngineer={
     const output=document.getElementById("engineerAiOutput"),status=document.getElementById("engineerAiStatus");
     const brief=document.getElementById("engineerAiBtn"),ask=document.getElementById("engineerAskBtn");
     const report=this.report();
-    if(!report.ok){
+    const analysis=window.AMSEngineer?.currentReport;
+    const sessionLabel=document.getElementById("engineerSessionSelect")?.selectedOptions?.[0]?.textContent||"—";
+    if(!report.ok||!analysis){
       if(output)output.textContent=this.tr("Analisa primeiro uma sessão no Virtual Performance Engineer.","Analyze a session in Virtual Performance Engineer first.");
       if(status)status.textContent=this.tr("SEM RELATÓRIO","NO REPORT");
       return;
@@ -38,18 +40,22 @@ window.AMSAIEngineer={
     if(status)status.textContent=this.tr("AI · A ANALISAR","AI · ANALYZING");
     try{
       const sessionToken=await AMSAuth.token();
+      if(window.AMSEngineer?.currentReport!==analysis)return;
       if(!sessionToken)throw new Error(this.tr("Sessão de login necessária.","Please sign in to continue."));
       const data=await AMSSupabase.request("/functions/v1/virtual-engineer",{
         token:sessionToken,method:"POST",
         body:{report,question:String(question||"").trim(),language:window.AMSi18n?.getLanguage?.()==="en"?"en":"pt-PT",context:{
-          simulator:this.text("simName"),circuit:this.text("trackName"),car:this.text("carName"),
-          session:document.getElementById("engineerSessionSelect")?.selectedOptions?.[0]?.textContent||"—",
+          simulator:analysis.context?.simulator||'—',circuit:analysis.context?.circuit||'—',car:analysis.context?.car||'—',
+          session_id:analysis.context?.sessionId||'',
+          session:sessionLabel,
           response_language:window.AMSi18n?.getLanguage?.()==="en"?"English":"Portuguese (Portugal)"
         }}
       });
+      if(window.AMSEngineer?.currentReport!==analysis)return;
       if(output)output.textContent=data?.text||this.tr("Sem resposta do Virtual Engineer.","No response from Virtual Engineer.");
       if(status)status.textContent=(data?.model||"AI")+this.tr(" · CONCLUÍDO"," · COMPLETE");
     }catch(err){
+      if(window.AMSEngineer?.currentReport!==analysis)return;
       const msg=String(err?.message||err);
       if(output)output.textContent=(msg.includes("OPENAI_API_KEY")||msg.includes("AI_NOT_CONFIGURED"))?this.tr("A integração AI está instalada, mas falta configurar a chave da API no backend.","AI integration is installed, but the backend API key has not been configured."):this.tr("Não foi possível gerar o briefing: ","Could not generate the briefing: ")+msg;
       if(status)status.textContent=this.tr("AI INDISPONÍVEL","AI UNAVAILABLE");
@@ -58,6 +64,11 @@ window.AMSAIEngineer={
     }
   },
   init(){
+    window.addEventListener('ams-engineer-analysis',()=>{
+      const output=document.getElementById('engineerAiOutput'),status=document.getElementById('engineerAiStatus');
+      if(output)output.textContent=this.tr('Analisa a sessão e pede um briefing para receber prioridades, diagnóstico de consistência e leitura setup vs pilotagem.','Analyze the session and request a briefing for priorities, consistency and setup versus driving evidence.');
+      if(status)status.textContent=this.tr('AI PRONTA','AI READY');
+    });
     const brief=document.getElementById("engineerAiBtn"),ask=document.getElementById("engineerAskBtn"),input=document.getElementById("engineerQuestion");
     brief?.addEventListener("click",()=>this.ask(""));
     ask?.addEventListener("click",()=>this.ask(input?.value||""));

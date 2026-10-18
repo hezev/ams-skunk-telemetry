@@ -77,6 +77,11 @@ window.AMSRealtime = {
     const session=Number(p.sessionTime); if(Number.isFinite(session)) this.set("sessionTime",session.toFixed(1)+"s");
     const flag=p.flagText; if(flag) this.set("liveFlag",String(flag));
     if(row?.circuit) this.set("liveTrack",row.circuit);
+    if(row?.circuit)this.set('trackChip',row.circuit);
+    if(this.mode==='native'||this.mode==='cloud'){
+      this.set('liveBadgeText','LIVE');this.set('lapStateChip','LIVE');
+      if(session>=0&&Number.isFinite(session))this.set('liveRaceTime',session.toFixed(1)+'s');
+    }
 
     const d=document.getElementById("delta");
     if(d && delta!==null){
@@ -84,10 +89,7 @@ window.AMSRealtime = {
       d.classList.toggle("red",delta>0);
     }
 
-    if(trackPos!==null){
-      AMSTrack.progress=trackPos;
-      AMSTrack.setPosition(trackPos);
-    }
+    window.AMSCharts?.pushLiveSample?.(p);
 
     if(row?.circuit && document.getElementById("trackName")?.textContent!==row.circuit){
       this.set("trackName",row.circuit);
@@ -96,9 +98,15 @@ window.AMSRealtime = {
     if(row?.simulator) this.set("simName",row.simulator);
   },
 
+  html(v){
+    return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  },
+
   renderCloudTiming(rows){
     const body=document.getElementById("timingBody");
-    if(!body || !Array.isArray(rows) || !rows.length) return;
+    if(!body || !Array.isArray(rows)) return;
+    if(!rows.length){body.replaceChildren();this.set('liveCars','—');return;}
+    this.set('liveCars',String(rows.length));
 
     const get=(p,...keys)=>{
       for(const k of keys){
@@ -126,7 +134,7 @@ window.AMSRealtime = {
       const p=row.sample||{};
       return {
         row,p,
-        pos:Number(get(p,"position","overallPosition","overall_position")) || i+1,
+        pos:Number(get(p,"positionOverall","position","overallPosition","overall_position")) || i+1,
         cls:Number(get(p,"classPosition","class_position")) || null,
         name:get(p,"driverName","driver_name","name") || (row.pilot_id===AMSAuth.user?.id?this.tr("Tu","You"):this.tr("Piloto AMS","AMS Driver")),
         number:get(p,"carNumber","car_number","number") || "",
@@ -146,7 +154,7 @@ window.AMSRealtime = {
       if(d.row.pilot_id===AMSAuth.user?.id) tr.classList.add("focus-row");
       const deltaNum=Number(d.delta);
       const deltaText=d.delta===null||d.delta===undefined?"—":(Number.isFinite(deltaNum)?((deltaNum>=0?"+":"")+deltaNum.toFixed(3)):String(d.delta));
-      tr.innerHTML=`<td><strong>${d.pos}</strong></td><td>${d.cls?"P"+d.cls:"—"}</td><td><strong>${d.name}</strong><br><small>${d.number?("#"+String(d.number).replace("#","")):""}</small></td><td>${d.row.car||"—"}</td><td>${d.lap}</td><td>${d.last!=null?lapText(d.last):"—"}</td><td>${d.best!=null?lapText(d.best):"—"}</td><td class="${Number.isFinite(deltaNum)?(deltaNum<=0?"green":"red"):""}">${deltaText}</td><td>${d.gap??"—"}</td><td>${d.fuel!=null?Number(d.fuel).toFixed(1)+" L":"—"}</td><td>${d.stint??"—"}</td>`;
+      tr.innerHTML=`<td><strong>${this.html(d.pos)}</strong></td><td>${this.html(d.cls?"P"+d.cls:"—")}</td><td><strong>${this.html(d.name)}</strong><br><small>${this.html(d.number?("#"+String(d.number).replace("#","")):"")}</small></td><td>${this.html(d.row.car||"—")}</td><td>${this.html(d.lap)}</td><td>${this.html(d.last!=null?lapText(d.last):"—")}</td><td>${this.html(d.best!=null?lapText(d.best):"—")}</td><td class="${Number.isFinite(deltaNum)?(deltaNum<=0?"green":"red"):""}">${this.html(deltaText)}</td><td>${this.html(d.gap??"—")}</td><td>${this.html(d.fuel!=null?Number(d.fuel).toFixed(1)+" L":"—")}</td><td>${this.html(d.stint??"—")}</td>`;
       body.appendChild(tr);
     }
   },
@@ -163,23 +171,39 @@ window.AMSRealtime = {
   },
 
   async pollCloud(){
+    if(window.AMSNativeLiveUntil>Date.now())return;
     if(this.polling || !AMSAuth.user?.id || !this.liveCloudAvailable) return;
     this.polling=true;
+    const owner=AMSAuth.user.id;
     try{
       const token=await AMSAuth.token();
-      if(!token) return;
+      if(!token||owner!==AMSAuth.user?.id) return;
 
-      const rows=await AMSSupabase.getLiveSessions(token,AMSAuth.user.id);
+      const rows=await AMSSupabase.getLiveSessions(token,owner);
+      if(window.AMSNativeLiveUntil>Date.now()||owner!==AMSAuth.user?.id)return;
       const fresh=(rows||[]).filter(r=>AMSSupabase.fresh(r));
 
       if(fresh.length){
         this.mode="cloud";
-        this.liveRows=fresh;
+        // Driver grid published from a simulator is embedded in a single owner's
+        // live row. Expand for presentation ONLY, not for authentication/ownership.
+        const expanded=fresh.flatMap(row=>{
+          const ownIndex=Number(row?.sample?.carIdx);
+          const others=(Array.isArray(row.drivers)?row.drivers:[])
+            .filter(d=>d && Number.isFinite(Number(d.trackPositionPct)))
+            .filter(d=>!Number.isFinite(ownIndex)||Number(d.carIdx)!==ownIndex)
+            .map(d=>({
+              pilot_id:String(row.pilot_id)+":car:"+String(d.carIdx),
+              simulator:row.simulator,circuit:row.circuit,
+              car:d.carName||row.car,sample:d,updated_at:row.updated_at
+            }));
+          return [row,...others];
+        });
+        this.liveRows=expanded;
         const own=fresh.find(r=>r.pilot_id===AMSAuth.user.id)||fresh[0];
         this.applySample(own);
-        AMSTrack.renderCars(fresh,AMSAuth.user.id);
-        this.renderCloudTiming(fresh);
-        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:fresh}}));
+        this.renderCloudTiming(expanded);
+        document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:expanded}}));
 
         const c=document.getElementById("connectionText");
         if(c) c.textContent=this.tr("SUPABASE EM DIRETO","SUPABASE LIVE");
@@ -189,12 +213,15 @@ window.AMSRealtime = {
       }else{
         this.mode="offline";
         this.liveRows=[];
+        this.renderCloudTiming([]);
         this.clearRealData(this.tr("SEM DADOS EM DIRETO","NO LIVE DATA"));
         document.dispatchEvent(new CustomEvent("ams-live-update",{detail:{rows:[]}}));
       }
     }catch(err){
+      if(owner!==AMSAuth.user?.id)return;
       this.mode="offline";
       this.liveRows=[];
+      this.renderCloudTiming([]);
       const msg=String(err?.message||err||"Erro Supabase");
       if(msg.includes("ams_live_sessions") && /not find|does not exist|relation/i.test(msg)){
         this.liveCloudAvailable=false;
@@ -257,13 +284,14 @@ window.AMSRealtime = {
         this.pollCloud();
       }
 
-      if(this.mode==="cloud"){
-        this.elapsed+=.25;
-        const fmt=t=>{const h=Math.floor(t/3600),m=Math.floor((t%3600)/60),s=Math.floor(t%60);return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":")};
-        this.set("sessionTime",fmt(this.elapsed)); this.set("liveRaceTime",fmt(this.elapsed).slice(3));
-      }
-
       if(Math.round(this.phase*10)%4===0) AMSCharts.drawAll(this.phase);
     },250);
   }
 };
+document.addEventListener('ams-auth-changed',event=>{
+  if(event.detail?.user)return;
+  AMSRealtime.mode='offline';AMSRealtime.liveRows=[];
+  AMSRealtime.clearRealData(AMSRealtime.tr('SEM SESSÃO','SIGNED OUT'));
+  AMSRealtime.renderCloudTiming([]);
+  document.dispatchEvent(new CustomEvent('ams-live-update',{detail:{rows:[]}}));
+});

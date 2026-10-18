@@ -33,7 +33,7 @@ const strip=create('div','ams-corner-status');
  if(target){const update=()=>{value.textContent=(target.textContent||'').trim()||'—'};new MutationObserver(update).observe(target,{subtree:true,childList:true,characterData:true});update()}
  strip.append(item);
 });
-box.append(note,buttons,boxStatus,strip);insertAfter(compare,box);
+box.append(note,buttons,boxStatus,strip);compare.append(box);
 const evidence=panel('Engineering Evidence · Session Notes');
 const info=create('p','ams-event-hint','Resumo dos resultados de análise existentes; sem interpretações simuladas.');
 const dat=create('div','ams-corner-status');
@@ -42,5 +42,5 @@ const dat=create('div','ams-corner-status');
  const source=$('#'+id);if(source){const fn=()=>{val.textContent=(source.textContent||'').trim()||'—'};new MutationObserver(fn).observe(source,{childList:true,subtree:true,characterData:true});fn()}
  dat.append(item);
 });
-evidence.append(info,dat);insertAfter(eng,evidence);
+evidence.append(info,dat);eng.append(evidence);
 })();
