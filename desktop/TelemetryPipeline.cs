@@ -1,8 +1,30 @@
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace AMSSkunkTelemetry.Desktop;
+
+internal static class IracingTrackIdentity
+{
+    internal static Dictionary<string, string> Metadata(SimSnapshot snapshot)
+    {
+        var info = snapshot.SessionInfo ?? "";
+        var metadata = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (string key in new[] { "TrackID", "TrackName", "TrackDisplayName", "TrackConfigName", "TrackLength", "TrackType" })
+        {
+            var match = Regex.Match(info, @"(?m)^\s*" + Regex.Escape(key) + @":\s*(.*?)\s*$");
+            if (match.Success)
+            {
+                var value = match.Groups[1].Value.Trim(' ', '\\r', '\\n', '"', '\\'');
+                if (value.Length > 0) metadata[key] = value;
+            }
+        }
+        if (!metadata.ContainsKey("TrackDisplayName") && !string.IsNullOrWhiteSpace(snapshot.Circuit))
+            metadata["TrackDisplayName"] = snapshot.Circuit;
+        return metadata;
+    }
+}
 
 internal static class TelemetryFields
 {
@@ -193,26 +215,39 @@ internal sealed class TelemetryPipeline : IDisposable
                         Status?.Invoke(snapshot.Simulator + " ligado | aquisição local em curso");
                     }
 
-                    if (snapshot.SessionKey != lastSession)
+                    string sessionIdentity = string.Join("|",snapshot.Simulator,snapshot.SessionKey,snapshot.Circuit,snapshot.Car);
+                    if (sessionIdentity != lastSession)
                     {
                         lap.Clear();
                         lastCompleted = -1;
-                        lastSession = snapshot.SessionKey;
+                        lastSession = sessionIdentity;
+                        Status?.Invoke("Nova sessão: " + snapshot.Simulator + " / " +
+                            (string.IsNullOrWhiteSpace(snapshot.Circuit) ? "pista desconhecida" : snapshot.Circuit) +
+                            " / " + (string.IsNullOrWhiteSpace(snapshot.Car) ? "carro por identificar" : snapshot.Car));
                     }
 
-                    int completed = (int)(GetNumber(snapshot, "LapCompleted") ??
-                        (snapshot.Simulator == "Assetto Corsa" ? GetNumber(snapshot, "Lap") : null) ?? -1);
+                    // IRSDK LapCompleted is ideal; Lap-1 is a fallback for SDK
+                    // sessions where the completed field is absent.
+                    double? completedRaw = GetNumber(snapshot, "LapCompleted");
+                    if (completedRaw is null && snapshot.Simulator == "iRacing")
+                        completedRaw = GetNumber(snapshot, "Lap") is double l ? l - 1 : null;
+                    if (snapshot.Simulator == "Assetto Corsa")
+                        completedRaw ??= GetNumber(snapshot, "Lap") is double l ? l - 1 : null;
+                    int completed = (int)(completedRaw ?? -1);
                     if (lastCompleted >= 0 && completed > lastCompleted)
                     {
                         double duration = GetNumber(snapshot, "LapLastLapTime") ??
                             (GetNumber(snapshot, "LastLapTimeMs") / 1000.0) ?? 0;
                         if (duration >= 20 && duration <= 7200 && lap.Count >= 20)
                         {
-                            // Limite da tabela AMS: 2 MiB na volta. Se necessário, reduzir amostras.
                             var saved = Downsample(lap, 1200);
                             while (saved.Count > 25 && JsonSerializer.SerializeToUtf8Bytes(saved).Length > 1_900_000)
                                 saved = Downsample(saved, Math.Max(25, saved.Count / 2));
                             cloud.QueueLap(snapshot, completed, (int)Math.Round(duration * 1000), saved);
+                        }
+                        else
+                        {
+                            Status?.Invoke($"Volta {completed} não elegível: duração={duration:F2}s, amostras={lap.Count} (mín. 20).");
                         }
                         lap.Clear();
                     }
@@ -220,7 +255,10 @@ internal sealed class TelemetryPipeline : IDisposable
                     if (snapshot.CapturedAt - lastLapSample >= TimeSpan.FromMilliseconds(50))
                     {
                         lastLapSample = snapshot.CapturedAt;
-                        lap.Add(sample);
+                        var lapSample = new Dictionary<string, object?>(sample);
+                        if (snapshot.Simulator == "iRacing" && lap.Count == 0)
+                            lapSample["_capture"] = new { metadata = IracingTrackIdentity.Metadata(snapshot) };
+                        lap.Add(lapSample);
                         if (lap.Count > 15_000) lap.RemoveRange(0, 1000);
                     }
                 }
