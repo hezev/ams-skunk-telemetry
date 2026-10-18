@@ -226,6 +226,16 @@ internal sealed class IRacingAdapter : ISimulatorAdapter
             }
         }
         Save();
+        // DriverCarScreenName/DriverCarName are not guaranteed by every IRSDK
+        // session YAML. The authoritative selected car is DriverCarIdx in
+        // DriverInfo, resolved against the Drivers array collected above.
+        if (string.IsNullOrWhiteSpace(car) &&
+            int.TryParse(Key("DriverCarIdx"), out int driverCarIdx) &&
+            drivers.TryGetValue(driverCarIdx, out var selected))
+            car = selected.Car;
+        if (string.IsNullOrWhiteSpace(car)) car = Key("CarScreenName");
+        // Never use a random opponent's car or an unrelated numerical setting.
+        if (string.IsNullOrWhiteSpace(car)) car = Key("DriverCarPath");
     }
     private void Reset()
     {
