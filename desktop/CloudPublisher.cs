@@ -160,7 +160,9 @@ internal sealed class CloudPublisher : IDisposable
     {
         if (!Directory.Exists(Outbox)) return;
         // Bounded batch keeps Live responsive on slower networks.
-        foreach (var file in Directory.EnumerateFiles(Outbox, "*.json").OrderBy(x => x).Take(8))
+        foreach (var file in Directory.EnumerateFiles(Outbox, "*.json")
+                     .Where(x => Path.GetFileName(x).StartsWith(credentials.PilotId.ToString("N") + "-", StringComparison.OrdinalIgnoreCase))
+                     .OrderBy(x => x).Take(8))
         {
             if (stop.IsCancellationRequested || Current()?.PilotId != credentials.PilotId) break;
             try
