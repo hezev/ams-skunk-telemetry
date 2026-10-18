@@ -1,5 +1,21 @@
 window.AMSCharts = {
   telemetry: [],
+  liveSamples: [],
+  lastLiveChartAt: 0,
+
+  pushLiveSample(sample){
+    const now=performance.now();if(now-this.lastLiveChartAt<100)return;
+    this.lastLiveChartAt=now;this.liveSamples.push({...sample});
+    if(this.liveSamples.length>300)this.liveSamples.shift();
+    this.drawLive();
+  },
+
+  drawLive(){
+    const canvas=document.getElementById('dashboardChart');if(!canvas)return;
+    const samples=this.liveSamples.map((s,i)=>({...s,_p:i/Math.max(1,this.liveSamples.length-1)}));
+    const chart=Object.assign(Object.create(this),{telemetry:samples,reference:[],cursorPos:null,zoomStart:0,zoomEnd:1});
+    chart.drawTelemetry(canvas,'speed');
+  },
   reference: [],
   compareA: [],
   compareB: [],
@@ -380,6 +396,6 @@ window.AMSCharts = {
 
   drawAll(){
     document.querySelectorAll("canvas.trace").forEach(c=>this.draw(c,c.dataset.trace||"speed"));
-    this.draw(document.getElementById("dashboardChart"),"speed");
+    this.drawLive();
   }
 };

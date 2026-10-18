@@ -25,17 +25,16 @@ window.AMSEngineer = {
   fmtDelta(sec){
     const n=Number(sec); return Number.isFinite(n)?((n>=0?"+":"")+n.toFixed(3)+"s"):"—";
   },
-  nearestCorner(progress){
-    if(!window.AMSTrack?.detectCorners)return null;
+  nearestCorner(progress,corners=[]){
     let best=null,d=Infinity;
-    for(const c of AMSTrack.detectCorners()||[]){
+    for(const c of corners){
       const raw=Math.abs(Number(c.p)-progress),cd=Math.min(raw,1-raw);
       if(cd<d){d=cd;best=c;}
     }
     return d<=.05?best:null;
   },
-  zoneLabel(index,start,end){
-    const c=this.nearestCorner((start+end)/2);
+  zoneLabel(index,start,end,corners){
+    const c=this.nearestCorner((start+end)/2,corners);
     return c?("T"+c.index+" · "+c.direction):("Zona "+index);
   },
   fingerprint(lap,events,start,end){
@@ -71,6 +70,15 @@ window.AMSEngineer = {
     return "Recolher mais voltas comparáveis antes de atribuir a perda a pilotagem ou setup.";
   },
   analyze(details,options={}){
+    const track=options.track;
+    const corners=track?.detectCorners?.()||[];
+    const session=options.session||{};
+    const context={sessionId:String(session.id||''),simulator:session.sim||'',circuit:session.track||'',car:session.car||''};
+    const map=track?.reference&&track.centerline?.length>=50?{
+      name:context.circuit||track.reference.name,
+      points:track.centerline.map(p=>({x:Number(p.x),y:Number(p.y)})),
+      turns:corners.length&&corners.every(c=>c.official)?corners.map(c=>({p:c.p,index:c.index})):[]
+    }:null;
     const trackLengthM=Number(options.trackLengthM);
     const miniCount=Math.max(10,Math.min(40,Number(options.minisectors)||20));
     const validByArrival=(details||[])
@@ -116,7 +124,7 @@ window.AMSEngineer = {
       if(correction.length>=3&&this.cv(correction)>.30)driverScore+=.10;
 
       rawZones.push({
-        index:i+1,start,end,label:this.zoneLabel(i+1,start,end),bestSeg,secondSeg,medianSeg,timeSd,bestLapSeg,avgLoss,repeatablePotential,
+        index:i+1,start,end,label:this.zoneLabel(i+1,start,end,corners),bestSeg,secondSeg,medianSeg,timeSd,bestLapSeg,avgLoss,repeatablePotential,
         brakeStdP,throttleStdP,minSpeedSd,
         brakeSamples:brakeP.length,throttleSamples:throttleP.length,
         brakeStdM:Number.isFinite(trackLengthM)?brakeStdP*trackLengthM:null,
@@ -210,12 +218,13 @@ window.AMSEngineer = {
     };
 
     return {
-      ok:true,lapCount:prepared.length,bestTime,consistentPace:pace,lapStdDev:lapSd,consistency,achievable,absoluteTheoretical,
+      ok:true,context,map,lapCount:prepared.length,bestTime,consistentPace:pace,lapStdDev:lapSd,consistency,achievable,absoluteTheoretical,
       repeatablePotential,driverPotential,driverShare,setupShare,balanceTelemetry,verdict,priorities,zones,lapComparison,
       setupPotential:{low:setupLow,high:setupUpper,confidence:setupCandidates.length?Math.round(this.mean(setupCandidates.map(z=>z.confidence))||0):0,candidates:setupCandidates.length}
     };
   },
   render(report){
+    this.currentReport=report?.ok?report:null;
     const set=(id,value)=>{ const el=document.getElementById(id); if(el)el.textContent=value; };
     if(!report?.ok){
       set("engineerStatus",report?.reason||"Sem dados suficientes.");

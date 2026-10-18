@@ -80,7 +80,13 @@ window.AMSAuth = {
     return data;
   },
 
-  async refresh(){
+  refresh(){
+    if(this.refreshTask)return this.refreshTask;
+    const expected=this.session?.refresh_token;
+    this.refreshTask=this.refreshOnce(expected).finally(()=>{this.refreshTask=null;});
+    return this.refreshTask;
+  },
+  async refreshOnce(expected){
     if(!this.session?.refresh_token) throw new Error(this.tr("Sessão expirada.","Session expired."));
     const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/token?grant_type=refresh_token",{
       method:"POST",headers:this.headers(),body:JSON.stringify({refresh_token:this.session.refresh_token})
@@ -88,6 +94,7 @@ window.AMSAuth = {
     const data=await res.json();
     if(!res.ok) throw new Error(data.msg||data.error_description||data.message||this.tr("Sessão expirada.","Session expired."));
     data.expires_at=Math.floor(Date.now()/1000)+(data.expires_in||3600);
+    if(this.session?.refresh_token!==expected)throw new Error('Sessão alterada durante renovação.');
     this.user=data.user||this.user;
     this.save(data);
     this.setLoginCookie();
@@ -97,7 +104,7 @@ window.AMSAuth = {
   async token(){
     if(!this.session?.access_token) return null;
     if(this.session.expires_at && this.session.expires_at<Date.now()/1000+60){
-      try{ await this.refresh(); }catch{ this.logout(false); return null; }
+      try{ await this.refresh(); }catch{ return null; }
     }
     return this.session?.access_token||null;
   },
@@ -105,16 +112,18 @@ window.AMSAuth = {
   async restore(){
     try{ this.session=JSON.parse(localStorage.getItem("ams_auth_session")||"null"); }catch{ this.session=null; }
     if(!this.session?.access_token){ this.render(); return null; }
+    this.user=this.session.user||null;
     const token=await this.token();
-    if(!token){ this.render(); return null; }
+    if(!token){this.render();document.dispatchEvent(new CustomEvent("ams-auth-changed",{detail:{user:this.user}}));return this.user;}
     try{
       const res=await fetch(AMS_CONFIG.supabaseUrl+"/auth/v1/user",{headers:this.headers(token)});
+      if(res.status===401){this.logout(false);return null;}
       if(!res.ok) throw new Error();
       this.user=await res.json();
       this.setLoginCookie();
     }catch{
-      this.logout(false);
-      return null;
+      // Offline startup retains the stored identity; authenticated requests still require a valid JWT.
+      this.user=this.session?.user||null;
     }
     this.render();
     document.dispatchEvent(new CustomEvent("ams-auth-changed",{detail:{user:this.user}}));

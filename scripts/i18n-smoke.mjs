@@ -14,5 +14,6 @@ assert.match(i18n,/English/, 'EN locale missing');
 assert.match(i18n,/const aliases=new Map/, 'translation mapping missing');
 assert.match(auth,/this\.tr\(/, 'auth state translation missing');
 assert.match(realtime,/this\.tr\(/, 'live state translation missing');
-assert.match(pitwall,/ams-pitwall-replay-position/, 'replay marker event missing');
+assert.doesNotMatch(pitwall,/ams-pitwall-replay-position/, 'Pitwall must not receive recorded replay positions');
+assert.match(pitwall,/ams-live-update/, 'live session map event missing');
 console.log('PT/EN static integration checks passed');

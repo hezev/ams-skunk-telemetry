@@ -27,7 +27,7 @@ window.AMSSupabase = {
 
   async getLiveSessions(token,pilotId=null){
     const params={
-      select:"pilot_id,simulator,circuit,car,sample,updated_at",
+      select:"pilot_id,simulator,circuit,car,sample,drivers,updated_at",
       order:"updated_at.desc",
       limit:"100"
     };

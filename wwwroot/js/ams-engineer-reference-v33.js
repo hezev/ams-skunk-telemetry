@@ -65,14 +65,7 @@ function render(){
 }
 window.addEventListener('ams-engineer-analysis',e=>{
  report=e.detail?.report||null;
- const track=window.AMSTrack;
- if(!report?.ok||!track?.reference||!Array.isArray(track.centerline)||track.centerline.length<50){snapshot=null;clear();return;}
- const detected=track.detectCorners?.()||[];
- snapshot={
-  name:track.reference.name||'Traçado de referência',
-  points:track.centerline.map(p=>({x:Number(p.x),y:Number(p.y)})),
-  turns:detected.length&&detected.every(x=>x.official)?detected.map(c=>({p:c.p,index:c.index})):[]
- };
+ snapshot=report?.map||null;
  render();
 });
 document.getElementById('engineerSessionSelect')?.addEventListener('change',()=>{

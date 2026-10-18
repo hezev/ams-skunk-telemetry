@@ -15,6 +15,23 @@ window.AMSTrack = {
   gpsProjection:null,
   yawOffset:0,
   artworkCalibration:null,
+  artworkGeometryCache:new Map(),
+
+  createContext(name){
+    const holder=document.createElement('div');
+    holder.setAttribute('aria-hidden','true');
+    holder.style.cssText='position:absolute;left:-10000px;width:1920px;height:1080px;pointer-events:none';
+    const hostId=name+'TrackMotionSvg',stackId=name+'TrackVectorStack';
+    holder.innerHTML='<div id="'+stackId+'"><svg id="'+hostId+'" viewBox="0 0 1000 600"></svg></div>';
+    document.body.appendChild(holder);
+    return Object.assign(Object.create(this),{contextName:name,hostId,stackId,background:true,
+      centerline:[],reference:null,activePath:null,activeEntry:null,officialCorners:null,
+      elevationProfile:null,gpsProjection:null,artworkCalibration:null,loadedMap:null,
+      trajectoryCompare:null,focusedCompare:null,loadQueue:null,progress:0});
+  },
+
+  mapHost(){return document.getElementById(this.hostId||'trackMotionSvg');},
+  mapStack(){return document.getElementById(this.stackId||'trackVectorStack');},
 
   normalize(value){
     return String(value||"")
@@ -118,6 +135,11 @@ window.AMSTrack = {
     return match?match[1]:"";
   },
 
+  isExactIracingEntry(trackId,entry){
+    const wanted=String(trackId||"").trim();
+    return Boolean(wanted&&entry&&this.entryTrackId(entry)===wanted);
+  },
+
   layoutKind(value){
     const n=this.normalize(value);
     if(!n)return "";
@@ -173,14 +195,14 @@ window.AMSTrack = {
 
   async getIndex(){
     if(this.index)return this.index;
-    const cached=sessionStorage.getItem("ams_track_index_v2");
+    const cached=sessionStorage.getItem("ams_track_index_v3");
     if(cached){
       try{this.index=JSON.parse(cached);return this.index;}catch{}
     }
-    const res=await fetch(AMS_CONFIG.trackMetadataUrl,{cache:"force-cache"});
+    const res=await fetch(AMS_CONFIG.trackMetadataUrl,{cache:"no-cache"});
     if(!res.ok)throw new Error("Não foi possível carregar o catálogo iRacing.");
     this.index=this.buildIndex(await res.json());
-    try{sessionStorage.setItem("ams_track_index_v2",JSON.stringify(this.index));}catch{}
+    try{sessionStorage.setItem("ams_track_index_v3",JSON.stringify(this.index));}catch{}
     return this.index;
   },
 
@@ -223,6 +245,9 @@ window.AMSTrack = {
     if(wantedId){
       const exact=index.find(entry=>this.entryTrackId(entry)===wantedId);
       if(exact)return exact;
+      // A known SDK TrackID that is absent from the external catalogue is a
+      // newer layout. Never substitute an older layout from the same venue.
+      return null;
     }
 
     return index
@@ -386,7 +411,7 @@ window.AMSTrack = {
     return {offset,rms,rows:rows.length};
   },
 
-  async artworkStartFinishPoint(base){
+  async artworkStartFinishMarkers(base){
     try{
       const res=await fetch(base+"/start-finish.svg",{cache:"force-cache"});
       if(!res.ok)return null;
@@ -409,23 +434,87 @@ window.AMSTrack = {
       document.body.appendChild(svg);
 
       try{
-        const items=[...svg.querySelectorAll("path,line,rect,polyline,polygon")];
-        let best=null,bestScore=-Infinity;
-        for(const el of items){
-          let box=null;
-          try{box=el.getBBox();}catch{}
-          if(!box||!(box.width>0)||!(box.height>0))continue;
-          const long=Math.max(box.width,box.height),short=Math.max(.5,Math.min(box.width,box.height));
-          if(long<8)continue;
-          const aspect=long/short;
-          // Start/finish line graphics are typically narrow and elongated.
-          const score=aspect*8+Math.min(40,long/5)-Math.min(30,(box.width*box.height)/1800);
-          if(score>bestScore){
-            bestScore=score;
-            best={x:box.x+box.width/2,y:box.y+box.height/2,box,score};
+        // Official layers can instance symbols with <use>. Definitions have
+        // local coordinates; only their rendered instances locate the finish.
+        for(let depth=0;depth<8;depth++){
+          const uses=[...svg.querySelectorAll('use')].filter(el=>!el.closest('defs,symbol'));
+          if(!uses.length)break;
+          for(const use of uses){
+            const href=use.getAttribute('href')||use.getAttribute('xlink:href')||'';
+            const target=href.startsWith('#')?doc.getElementById(href.slice(1)):null;
+            if(!target){use.remove();continue;}
+            const group=document.createElementNS(svg.namespaceURI,'g');
+            group.setAttribute('data-ams-ref',href);
+            const transform=use.getAttribute('transform');if(transform)group.setAttribute('transform',transform);
+            if(target.localName==='symbol'||target.localName==='svg'){
+              const instance=document.createElementNS(svg.namespaceURI,'svg');
+              for(const key of ['x','y','width','height'])if(use.hasAttribute(key))instance.setAttribute(key,use.getAttribute(key));
+              for(const key of ['viewBox','preserveAspectRatio'])if(target.hasAttribute(key))instance.setAttribute(key,target.getAttribute(key));
+              instance.innerHTML=target.innerHTML;group.appendChild(instance);
+            }else{
+              const instance=document.createElementNS(svg.namespaceURI,'g');
+              instance.setAttribute('transform','translate('+(Number(use.getAttribute('x'))||0)+' '+(Number(use.getAttribute('y'))||0)+')');
+              instance.appendChild(target.cloneNode(true));group.appendChild(instance);
+            }
+            use.replaceWith(group);
           }
         }
-        return best?{x:best.x,y:best.y}:null;
+        const rootInverse=svg.getScreenCTM().inverse();
+        const items=[...svg.querySelectorAll('path,line,rect,polyline,polygon')].filter(el=>!el.closest('defs,symbol,clipPath,mask'));
+        const shapes=[];
+        for(const el of items){
+          try{
+            const length=el.getTotalLength();if(!(length>8))continue;
+            const matrix=rootInverse.multiply(el.getScreenCTM());
+            const point=t=>{const p=el.getPointAtLength(((t%1)+1)%1*length);return new DOMPoint(p.x,p.y).matrixTransform(matrix);};
+            const points=Array.from({length:400},(_,i)=>point(i/400));
+            const mean={x:points.reduce((s,p)=>s+p.x,0)/points.length,y:points.reduce((s,p)=>s+p.y,0)/points.length};
+            let xx=0,yy=0,xy=0;
+            for(const p of points){xx+=(p.x-mean.x)**2;yy+=(p.y-mean.y)**2;xy+=(p.x-mean.x)*(p.y-mean.y);}
+            const angle=.5*Math.atan2(2*xy,xx-yy),ux=Math.cos(angle),uy=Math.sin(angle);
+            const along=points.map(p=>p.x*ux+p.y*uy),across=points.map(p=>-p.x*uy+p.y*ux);
+            const lo=Math.min(...along),hi=Math.max(...along),bottom=Math.min(...across),top=Math.max(...across);
+            const long=hi-lo,short=Math.max(.5,top-bottom);
+            const center={x:(lo+hi)/2*ux-(bottom+top)/2*uy,y:(lo+hi)/2*uy+(bottom+top)/2*ux};
+            const labels=[];for(let node=el;node&&node!==svg;node=node.parentElement)labels.push(node.id||'',node.getAttribute('data-ams-ref')||'');
+            shapes.push({el,point,points,long,short,center,ux,uy,label:labels.join(' ')});
+          }catch{}
+        }
+        let best=null,bestScore=-Infinity;
+        for(const shape of shapes){
+          if(shape.long<8||/direction|arrow/i.test(shape.label))continue;
+          const aspect=shape.long/shape.short;
+          if(aspect<3)continue;
+          const score=aspect*8+Math.min(40,shape.long/5)+(/start.*finish/i.test(shape.label)?100:0);
+          if(score>bestScore){
+            bestScore=score;best=shape;
+          }
+        }
+        if(!best)return null;
+        let direction=null,directionScore=-Infinity;
+        for(const shape of shapes){
+          if(shape===best||shape.long/shape.short>6)continue;
+          const points=shape.points;
+          const area=points.reduce((sum,p,i)=>{const q=points[(i+1)%points.length];return sum+p.x*q.y-q.x*p.y;},0);
+          if(Math.abs(area)<1)continue;
+          // The sharpest convex corner is the arrow tip. Rounded shaft ends
+          // are measured over a small arc so they cannot be mistaken for it.
+          let tip=null,sharpest=0,tipScore=-Infinity;
+          for(let i=0;i<points.length;i++){
+            for(const sub of [0,.25,.5,.75]){
+              const t=(i+sub)/points.length,a=shape.point(t-.008),p=shape.point(t),b=shape.point(t+.008);
+              const ax=p.x-a.x,ay=p.y-a.y,bx=b.x-p.x,by=b.y-p.y;
+              const turn=Math.atan2(ax*by-ay*bx,ax*bx+ay*by)*Math.sign(area);
+              const offAxis=Math.abs(-(p.x-shape.center.x)*shape.uy+(p.y-shape.center.y)*shape.ux)/Math.max(.5,shape.short/2);
+              const score=turn-offAxis*.8;
+              if(turn>1.3&&score>tipScore){tipScore=score;sharpest=turn;tip={x:p.x-(a.x+b.x)/2,y:p.y-(a.y+b.y)/2};}
+            }
+          }
+          const norm=tip?Math.hypot(tip.x,tip.y):0;
+          const score=sharpest+(/direction|arrow/i.test(shape.label)?100:0);
+          if(norm>0&&sharpest>1.3&&score>directionScore){directionScore=score;direction={x:tip.x/norm,y:tip.y/norm};}
+        }
+        return {point:best.center,direction,line:{a:{x:best.center.x-best.ux*best.long/2,y:best.center.y-best.uy*best.long/2},b:{x:best.center.x+best.ux*best.long/2,y:best.center.y+best.uy*best.long/2}}};
       }finally{
         svg.remove();
       }
@@ -435,10 +524,15 @@ window.AMSTrack = {
     }
   },
 
+  async artworkStartFinishPoint(base){
+    return (await this.artworkStartFinishMarkers(base))?.point||null;
+  },
+
   async calibrateArtworkCenterline(base,telemetry){
     if(!this.centerline.length)return null;
     let points=[...this.centerline];
-    const start=await this.artworkStartFinishPoint(base);
+    const markers=await this.artworkStartFinishMarkers(base);
+    const start=markers?.point;
 
     let startIndex=0;
     if(start){
@@ -447,7 +541,25 @@ window.AMSTrack = {
         const d=(points[i].x-start.x)**2+(points[i].y-start.y)**2;
         if(d<best){best=d;startIndex=i;}
       }
-      points=this.rotateClosed(points,startIndex);
+      // Place lap zero on the actual finish-line intersection rather than
+      // rounding it to the closest distance sample (or the graphic's center).
+      let crossing=null;
+      const line=markers.line;
+      if(line){
+        const sx=line.b.x-line.a.x,sy=line.b.y-line.a.y;
+        for(let i=0;i<points.length;i++){
+          const a=points[i],b=points[(i+1)%points.length],rx=b.x-a.x,ry=b.y-a.y;
+          const den=rx*sy-ry*sx;if(Math.abs(den)<1e-9)continue;
+          const qx=line.a.x-a.x,qy=line.a.y-a.y,t=(qx*sy-qy*sx)/den,u=(qx*ry-qy*rx)/den;
+          if(t<0||t>1||u<0||u>1)continue;
+          const p={x:a.x+t*rx,y:a.y+t*ry},distance=this.distance(p,start);
+          if(!crossing||distance<crossing.distance)crossing={index:i,p,distance};
+        }
+      }
+      if(crossing){
+        startIndex=crossing.index;
+        points=this.resampleClosed([crossing.p,...points.slice(startIndex+1),...points.slice(0,startIndex+1)],points.length);
+      }else points=this.rotateClosed(points,startIndex);
     }
 
     const forward=this.circularFitOffset(points,telemetry);
@@ -455,7 +567,11 @@ window.AMSTrack = {
     const reverse=this.circularFitOffset(reversedPoints,telemetry);
 
     let reversed=false,fit=forward;
-    if(reverse&&(!forward||reverse.rms+0.03<forward.rms)){
+    const ahead=points[Math.min(6,points.length-1)],behind=points[(points.length-6)%points.length];
+    const dx=ahead.x-behind.x,dy=ahead.y-behind.y,norm=Math.hypot(dx,dy);
+    const arrowDot=markers?.direction&&norm>0?(dx*markers.direction.x+dy*markers.direction.y)/norm:null;
+    const officialDirection=Number.isFinite(arrowDot)&&Math.abs(arrowDot)>.35;
+    if(officialDirection?arrowDot<0:reverse&&(!forward||reverse.rms+0.03<forward.rms)){
       points=reversedPoints;
       fit=reverse;
       reversed=true;
@@ -465,6 +581,9 @@ window.AMSTrack = {
     this.yawOffset=Number.isFinite(Number(fit?.offset))?Number(fit.offset):0;
     this.artworkCalibration={
       startIndex,
+      startAligned:!!start,
+      startFinish:markers?.line||null,
+      directionSource:officialDirection?'official-arrow':fit?'telemetry':'unknown',
       reversed,
       headingRmsDeg:Number.isFinite(Number(fit?.rms))?fit.rms*180/Math.PI:null,
       sampleCount:Number(fit?.rows)||0
@@ -616,8 +735,8 @@ window.AMSTrack = {
   },
 
   drawGpsReference(data){
-    const host=document.getElementById("trackMotionSvg");
-    const stack=document.getElementById("trackVectorStack");
+    const host=this.mapHost();
+    const stack=this.mapStack();
     if(!host||!stack)return false;
 
     this.elevationProfile=null;
@@ -666,22 +785,56 @@ window.AMSTrack = {
     return true;
   },
 
-  async load(trackName,configHint="",telemetry=null){
+  load(trackName,configHint="",telemetry=null,options={}){
+    // Loading/calibration mutates the analysis SVG. Serialize it so an archive
+    // request cannot mix its geometry with a native session request mid-load.
+    const job=(this.loadQueue||Promise.resolve()).catch(()=>{}).then(async()=>{
+      const result=await this.loadTrack(trackName,configHint,telemetry,options);
+      if(!result||this.centerline.length<3)return null;
+      const identity=this.telemetryTrackIdentity(trackName,configHint,telemetry);
+      const map={circuit:trackName,trackId:identity.trackId||this.entryTrackId(result.entry),
+        config:result.entry?.config||identity.configHint,source:this.reference?.source||"iRacing artwork",
+        alignment:this.artworkCalibration?{...this.artworkCalibration}:null,
+        centerline:this.centerline.map(p=>({x:p.x,y:p.y}))};
+      this.loadedMap=map;
+      document.dispatchEvent(new CustomEvent("ams-track-loaded",{detail:{map,context:this.contextName||'analysis'}}));
+      return {...result,map};
+    });
+    this.loadQueue=job;
+    return job;
+  },
+
+  async loadTrack(trackName,configHint="",telemetry=null,options={}){
     this.elevationProfile=null;
+    this.artworkCalibration=null;
     const status=document.getElementById("trackSource");
     try{
       if(status)status.textContent="A localizar referência…";
       const identity=this.telemetryTrackIdentity(trackName,configHint,telemetry);
       const entry=await this.resolve(identity.trackName,identity.configHint,identity.trackId);
+      if(identity.trackId&&!entry){
+        if(options.localReference&&this.drawGpsReference(options.localReference)){
+          this.reference.source="GPS local gravado";
+          return {entry:null,reference:options.localReference};
+        }
+        throw new Error("O catálogo de mapas ainda não contém o TrackID "+identity.trackId+".");
+      }
       this.activeEntry=entry;
       this.officialCorners=null;
-      const estimatedLength=this.estimateLapLength(telemetry);
+      const estimatedLength=this.estimateLapLength(telemetry)||this.metadataTrackLengthM(identity.metadata);
 
       // Prefer a GPS reference only when it is compatible with the exact
       // iRacing layout. Multi-layout venues must never fall back to a generic
       // venue outline (e.g. Indianapolis road accidentally using the oval).
-      const reference=await this.resolveRaceStudio(identity.trackName,entry,estimatedLength,identity.configHint);
+      // A live iRacing TrackID identifies one exact configuration. Its official
+      // artwork must win over a venue-level RaceStudio reference, which may be
+      // a different layout at multi-configuration venues such as Tsukuba.
+      const exactIracing=this.isExactIracingEntry(identity.trackId,entry);
+      const reference=exactIracing?null:await this.resolveRaceStudio(identity.trackName,entry,estimatedLength,identity.configHint);
       if(reference&&this.drawGpsReference(reference)){
+        if(!(Number(this.reference?.lengthM)>0)){
+          this.reference.lengthM=this.metadataTrackLengthM(identity.metadata,estimatedLength);
+        }
         const label=reference?.contact?.Nmg||reference?.short_name||reference?.full_name||trackName;
         if(status){
           const len=Number(reference?.track_length_m);
@@ -696,8 +849,8 @@ window.AMSTrack = {
       // Fallback: use the iRacing artwork when a GPS reference is unavailable.
       const base=this.baseUrl(entry);
       if(!base)throw new Error("Traçado não encontrado.");
-      const stack=document.getElementById("trackVectorStack");
-      const host=document.getElementById("trackMotionSvg");
+      const stack=this.mapStack();
+      const host=this.mapHost();
       if(!stack||!host)return null;
 
       host.classList.remove("gps-reference");
@@ -730,7 +883,7 @@ window.AMSTrack = {
         const layout=identity.metadata?.TrackConfigName||this.configHint(entry);
         const id=identity.trackId||this.entryTrackId(entry);
         const cal=this.artworkCalibration;
-        const heading=Number.isFinite(Number(cal?.headingRmsDeg))
+        const heading=Number.isFinite(cal?.headingRmsDeg)
           ?"ALIGN "+cal.headingRmsDeg.toFixed(1)+"°"+(cal.reversed?" · DIR FIX":"")
           :"";
         status.textContent=["iRacing",id,layout,heading].filter(Boolean).join(" · ")||this.reference.name||trackName;
@@ -834,11 +987,11 @@ window.AMSTrack = {
   async prepareArtworkFallback(activeUrl){
     this.activePath=null;
     this.centerline=[];
-    const host=document.getElementById("trackMotionSvg");
+    const host=this.mapHost();
     if(!host)return;
 
     const res=await fetch(activeUrl,{cache:"force-cache"});
-    if(!res.ok)return;
+    if(!res.ok)throw new Error("Mapa oficial indisponível: HTTP "+res.status);
     const doc=new DOMParser().parseFromString(await res.text(),"image/svg+xml");
     const src=doc.documentElement;
     const viewBox=src.getAttribute("viewBox");
@@ -855,16 +1008,22 @@ window.AMSTrack = {
         if(len>bestLen){best=p;bestLen=len;}
       }catch{}
     }
-    if(!best)return;
+    if(!best)throw new Error("O SVG oficial não contém um traçado válido.");
     this.activePath=best;
-    const contours=this.splitContours(this.sampleCompoundPath(best,5000)).sort((x,y)=>y.length-x.length);
-    this.centerline=this.buildArtworkCenterline(contours[0]||[],contours[1]||[]);
+    const cached=this.artworkGeometryCache.get(activeUrl);
+    if(cached)this.centerline=cached.map(p=>({...p}));
+    else{
+      const contours=this.splitContours(this.sampleCompoundPath(best,5000)).sort((x,y)=>y.length-x.length);
+      this.centerline=this.buildArtworkCenterline(contours[0]||[],contours[1]||[]);
+      this.artworkGeometryCache.set(activeUrl,this.centerline.map(p=>({...p})));
+    }
     requestAnimationFrame(()=>this.setPosition(this.progress));
   },
 
   renderDashboardCompareMap(){
-    const host=document.getElementById("trackMotionSvg");
-    const stack=document.getElementById("trackVectorStack");
+    if(this.background)return false;
+    const host=this.mapHost();
+    const stack=this.mapStack();
     if(!host||!stack||!this.centerline.length)return false;
 
     // Race Control now uses exactly the same calibrated centerline geometry
@@ -900,7 +1059,7 @@ window.AMSTrack = {
   },
 
   analysisViewBox(){
-    const host=document.getElementById("trackMotionSvg");
+    const host=this.mapHost();
     return host?.getAttribute("viewBox")||"0 0 1000 600";
   },
 
@@ -1857,6 +2016,7 @@ window.AMSTrack = {
 
   setPosition(progress){
     this.progress=((Number(progress)%1)+1)%1;
+    if(this.background)return;
     const point=this.localPoint(this.progress);
     const svgCursor=document.getElementById("dashboardMapCursor");
     if(svgCursor&&point){

@@ -1,6 +1,6 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
-  const state={compareBest:null,compareOwnBests:[],laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,replayTimer:null,replayCursor:0,replaySpeed:1,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
+  const state={compareBest:null,compareOwnBests:[],laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
 
   async function coachFlag(token){
     try{
@@ -137,8 +137,10 @@
   }
 
   async function loadPublicRecords(token){
+    const revision=authRevision;
     try{
       const data=await AMSSupabase.request("/rest/v1/rpc/ams_public_record_board",{token,method:"POST",body:{}});
+      if(revision!==authRevision)return;
       state.publicBoard=data||{records:[],progression:[],career:[]};
       renderRecords();
     }catch(err){
@@ -192,64 +194,77 @@
 
   function fillEngineerSessionSelector(){
     const e=q("#engineerSessionSelect");if(!e)return;
-    const sessions=groupSessions(state.laps).filter(s=>s.laps.length>=2);
+    const sessions=groupSessions(state.laps);
     const current=e.value;
     e.innerHTML=sessions.map(s=>`<option value="${s.id}">${s.last?s.last.toLocaleDateString("pt-PT"):"—"} · ${s.track||"—"} · ${s.car||"—"} · ${s.laps.length} laps</option>`).join("");
     if(current&&sessions.some(s=>String(s.id)===String(current)))e.value=current;
     else if(sessions[0])e.value=sessions[0].id;
-    setText("engineerStatus",sessions.length?"Pronto para analisar":"São necessárias pelo menos duas voltas na mesma sessão");
+    window.AMSEngineerReplay?.setLaps(sessions.find(s=>String(s.id)===String(e.value))?.laps||[]);
+    setText("engineerStatus",(sessions.find(s=>String(s.id)===String(e.value))?.laps.length||0)>=2?"Pronto para analisar":"São necessárias pelo menos duas voltas na mesma sessão para analisar");
   }
 
   function fillSelectors(){
     const options=state.laps.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
-    for(const id of ["telemetryLapSelect","compareLapA","compareLapB"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
+    const priorA=q("#compareLapA")?.value,priorB=q("#compareLapB")?.value;
+    for(const id of ["telemetryLapSelect","compareLapA"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
     if(state.selectedId){const t=q("#telemetryLapSelect");if(t)t.value=state.selectedId;}
     const own=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&Number(l.lap_time_ms)>0);
-    own.sort((a,b)=>Number(a.lap_time_ms)-Number(b.lap_time_ms));
+    own.sort((a,b)=>Date.parse(b.completed_at||0)-Date.parse(a.completed_at||0));
     const a=q("#compareLapA"),b=q("#compareLapB");
-    if(a){a.innerHTML=own.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");if(own[0])a.value=own[0].id;}
+    if(a){a.innerHTML=own.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");if(priorA&&own.some(l=>String(l.id)===priorA))a.value=priorA;else if(own[0])a.value=own[0].id;}
     if(b)b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
-    void refreshCommunityReference();
+    void refreshCommunityReference(priorB);
     fillReferenceSelector();
     fillEngineerSessionSelector();
   }
 
   async function loadComparePersonalBests(token){
+    const revision=authRevision;
     try{
       const rows=await AMSSupabase.getBestLaps(token,AMSAuth.user?.id);
+      if(revision!==authRevision)return;
       state.compareOwnBests=(rows||[]).filter(l=>Number(l.lap_time_ms)>0);
-      const a=q("#compareLapA");
-      if(!a||!state.compareOwnBests.length)return;
-      a.innerHTML=state.compareOwnBests.map(l=>`<option value="best:${l.id}">${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
       await refreshCommunityReference();
     }catch(err){console.warn("AMS Compare personal bests:",err);}
   }
 
-  async function refreshCommunityReference(){
+  async function refreshCommunityReference(preferred=null){
     const a=q("#compareLapA"),b=q("#compareLapB");
-    const own=state.compareOwnBests.find(l=>`best:${l.id}`===String(a?.value))||state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id);
+    const revision=authRevision,chosen=a?.value;
+    const current=()=>revision===authRevision&&chosen===a?.value;
+    const own=state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id)||state.compareOwnBests.find(l=>`best:${l.id}`===String(a?.value));
     if(!b)return;
     b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
     if(!own){b.innerHTML='<option value="">Sem volta do piloto</option>';return;}
-    const token=await AMSAuth.token();if(!token)return;
+    const compatible=state.laps.filter(l=>l.id!==own.id&&l.pilot_id===AMSAuth.user?.id&&l.simulator===own.simulator&&l.circuit===own.circuit&&l.car===own.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms));
+    const localOptions=compatible.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""}</option>`);
+    const token=await AMSAuth.token();
+    if(!current())return;
+    if(!token){
+      b.innerHTML=localOptions.join("")||'<option value="">Sem outra volta compatível</option>';
+      if(preferred&&[...b.options].some(o=>o.value===preferred))b.value=preferred;
+      return;
+    }
     try{
       // RLS permits the pilot's own best laps and explicitly shared community laps.
       const qparams=new URLSearchParams({select:"id,pilot_id,simulator,circuit,car,lap_time_ms,shared",simulator:"eq."+own.simulator,circuit:"eq."+own.circuit,car:"eq."+own.car,order:"lap_time_ms.asc",limit:"1"});
       const results=await AMSSupabase.request("/rest/v1/ams_best_laps?"+qparams,{token});
+      if(!current())return;
       const first=results?.find(l=>Number(l.lap_time_ms)>0);
       state.compareBest=first||null;
-      if(first){
-        b.innerHTML=`<option value="best:${first.id}">${fmtLap(first.lap_time_ms)} · ${first.shared?"Community":"Best lap"} · ${own.circuit} · ${own.car}</option>`;
-      }else{
-        // Own-lap fallback avoids manufacturing a reference when no shared record exists.
-        const candidates=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&l.simulator===own.simulator&&l.circuit===own.circuit&&l.car===own.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms));
-        b.innerHTML=candidates[0]?`<option value="${candidates[0].id}">${fmtLap(candidates[0].lap_time_ms)} · Personal best</option>`:'<option value="">Sem referência disponível</option>';
-      }
-    }catch(err){console.warn("AMS Compare community reference:",err);b.innerHTML='<option value="">Referência indisponível</option>';}
+      const cloudOption=first?`<option value="best:${first.id}">${fmtLap(first.lap_time_ms)} · ${first.shared?"Community":"Melhor cloud"} · ${own.circuit}</option>`:"";
+      b.innerHTML=[...localOptions,cloudOption].filter(Boolean).join("")||'<option value="">Sem outra volta compatível</option>';
+      if(preferred&&[...b.options].some(o=>o.value===preferred))b.value=preferred;
+    }catch(err){
+      console.warn("AMS Compare community reference:",err);
+      b.innerHTML=localOptions.join("")||'<option value="">Referência indisponível</option>';
+      if(preferred&&[...b.options].some(o=>o.value===preferred))b.value=preferred;
+    }
   }
 
   async function detail(id){
     if(!id)return null;
+    if(String(id).startsWith("local:"))return AMSSupabase.getLapTelemetry(null,id);
     if(state.cache.has(id))return state.cache.get(id);
     if(String(id).startsWith("best:")){
       const token=await AMSAuth.token();if(!token)return null;
@@ -270,14 +285,19 @@
     return d;
   }
 
+  let engineerAnalysisRevision=0;
   async function analyzeEngineerSession(){
     const select=q("#engineerSessionSelect");
     const session=groupSessions(state.laps).find(s=>String(s.id)===String(select?.value));
     if(!session){setText("engineerStatus","Sessão não encontrada");return;}
+    const selectedSession=String(session.id);
+    const revision=++engineerAnalysisRevision;
+    const stillSelected=()=>revision===engineerAnalysisRevision&&String(select?.value)===selectedSession;
 
     const btn=q("#engineerAnalyzeBtn");
     if(btn){btn.disabled=true;btn.textContent="A ANALISAR…";}
-    setText("engineerStatus","A carregar voltas e evidência…");
+    state.engineerReport=null;
+    AMSEngineer.render({ok:false,reason:"A carregar voltas e evidência…"});
 
     try{
       const candidates=[...session.laps]
@@ -285,6 +305,7 @@
         .sort((a,b)=>new Date(a.completed_at||0)-new Date(b.completed_at||0))
         .slice(-20);
       const details=(await Promise.all(candidates.map(l=>detail(l.id)))).filter(Boolean);
+      if(!stillSelected())return;
       if(details.length<2){
         const report={ok:false,reason:"São necessárias pelo menos duas voltas completas com telemetria."};
         state.engineerReport=null;
@@ -293,19 +314,20 @@
         return;
       }
 
-      await AMSTrack.load(session.track||"","",details[0]?.telemetry||[]);
+      const engineerTrack=window.AMSEngineerTrack||(window.AMSEngineerTrack=AMSTrack.createContext('engineer'));
+      await engineerTrack.load(session.track||"","",details[0]?.telemetry||[]);
+      if(!stillSelected())return;
       const report=AMSEngineer.analyze(details,{
         minisectors:20,
-        trackLengthM:Number(AMSTrack.reference?.lengthM)||null,
+        trackLengthM:Number(engineerTrack.reference?.lengthM)||null,
+        track:engineerTrack,
         session
       });
       state.engineerReport=report;
       AMSEngineer.render(report);
       document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:String(session.id),report}}));
-      setText("simName",session.sim||"—");
-      setText("trackName",session.track||"—");
-      setText("carName",session.car||"—");
     }catch(err){
+      if(!stillSelected())return;
       console.warn("AMS engineer:",err);
       const report={ok:false,reason:"Erro na análise: "+String(err.message||err)};
       state.engineerReport=null;
@@ -345,17 +367,6 @@
   }
 
   function updateReplayDerived(d){
-    const s=d?.telemetry||[];
-    if(!s.length)return;
-    const first=s[0], last=s[s.length-1];
-    const fuelUsed=Number(first.fuel)-Number(last.fuel);
-    if(Number.isFinite(fuelUsed)&&fuelUsed>=0){
-      setText("fuelAverage",fuelUsed.toFixed(2)+" L/lap");
-      AMSRealtime.fuelPerLap=fuelUsed>0?fuelUsed:null;
-    }
-    setText("fuelWindow","N/D");
-    setText("trackChip",d.circuit||"—");
-    setText("dashboardSubtitle",`Replay disponível · volta #${d.lap_number??"—"} · ${fmtLap(d.lap_time_ms)}`);
     updateTelemetrySummary(d);
   }
 
@@ -385,7 +396,6 @@
     setText("cursorBrake",fmtPair(v.a.brake,v.b.brake,0,"%"));
     setText("cursorThrottle",fmtPair(v.a.throttle,v.b.throttle,0,"%"));
     setText("cursorGear",(Number.isFinite(v.a.gear)?Math.round(v.a.gear):"—")+" / "+(Number.isFinite(v.b.gear)?Math.round(v.b.gear):"—"));
-    AMSTrack.setPosition(progress);
     AMSTrack.setAnalysisPosition(progress);
     AMSTrack.setTrajectoryPosition(progress);
     AMSTrack.setTrajectoryCoachingPosition(progress);
@@ -499,97 +509,19 @@
   }
 
   async function selectLap(id,goTelemetry=false){
+    const revision=authRevision;
     const d=await detail(id); if(!d)return;
+    if(revision!==authRevision)return;
     state.selectedId=id; state.selectedDetail=d; renderLaps();
     setText("telemetryStatus",`${(d.telemetry||[]).length} amostras`);
     const sel=q("#telemetryLapSelect"); if(sel)sel.value=id;
-    setText("simName",d.simulator||"—"); setText("trackName",d.circuit||"—"); setText("carName",d.car||"—");
     fillReferenceSelector();
     await AMSTrack.load(d.circuit||"","",d.telemetry||[]);
-    state.replayCursor=0;
-    const seek=q("#replaySeek"); if(seek)seek.value="0";
-    setText("replayPositionText","0.0%");
+    if(revision!==authRevision)return;
     updateWorkspace(); updateReplayDerived(d);
     setZoomWindow(0,100);
     await refreshEngineeringAnalysis();
     if(goTelemetry)switchView("telemetry");
-  }
-
-  function renderReplayTiming(d,sample){
-    const body=q("#timingBody"); if(!body)return;
-    const pos=sample?.positionOverall??sample?.position??"—", cls=sample?.positionClass??"—";
-    body.innerHTML=`<tr class="focus-row"><td><strong>${pos}</strong></td><td>${cls==="—"?"—":"P"+cls}</td><td><strong>${pilotName(d.pilot_id)}</strong><br><small>REPLAY</small></td><td>${d.car||"—"}</td><td>${d.lap_number??"—"}</td><td>${fmtLap(d.lap_time_ms)}</td><td>${fmtLap(sample?.bestLapTime*1000)}</td><td>${Number.isFinite(Number(sample?.delta))?Number(sample.delta).toFixed(3):"—"}</td><td>—</td><td>${Number.isFinite(Number(sample?.fuel))?Number(sample.fuel).toFixed(1)+" L":"—"}</td><td>—</td></tr>`;
-  }
-
-  function applyReplaySample(d,index){
-    const samples=d?.telemetry||[];
-    if(!samples.length)return;
-    const i=Math.max(0,Math.min(samples.length-1,Math.floor(index)));
-    const s=samples[i];
-    AMSRealtime.applySample({sample:s,circuit:d.circuit,car:d.car,simulator:d.simulator});
-    const t=Number(s.t);
-    if(Number.isFinite(t))setText("sessionTime",t.toFixed(2)+"s");
-    setText("liveRaceTime",Number.isFinite(t)?t.toFixed(1)+"s":"—");
-    setText("liveFlag",s.flagText||"—");
-    setText("lapStateChip","REPLAY");
-    renderReplayTiming(d,s);
-
-    const seek=q("#replaySeek");
-    const ratio=samples.length>1?i/(samples.length-1):0;
-    if(seek)seek.value=String(Math.round(ratio*1000));
-    const pos=Number(s.position);
-    const progress=Number.isFinite(pos)?Math.max(0,Math.min(1,pos/100)):ratio;
-    setText("replayPositionText",Number.isFinite(pos)?pos.toFixed(1)+"%":(ratio*100).toFixed(1)+"%");
-    AMSCharts.setExternalCursor(progress);
-    AMSTrack.setAnalysisPosition(progress);
-    document.dispatchEvent(new CustomEvent("ams-pitwall-replay-position",{detail:{
-      progress,
-      pilotId:d.pilot_id,
-      driver:pilotName(d.pilot_id),
-      car:d.car||"",
-      circuit:d.circuit||""
-    }}));
-    renderAnalysisCursor(progress);
-  }
-
-  async function startReplay(){
-    if(!state.selectedDetail&&state.laps[0])await selectLap(state.laps[0].id);
-    const d=state.selectedDetail, samples=d?.telemetry||[]; if(!samples.length)return;
-    if(state.replayTimer){clearInterval(state.replayTimer);state.replayTimer=null;}
-    if(state.replayCursor>=samples.length-1)state.replayCursor=0;
-
-    AMSRealtime.mode="replay";
-    const btn=q("#replayBtn"); if(btn)btn.textContent="■ Parar replay";
-    const tbtn=q("#telemetryReplayBtn"); if(tbtn)tbtn.textContent="■ Parar";
-    const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="■ Parar simulação";
-    setText("connectionText","REPLAY SUPABASE"); setText("liveBadgeText","REPLAY");
-    setText("liveTrack",d.circuit||"—"); setText("liveCars","1"); setText("liveGap","—");
-
-    const duration=Math.max(1,Number(d.lap_time_ms)/1000);
-    state.replayTimer=setInterval(()=>{
-      if(state.replayCursor>=samples.length){stopReplay();return;}
-      applyReplaySample(d,state.replayCursor);
-      const samplesPerTick=samples.length/(duration*20);
-      state.replayCursor+=Math.max(.1,samplesPerTick*state.replaySpeed);
-    },50);
-  }
-
-  function stopReplay(){
-    if(state.replayTimer)clearInterval(state.replayTimer); state.replayTimer=null;
-    AMSRealtime.mode="offline";
-    const btn=q("#replayBtn"); if(btn)btn.textContent="▶ Replay volta";
-    const tbtn=q("#telemetryReplayBtn"); if(tbtn)tbtn.textContent="▶ Replay";
-    const liveBtn=q("#simulateLiveBtn"); if(liveBtn)liveBtn.textContent="▶ Simular com volta gravada";
-    setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT");
-    setText("liveBadgeText","OFFLINE"); setText("lapStateChip","SEM LIVE");
-  }
-
-  function seekReplay(value){
-    const d=state.selectedDetail,samples=d?.telemetry||[];
-    if(!samples.length)return;
-    const ratio=Math.max(0,Math.min(1,Number(value)/1000));
-    state.replayCursor=ratio*(samples.length-1);
-    applyReplaySample(d,state.replayCursor);
   }
 
   function exportTelemetryCsv(){
@@ -628,7 +560,6 @@
     if(Number.isFinite(t))state.compareReplayTime=t;
     AMSTrack.setFocusedComparePosition(p);
     AMSCharts.setCompareExternalCursors(null,null);
-    AMSCharts.setExternalCursor(p);
 
     const duration=compareDuration();
     const seek=q("#compareReplaySeek");
@@ -698,9 +629,8 @@
   async function compare(){
     stopCompareReplay();
     const chosen=state.compareOwnBests.find(l=>`best:${l.id}`===String(q("#compareLapA")?.value))||state.laps.find(l=>String(l.id)===String(q("#compareLapA")?.value));
-    const ownBest=(state.compareOwnBests.length?state.compareOwnBests:state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id)).filter(l=>l.simulator===chosen?.simulator&&l.circuit===chosen?.circuit&&l.car===chosen?.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms))[0];
-    if(ownBest&&q("#compareLapA"))q("#compareLapA").value=state.compareOwnBests.includes(ownBest)?`best:${ownBest.id}`:ownBest.id;
-    await refreshCommunityReference();
+    if(!chosen)return;
+    await refreshCommunityReference(q("#compareLapB")?.value||null);
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
     const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
 
@@ -745,27 +675,95 @@
   }
 
   async function loadCloud(){
-    if(!AMSAuth.user?.id)return;
+    const owner=AMSAuth.user?.id,revision=authRevision;
+    const current=()=>owner===AMSAuth.user?.id&&revision===authRevision;
+    if(!owner)return;
     const token=await AMSAuth.token(); if(!token)return;
+    if(!current())return;
     try{
-      state.isCoach=await coachFlag(token);
-      state.laps=await visibleLaps(token,state.isCoach);
-      state.pilots=await visiblePilots(token,state.isCoach);
+      const isCoach=await coachFlag(token);if(!current())return;
+      const [laps,pilots]=await Promise.all([visibleLaps(token,isCoach),visiblePilots(token,isCoach)]);
+      if(!current())return;
+      state.isCoach=isCoach;state.laps=laps;state.pilots=pilots;
       renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
       await loadComparePersonalBests(token);
+      if(!current())return;
       publishSetupSessions();
       await loadPublicRecords(token);
+      if(!current())return;
       if(state.laps.length)await selectLap(state.laps[0].id);
-      setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT"); setText("liveBadgeText","OFFLINE");
+      setText("connectionText",state.isCoach?"COACH · SUPABASE":"SUPABASE ACCOUNT");
     }catch(err){
+      if(!current())return;
       console.warn("AMS portal data:",err); setText("connectionText","SUPABASE ERROR");
       const body=q("#lapsBody");if(body)body.innerHTML='<tr><td colspan="7" class="error-cloud">Erro: '+String(err.message||err)+'</td></tr>';
     }
   }
 
+  document.addEventListener("ams-native-archive-ready",async()=>{
+    if(!window.AMSNativeArchive)return;
+    try{state.laps=await window.AMSNativeArchive();renderLaps();renderSessions();fillSelectors();publishSetupSessions();}
+    catch(error){console.warn("Local archive:",error);}
+  });
   document.addEventListener("ams-setup-request-sessions",publishSetupSessions);
+  let lapRefreshQueue=Promise.resolve();
+  const lapSignature=rows=>JSON.stringify((rows||[]).map(row=>[row.id,row.pilot_id,row.session_id,row.lap_number,row.lap_time_ms,row.completed_at,row.simulator,row.circuit,row.car,row.verified]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))));
+  let cloudLapPolling=false,authRevision=0;
+  async function pollCloudLaps(){
+    const owner=AMSAuth.user?.id,revision=authRevision;
+    if(!owner||cloudLapPolling||document.visibilityState==='hidden')return;
+    cloudLapPolling=true;
+    try{
+      const token=await AMSAuth.token();if(!token)return;
+      if(revision!==authRevision||AMSAuth.user?.id!==owner)return;
+      const rows=await visibleLaps(token,state.isCoach);
+      if(revision!==authRevision||AMSAuth.user?.id!==owner)return;
+      if(lapSignature(rows)===lapSignature(state.laps))return;
+      lapRefreshQueue=lapRefreshQueue.catch(()=>{}).then(()=>revision===authRevision?refreshAllLapViews({phase:'cloud'},rows):null);
+      await lapRefreshQueue;
+    }catch(error){console.warn('AMS web lap refresh:',error);}
+    finally{cloudLapPolling=false;}
+  }
+  window.AMSWebSync={refresh:pollCloudLaps};
+  async function refreshAllLapViews(detail={},cloudRows=null){
+    const owner=AMSAuth.user?.id,revision=authRevision;
+    const previousId=state.selectedId;
+    const token=AMSAuth.user?.id?await AMSAuth.token():null;
+    if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+    if(AMSAuth.user?.id&&token){
+      const rows=cloudRows||await visibleLaps(token,state.isCoach);
+      if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+      state.laps=rows;
+      state.pilots=await visiblePilots(token,state.isCoach);
+      if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+    }else if(window.AMSNativeArchive){
+      state.laps=await window.AMSNativeArchive();
+    }
+    state.cache.clear();
+    renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+    publishSetupSessions();
+    if(token){
+      await loadComparePersonalBests(token);
+      await loadPublicRecords(token);
+    }
+    if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+    const changed=detail.lapId?state.laps.find(l=>l.local_lap_id===detail.lapId||l.id==="local:"+detail.lapId):null;
+    const selected=changed||state.laps.find(l=>l.id===previousId)||state.laps[0];
+    if(selected)await selectLap(selected.id);
+    document.dispatchEvent(new CustomEvent("ams-interface-laps-refreshed",{detail:{phase:detail.phase||"local",lapId:detail.lapId||null,count:state.laps.length,selectedId:selected?.id||null}}));
+  }
+  document.addEventListener("ams-laps-changed",e=>{
+    const detail=e.detail||{};
+    lapRefreshQueue=lapRefreshQueue.catch(()=>{}).then(()=>refreshAllLapViews(detail)).catch(err=>console.warn("AMS complete interface refresh:",err));
+  });
   q("#engineerAnalyzeBtn")?.addEventListener("click",analyzeEngineerSession);
-  q("#engineerSessionSelect")?.addEventListener("change",()=>setText("engineerStatus","Pronto para analisar"));
+  q("#engineerSessionSelect")?.addEventListener("change",()=>{
+    engineerAnalysisRevision++;
+    state.engineerReport=null;
+    setText("engineerStatus","Pronto para analisar");
+    const session=groupSessions(state.laps).find(s=>String(s.id)===String(q('#engineerSessionSelect')?.value));
+    window.AMSEngineerReplay?.setLaps(session?.laps||[]);
+  });
   q("#telemetryLapSelect")?.addEventListener("change",e=>selectLap(e.target.value));
   q("#telemetryReferenceSelect")?.addEventListener("change",()=>refreshEngineeringAnalysis());
   q("#miniSectorCount")?.addEventListener("change",e=>{state.miniCount=Math.max(5,Number(e.target.value)||20);refreshEngineeringAnalysis();});
@@ -779,15 +777,11 @@
   q("#compareReplaySeek")?.addEventListener("input",e=>seekCompare(e.target.value));
   q("#compareReplaySpeed")?.addEventListener("change",e=>{state.compareSpeed=Math.max(.25,Number(e.target.value)||1);});
   q("#compareFocusZoom")?.addEventListener("change",e=>AMSTrack.setFocusedCompareZoom(e.target.value));
-  q("#replayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
-  q("#telemetryReplayBtn")?.addEventListener("click",()=>state.replayTimer?stopReplay():startReplay());
-  q("#simulateLiveBtn")?.addEventListener("click",()=>{switchView("live");state.replayTimer?stopReplay():startReplay();});
-  q("#replaySeek")?.addEventListener("input",e=>seekReplay(e.target.value));
-  q("#replaySpeed")?.addEventListener("change",e=>{state.replaySpeed=Math.max(.25,Number(e.target.value)||1);});
   q("#exportCsvBtn")?.addEventListener("click",exportTelemetryCsv);
   document.addEventListener("ams-trajectory-seek",e=>{
     const p=Math.max(0,Math.min(1,Number(e.detail?.progress)||0));
-    seekReplay(p*1000);
+    renderAnalysisCursor(p);
+    AMSCharts.setExternalCursor(p);
     switchView("telemetry");
   });
   AMSCharts.setCompareCursorCallback(p=>{
@@ -798,11 +792,23 @@
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
-  document.addEventListener("ams-auth-changed",e=>{if(e.detail?.user)loadCloud();else{stopReplay();state.laps=[];state.engineerReport=null;publishSetupSessions();document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:null,report:null}}));}});
+  document.addEventListener("ams-auth-changed",e=>{
+    authRevision++;
+    if(e.detail?.user)void loadCloud();
+    else{
+      engineerAnalysisRevision++;
+      stopCompareReplay();window.AMSEngineerReplay?.setLaps([]);
+      state.laps=[];state.cache.clear();state.engineerReport=null;state.compareOwnBests=[];state.publicBoard=null;state.isCoach=false;
+      state.selectedId=null;state.selectedDetail=null;
+      AMSEngineer.render({ok:false,reason:'Inicia sessão para analisar as tuas voltas.'});
+      renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();publishSetupSessions();
+      document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:null,report:null}}));
+    }
+  });
 
   initWorkspace();
   AMSAuth.init();
-  const probe=setInterval(()=>{if(AMSAuth.user?.id){clearInterval(probe);loadCloud();}},250);
-  setTimeout(()=>clearInterval(probe),5000);
+  setInterval(()=>void pollCloudLaps(),Math.max(2500,Number(AMS_CONFIG.lapPollMs)||5000));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void pollCloudLaps();});
   AMSRealtime.start();
 })();
