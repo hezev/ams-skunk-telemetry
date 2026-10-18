@@ -1,6 +1,6 @@
 # AMSports Skunk Telemetry v6.0 — Windows (pré-visualização)
 
-Versão: **6.0.0**. Projeto desktop .NET 10 / WebView2 com interface local, gravação e serviços de aquisição integrados no próprio processo — sem coletor Windows ou servidor bridge separado.
+Versão: **6.0.1**. Projeto desktop .NET 10 / WebView2 com interface local, gravação e serviços de aquisição integrados no próprio processo — sem coletor Windows ou servidor bridge separado.
 
 ## Funcionalidades novas (v6)
 - Team e Settings desktop baseados no programa AMSports Telemetry v5.2.25.
