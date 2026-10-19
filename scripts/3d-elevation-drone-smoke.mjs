@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const trackSource=fs.readFileSync('wwwroot/js/track-map.js','utf8');
 const script=fs.readFileSync('wwwroot/js/ams-dual-map-3d-v41.js','utf8');
 const styles=fs.readFileSync('wwwroot/css/ams-dual-map-3d-v41.css','utf8');
-const html=fs.readFileSync('wwwroot/index.html','utf8');
+const html=fs.readFileSync('wwwroot/portal.html','utf8');
 const sandbox={window:{}};
 vm.runInNewContext(trackSource,sandbox);
 const t=sandbox.window.AMSTrack;

@@ -23,7 +23,10 @@ jobs:
         run: |
           test -s wwwroot/index.html
           test -s wwwroot/css/ams-mockup-live-v19.css
-          grep -q "ams-mockup-live-v19.css" wwwroot/index.html
+          test -s wwwroot/portal.html
+          test -s wwwroot/ajuda.html
+          test -s wwwroot/privacidade.html
+          grep -q "ams-mockup-live-v19.css" wwwroot/portal.html
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
