@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const read=p=>fs.readFileSync(p,'utf8');
-const html=read('wwwroot/index.html');
+const html=read('wwwroot/portal.html');
 const three=read('wwwroot/js/ams-dual-map-3d-v41.js');
 const css=read('wwwroot/css/ams-dual-map-3d-v41.css');
 const app=read('wwwroot/js/app.js');

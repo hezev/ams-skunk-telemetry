@@ -26,10 +26,16 @@ jobs:
           node --check wwwroot/js/realtime.js
           node --check wwwroot/js/ams-live-pitwall-map.js
           node --check wwwroot/js/ai-engineer.js
+          node --check wwwroot/js/ams-welcome.js
+          node --check wwwroot/js/ams-context-help.js
+          node --check wwwroot/js/ams-public-pages.js
           node scripts/i18n-smoke.mjs
 
       - name: Engineering telemetry smoke test
         run: node scripts/smoke-test.mjs
+
+      - name: Public pages and navigation
+        run: node scripts/public-pages-smoke.mjs
 
       - name: Preserve 2D map and validate 3D opt-in
         run: |

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const read=p=>fs.readFileSync(p,"utf8");
-const index=read("wwwroot/index.html");
+const index=read("wwwroot/portal.html");
 const app=read("wwwroot/js/app.js");
 const analysis=read("wwwroot/js/analysis.js");
 const charts=read("wwwroot/js/charts.js");
