@@ -20,7 +20,7 @@ const testPassword='Fixture-Only-Password42';
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   return {context,page,calls,errors};
  }
- async function ready(page,url='/'){await page.goto(base+url,{waitUntil:'domcontentloaded'});await page.locator('#accessSubmit').waitFor();await page.waitForFunction(()=>!document.getElementById('accessSubmit').disabled);}
+ async function ready(page,url='/'){await page.goto(base+url,{waitUntil:'domcontentloaded'});await page.locator('#accessSubmit').waitFor({state:'attached'});await page.waitForFunction(()=>!document.getElementById('accessSubmit').disabled);}
  async function fill(page){await page.locator('#welcomeEmail').fill(user.email);await page.locator('#welcomePassword').fill(testPassword);}
  async function finish(test){assert.deepEqual(test.errors,[]);await test.context.close();cases++;}
  try{
@@ -74,7 +74,15 @@ const testPassword='Fixture-Only-Password42';
   test=await setup(request=>new URL(request.url()).pathname.endsWith('/user')?{status:401,body:{message:'Expired'}}:null);
   await ready(test.page,'/#access_token=expired-fixture&type=recovery');assert.ok(!test.page.url().includes('access_token'));assert.match(await test.page.locator('#accessStatus').textContent(),/validar/);assert.equal(test.calls.filter(c=>c.method==='PUT').length,0);await finish(test);
 
-  test=await setup(()=>null,session);await ready(test.page);assert.ok(await test.page.locator('#existingSession').isVisible());await finish(test);
+  test=await setup(()=>null,session);await ready(test.page);
+  assert.ok(await test.page.locator('#existingSession').isVisible());assert.match(await test.page.locator('#existingSession').textContent(),/Avançar para o Portal de Telemetria/);
+  for(const selector of ['#welcomeForm','#welcomeEmail','#welcomePassword','#createAccount','#recoverAccount','#accessPrivacy'])assert.ok(await test.page.locator(selector).isHidden(),selector);
+  assert.equal(await test.page.locator('#acesso button:visible,#acesso a:visible').count(),1);
+  if(output)await test.page.screenshot({path:path.join(output,'existing-session.png'),fullPage:true});
+  await test.page.evaluate(()=>{localStorage.removeItem('ams_auth_session');dispatchEvent(new StorageEvent('storage',{key:'ams_auth_session'}));});
+  await test.page.locator('#welcomeForm').waitFor({state:'visible'});assert.ok(await test.page.locator('#existingSession').isHidden());await finish(test);
+  test=await setup(request=>new URL(request.url()).pathname.endsWith('/user')?{status:401,body:{message:'Expired'}}:null,session);await ready(test.page);
+  assert.ok(await test.page.locator('#welcomeForm').isVisible());assert.ok(await test.page.locator('#existingSession').isHidden());await finish(test);
   test=await setup(()=>null,session,{viewport:{width:390,height:844},hasTouch:true,isMobile:true});await test.page.goto(base+'/portal.html');
   await test.page.locator('#mainNav [data-view="compare"]').click();
   await test.page.getByRole('button',{name:'Explicar Volta A',exact:true}).tap();await test.page.locator('#amsContextTooltip').waitFor({state:'visible'});

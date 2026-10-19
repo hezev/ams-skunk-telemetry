@@ -9,6 +9,16 @@
   const status=byId('accessStatus'),submit=byId('accessSubmit');
   const messages={login:['Bem-vindo à equipa.','Entra na tua conta AMSports.','Entrar →'],signup:['Junta-te à equipa.','Cria a tua conta e confirma o email.','Criar conta →'],recover:['Recuperar acesso.','Enviaremos um link para redefinir a palavra-passe.','Enviar link →'],reset:['Nova palavra-passe.','Define uma nova palavra-passe para a conta recuperada.','Guardar palavra-passe →']};
   function report(message,error=false){status.textContent=message;status.dataset.error=String(error);}
+  function renderSession(user){
+    const session=AMSAuth.session;
+    const signedIn=mode==='login'&&Boolean(user&&session?.access_token)&&(!session.expires_at||Number(session.expires_at)>Date.now()/1000);
+    form.hidden=signedIn;byId('createAccount').parentElement.hidden=signedIn;byId('accessPrivacy').hidden=signedIn;
+    byId('existingSession').hidden=!signedIn;
+    if(mode==='login'){
+      byId('accessTitle').textContent=signedIn?'Bem-vindo de volta.':messages.login[0];
+      byId('accessDescription').textContent=signedIn?'A tua sessão está iniciada.':messages.login[1];
+    }
+  }
   function setBusy(value){busy=value;form.querySelectorAll('button,input').forEach(el=>el.disabled=value);confirm.disabled=value||!['signup','reset'].includes(mode);byId('createAccount').disabled=value;byId('recoverAccount').disabled=value;byId('backToLogin').disabled=value;submit.textContent=value?'A processar…':messages[mode][2];}
   function setMode(value){
     if(busy)return;
@@ -19,7 +29,7 @@
     password.minLength=mode==='login'?1:8;
     byId('confirmField').hidden=!['signup','reset'].includes(mode);confirm.required=['signup','reset'].includes(mode);confirm.disabled=!confirm.required;confirm.minLength=8;
     byId('createAccount').hidden=mode!=='login';byId('recoverAccount').hidden=mode!=='login';byId('backToLogin').hidden=mode==='login';
-    byId('existingSession').hidden=true;password.value=confirm.value='';password.type='password';byId('togglePassword').textContent='Mostrar';byId('togglePassword').setAttribute('aria-label','Mostrar palavra-passe');byId('togglePassword').setAttribute('aria-pressed','false');report('');
+    renderSession(null);password.value=confirm.value='';password.type='password';byId('togglePassword').textContent='Mostrar';byId('togglePassword').setAttribute('aria-label','Mostrar palavra-passe');byId('togglePassword').setAttribute('aria-pressed','false');report('');
   }
   async function authRequest(path,options={}){
     const response=await fetch(AMS_CONFIG.supabaseUrl+'/auth/v1'+path,{...options,headers:{...AMSAuth.headers(options.token),...(options.headers||{})}});
@@ -84,8 +94,11 @@
     setMode(new URLSearchParams(location.search).get('mode')==='recover'?'recover':'login');
     try{email.value=AMSAuth.loginHint()||'';}catch{/* Cookie access may be disabled. */}
     setBusy(true);
-    try{const user=await AMSAuth.restore();if(user&&mode==='login'){byId('existingSession').hidden=false;report('Já tens sessão iniciada. Podes continuar para o portal.');}}
+    try{renderSession(await AMSAuth.restore());}
     finally{setBusy(false);AMSAuth.startPersistence();}
   }
+  async function refreshSession(){if(busy||mode!=='login')return;try{renderSession(await AMSAuth.restore());}catch{renderSession(null);}}
+  window.addEventListener('pageshow',event=>{if(event.persisted)void refreshSession();});
+  window.addEventListener('storage',event=>{if(event.key==='ams_auth_session'||event.key===null)void refreshSession();});
   boot().catch(()=>{setBusy(false);report('Não foi possível restaurar a sessão. Podes iniciar sessão novamente.',true);});
 })();
