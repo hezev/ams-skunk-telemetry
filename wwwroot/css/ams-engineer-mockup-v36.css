@@ -57,3 +57,32 @@
 @media(max-width:1390px){#engineer>.metrics.engineer-mockup-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}#engineer .engineer-mockup-layout{grid-template-columns:minmax(0,1.1fr) minmax(260px,.9fr)!important}#engineer .engineer-mockup-ai-column{grid-column:1 / -1!important}}
 @media(max-width:790px){#engineer>.metrics.engineer-mockup-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}#engineer .engineer-mockup-layout{grid-template-columns:minmax(0,1fr)!important}#engineer .engineer-mockup-ai-column{grid-column:auto!important}#engineer .engineer-bottom-grid{grid-template-columns:minmax(0,1fr)!important}#engineer .engineer-map-stage{height:310px!important}}
 @media(max-width:460px){#engineer>.metrics.engineer-mockup-kpis>.metric>span{font-size:8px!important}#engineer>.metrics.engineer-mockup-kpis>.metric>strong{font-size:15px!important}#engineer .engineer-ai-suggestions{grid-template-columns:1fr}}
+
+/* Driving coaching: a short evidence table and one open lesson at a time. */
+#engineer .engineer-table{min-width:0!important;table-layout:fixed}
+#engineer .engineer-table th:nth-child(1){width:14%}
+#engineer .engineer-table th:nth-child(2){width:12%}
+#engineer .engineer-table th:nth-child(3){width:32%}
+#engineer .engineer-table td{white-space:normal!important;overflow-wrap:anywhere;line-height:1.5;vertical-align:top}
+#engineer .engineer-table td:nth-child(2){color:#f6ba70;font-weight:700;font-variant-numeric:tabular-nums}
+#engineer .engineer-evidence-empty{margin:0;padding:14px;color:#b2c5d5;font-size:12px;line-height:1.5}
+#engineer .engineer-evidence-empty[hidden]{display:none}
+#engineer .engineer-ai-output{white-space:normal!important;min-height:0!important;padding:0!important;border:0!important;background:transparent!important}
+#engineer .engineer-coach-lesson{margin:8px 0;border:1px solid #345067;background:#0d1a27;overflow-wrap:anywhere}
+#engineer .engineer-coach-lesson summary{cursor:pointer;padding:10px;line-height:1.4;color:#eaf5ff}
+#engineer .engineer-coach-lesson summary span{float:right;margin-left:8px;color:#f6ba70;font-variant-numeric:tabular-nums}
+#engineer .engineer-coach-lesson h4{margin:10px 12px 2px;color:#8ac6f0;font-size:11px;text-transform:none;letter-spacing:0}
+#engineer .engineer-coach-lesson p{margin:4px 12px 12px;color:#d0deea;font-size:12px;line-height:1.5}
+#engineer .engineer-coach-lesson .engineer-coach-observation{padding-top:8px;border-top:1px solid #2c4356;color:#f0f5fa}
+#engineer .engineer-coach-lesson summary:focus-visible{outline:2px solid #8ac6f0;outline-offset:2px}
+@media(max-width:620px){#engineer .engineer-table{table-layout:auto}#engineer .engineer-table th{width:auto!important}#engineer .engineer-table th,#engineer .engineer-table td{padding:6px!important;font-size:10px!important}}
+
+#engineer>.engineer-mockup-layout{grid-template-columns:minmax(0,1.15fr) minmax(340px,1fr)!important}
+#engineer .engineer-mockup-ai-column{grid-column:auto!important}
+#engineer .engineer-mockup-ai-column .engineer-ai-output{white-space:normal!important;min-height:0!important;max-height:none!important;overflow:visible!important;padding:0!important;border:0!important;background:transparent!important}
+#engineer .engineer-bottom-grid{grid-template-columns:minmax(0,1fr)!important}
+#engineer .engineer-secondary-details>.engineer-mockup-insights-column,#engineer .engineer-secondary-details>.engineer-priority-card,#engineer .engineer-secondary-details>.engineer-scorecard-card{margin:8px}
+@media(max-width:1000px){#engineer>.engineer-mockup-layout{grid-template-columns:minmax(0,1fr)!important}}
+#engineer .engineer-coach-lesson{font-family:system-ui,sans-serif}
+#engineer .engineer-table th{white-space:normal!important;overflow-wrap:anywhere;line-height:1.4}
+#engineer .engineer-secondary-details:not([open])>*:not(summary){display:none!important}

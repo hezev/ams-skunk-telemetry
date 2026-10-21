@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#07090c">
   <meta name="ams-web-version" content="6.1.11">
+  <meta name="ams-web-release" content="20261021-team-endurance">
   <title>AMS Skunk Telemetry</title>
   <link rel="stylesheet" href="css/app.css?v=20261012-3">
   <link rel="stylesheet" href="css/responsive.css?v=20261007-11">
@@ -52,7 +53,7 @@
   <link rel="stylesheet" href="css/ams-engineer-reference-v33.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-insights-v34.css?v=20261013-1">
   <link rel="stylesheet" href="css/ams-engineer-key-insights-v35.css?v=20261013-1">
-  <link rel="stylesheet" href="css/ams-engineer-mockup-v36.css?v=20261014-1">
+  <link rel="stylesheet" href="css/ams-engineer-mockup-v36.css?v=20261021-coaching">
   <link rel="stylesheet" href="css/ams-setup-mockup-v37.css?v=20261014-1">
   <link rel="stylesheet" href="css/ams-setup-session-v38.css?v=20261014-1">
   <link rel="stylesheet" href="css/ams-setup-snapshots-v39.css?v=20261014-1">
@@ -69,6 +70,7 @@
 @media(max-width:1050px){#live .ams-pitwall-split{grid-template-columns:1fr}}
 </style>
   <link rel="stylesheet" href="css/ams-context-help.css?v=6.1.11">
+  <link rel="stylesheet" href="css/team-endurance.css?v=20261021-team">
 </head>
 <body>
 
@@ -401,7 +403,7 @@
       <div class="titlebar">
         <div>
           <h1>Session Intelligence &amp; AI Engineer</h1>
-          <p>Análise pós-sessão · consistência, potencial e evidência DRIVER / SETUP</p>
+          <p>Onde perdes tempo por condução e como melhorar na próxima volta</p>
         </div>
         <div class="analysis-actions">
           <label>Session <select id="engineerSessionSelect"></select></label>
@@ -442,7 +444,7 @@
         <div class="engineer-mockup-map-column">
       <article class="card engineer-track-card">
         <div class="card-head"><div><div class="card-title">Track Analysis</div><div class="trajectory-subtitle">Traçado de referência carregado · sessão selecionada</div></div><span id="engineerMapStatus" class="chip">SEM TRAÇADO</span></div>
-        <div class="engineer-map-stage"><svg id="engineerTrackSvg" viewBox="0 0 1000 600" aria-label="Traçado e zonas de perda de tempo da sessão"></svg><p id="engineerMapEmpty">Seleciona e analisa uma sessão com mapa validado para visualizar o traçado.</p><div class="engineer-map-legend" id="engineerMapLegend" hidden>Perda vs. melhor segmento <span class="gain">Menor</span><span class="mid">Intermédia</span><span class="loss">Maior</span></div></div>
+        <div class="engineer-map-stage"><svg id="engineerTrackSvg" viewBox="0 0 1000 600" aria-label="Traçado e zonas de perda de tempo da sessão"></svg><p id="engineerMapEmpty">Seleciona e analisa uma sessão com mapa validado para visualizar o traçado.</p><div class="engineer-map-legend" id="engineerMapLegend" hidden>Perda de condução nesta volta <span class="gain">Menor</span><span class="mid">Intermédia</span><span class="loss">Maior</span></div></div>
       </article>
 
       <article class="card engineer-priority-card">
@@ -507,25 +509,25 @@
         <div class="card-head">
           <div>
             <div class="card-title">AI Performance Engineer</div>
-            <div class="trajectory-subtitle">Interpretação da evidência calculada pelo AMS · pós-sessão</div>
+            <div class="trajectory-subtitle">Como melhorar os pontos fracos da tua última volta</div>
           </div>
           <div class="engineer-ai-actions">
             <span id="engineerAiStatus" class="chip">AI READY</span>
-            <button id="engineerAiBtn" class="action-btn" type="button">Generate Briefing</button>
+            <button id="engineerAiBtn" class="action-btn" type="button">Explicar como melhorar</button>
           </div>
         </div>
         <div class="engineer-ai-suggestions" aria-label="Questões rápidas ao engenheiro">
           <button type="button" data-engineer-prompt="Qual é a principal zona onde estou a perder tempo?">Onde perco mais tempo?</button>
           <button type="button" data-engineer-prompt="Como posso melhorar a consistência na travagem?">Melhorar travagem</button>
-          <button type="button" data-engineer-prompt="Quais devem ser as prioridades da próxima sessão?">Próxima sessão</button>
-          <button type="button" data-engineer-prompt="Compara a minha última volta com a melhor volta.">Comparar voltas</button>
+          <button type="button" data-engineer-prompt="Dá-me um plano simples para praticar estes pontos fracos.">Plano de treino</button>
+          <button type="button" data-engineer-prompt="Como posso trabalhar a saída nas zonas identificadas?">Como trabalhar a saída?</button>
         </div>
-        <div id="engineerAiOutput" class="engineer-ai-output">Analisa a sessão e pede um briefing para receber prioridades, diagnóstico de consistência e leitura setup vs pilotagem.</div>
+        <div id="engineerAiOutput" class="engineer-ai-output">Analisa a sessão para receber um plano de treino dos pontos fracos.</div>
         <div class="engineer-ai-question">
-          <input id="engineerQuestion" type="text" maxlength="1200" placeholder="Ex.: Onde estou a perder mais tempo? Devo mexer no setup?">
+          <input id="engineerQuestion" type="text" maxlength="1200" placeholder="Como praticar esta curva?">
           <button id="engineerAskBtn" class="action-btn" type="button">Ask Engineer</button>
         </div>
-        <div class="engineer-ai-foot">A AI interpreta os cálculos do AMS; não substitui a evidência nem inventa ganhos de setup.</div>
+        <div class="engineer-ai-foot">Começa pela primeira prioridade. Treina uma mudança de cada vez.</div>
       </article>
 
         </div>
@@ -547,7 +549,7 @@
 
 
       <details class="engineer-secondary-details">
-        <summary>Indicadores adicionais de sessão (tempos e consistência)</summary>
+        <summary>Detalhes da sessão</summary>
         <div class="metrics metrics-4">
         <article class="metric"><span>Best Lap</span><strong id="engineerBestLap">—</strong></article>
         <article class="metric"><span>Consistent Pace</span><strong id="engineerPace">—</strong></article>
@@ -560,13 +562,14 @@
         <div class="card-head">
           <div>
             <div class="card-title">Evidence by Zone</div>
-            <div class="trajectory-subtitle">Variação entre voltas e classificação DRIVER / SETUP / BOTH / INCONCLUSIVE</div>
+            <div class="trajectory-subtitle">Só perdas de condução · última volta vs melhor volta da sessão</div>
           </div>
         </div>
         <table class="engineer-table">
-          <thead><tr><th>Zone</th><th>Median loss</th><th>Time σ</th><th>Brake σ</th><th>Throttle σ</th><th>Min speed σ</th><th>Diagnosis</th><th>Confidence</th></tr></thead>
+          <thead><tr><th>Zona</th><th>Perda nesta volta</th><th>O que acontece</th><th>O que trabalhar</th></tr></thead>
           <tbody id="engineerEvidenceBody"></tbody>
         </table>
+        <p id="engineerEvidenceEmpty" class="engineer-evidence-empty" role="status"></p>
       </article>
     </section>
 
@@ -607,7 +610,6 @@
 
     <section id="team" class="view">
       <div class="titlebar"><div><h1>Team / Coach</h1><p id="teamSubtitle">Pilotos e permissões disponíveis para a conta autenticada</p></div></div>
-      <article class="card table-card"><table><thead><tr><th>Pilot</th><th>Team</th><th>Laps</th><th>Sessions</th><th>Best</th></tr></thead><tbody id="teamBody"></tbody></table></article>
     </section>
 
     <section id="workspace" class="view">
@@ -656,7 +658,8 @@
 </div>
 <script src="js/config.js?v=20261018-web-6.1.10"></script>
 <script src="js/analysis.js?v=20261018-6.1.4-replay"></script>
-<script src="js/engineer.js?v=20261018-6.1.9"></script>
+<script src="js/engineer-coaching.js?v=20261021-coaching"></script>
+<script src="js/engineer.js?v=20261021-coaching"></script>
 <script src="js/engineering-ui.js?v=20261007-11"></script>
 <script src="js/charts.js?v=20261018-6.1.8-live-chart"></script>
 <script src="js/track-map.js?v=20261018-6.1.10-start-finish"></script>
@@ -664,10 +667,12 @@
 <script src="js/auth.js?v=20261018-web-6.1.10"></script>
 <script src="js/realtime.js?v=20261018-web-6.1.10"></script>
 <script src="js/ams-engineer-replay.js?v=20261018-6.1.8"></script>
-<script src="js/app.js?v=20261018-web-6.1.10"></script>
-<script src="js/ai-engineer.js?v=20261018-6.1.9"></script>
+<script src="js/endurance-planner.js?v=20261021-team"></script>
+<script src="js/ams-team-endurance.js?v=20261021-team"></script>
+<script src="js/app.js?v=20261021-team"></script>
+<script src="js/ai-engineer.js?v=20261021-coaching"></script>
 <script src="js/layout.js?v=20261007-12"></script>
-<script src="js/ams-concepts.js?v=20261014-38"></script>
+<script src="js/ams-concepts.js?v=20261021-team"></script>
 <script src="js/ams-mockup-v2.js?v=20261018-6.1.8"></script>
 <script src="js/ams-race-intelligence.js?v=20261018-6.1.9"></script>
 <script src="js/ams-mini-sector-explorer.js?v=20261012-1"></script>
@@ -677,16 +682,16 @@
 <script src="js/ams-chart-toolbar.js?v=20261016-3"></script>
 <script src="js/ams-telemetry-expand.js?v=20261013-1"></script>
 <script src="js/ams-map-empty-states.js?v=20261013-1"></script>
-  <script src="js/ams-engineer-reference-v33.js?v=20261018-6.1.9"></script>
+  <script src="js/ams-engineer-reference-v33.js?v=20261021-coaching"></script>
   <script src="js/ams-engineer-insights-v34.js?v=20261016-3"></script>
   <script src="js/ams-engineer-mockup-v36.js?v=20261014-1"></script>
   <script src="js/ams-setup-mockup-v37.js?v=20261014-38"></script>
   <script src="js/ams-setup-session-v38.js?v=20261014-1"></script>
   <script src="js/ams-setup-snapshots-v39.js?v=20261014-1"></script>
   <script type="module" src="js/ams-dual-map-3d-v41.js?v=20261014-43"></script>
-<script src="js/ams-i18n.js?v=20261018-6.1.8"></script>
+<script src="js/ams-i18n.js?v=20261021-coaching"></script>
 <script src="js/ams-live-pitwall-map.js?v=20261018-6.1.10-start-finish"></script>
 <script src="js/ams-web-live.js?v=20261018-web-6.1.10"></script>
-<script src="js/ams-context-help.js?v=6.1.11"></script>
+<script src="js/ams-context-help.js?v=20261021-team"></script>
 </body>
 </html>

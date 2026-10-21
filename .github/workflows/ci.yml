@@ -19,6 +19,27 @@ jobs:
           node-version: '22'
       - name: Build
         run: dotnet build --configuration Release
+      - name: Team membership and read-only sharing
+        run: |
+          npm ci --prefix tests/database --ignore-scripts --no-audit --no-fund
+          npm test --prefix tests/database
+      - name: Endurance and driving coach calculations
+        env:
+          AMS_APP: web
+        run: |
+          node tests/integration/endurance-planner.mjs
+          node tests/integration/engineer-coaching.mjs
+      - name: Team and endurance portal flows
+        env:
+          AMS_APP: web
+          NODE_PATH: ${{ github.workspace }}/tests/browser/node_modules
+        run: |
+          npm ci --prefix tests/browser --ignore-scripts --no-audit --no-fund
+          cd tests/browser
+          npx playwright install --with-deps chromium
+          cd ../..
+          node tests/integration/team-endurance-workspace.mjs
+          node tests/integration/engineer-workspace.mjs
       - name: Check bilingual JavaScript and integration
         run: |
           node --check wwwroot/js/ams-i18n.js
