@@ -22,14 +22,8 @@
   // Keep actionable original headings; decorative status ribbons have been retired.
   const titles=[['dashboard','Race Control Command Center'],['compare','Lap Compare & Corner Explorer'],['engineer','Session Intelligence & AI Engineer']];
   titles.forEach(([id,title])=>{const h=document.querySelector('#'+id+' .titlebar h1');if(h)h.textContent=title;});
-  // Strategy: illustrative UI only. Estimated values are intentionally not fabricated.
-  section('strategy','Race Strategy','Combustível · gestão de stint · planeamento de corrida',
-    kpis([['Fuel on board','—'],['Consumption','—'],['Laps remaining','—'],['Pit window','A calcular','ams-gold']])+
-    '<div class="ams-premium-grid">'+
-    card('Pit Strategy', '<div class="ams-premium-list"><div><span>Estratégia atual</span><strong>Sem plano</strong></div><div><span>Próxima paragem</span><strong>—</strong></div><div><span>Composto</span><strong>—</strong></div></div>'+note('Os dados serão apresentados apenas quando existirem medições válidas.'))+
-    card('Stint Timeline','<p class="ams-muted">Seleciona uma sessão com telemetria para obter uma projeção fundamentada.</p>'+Array.from({length:4},(_,i)=>'<div class="ams-timeline">'+Array.from({length:22},(_,j)=>'<span class="'+(j===i*5?'flag':j%7===0?'best':'')+'"></span>').join('')+'</div>').join('')+note('Faixas meramente ilustrativas; não representam uma corrida gravada.'))+
-    card('Strategy Notes','<div class="ams-premium-list"><div><span>Combustível alvo</span><strong>A definir</strong></div><div><span>Desgaste de pneus</span><strong>Sem dados</strong></div><div><span>Weather / Flags</span><strong>Sem feed</strong></div></div>')+
-    '</div>');
+  // The functional endurance workspace is mounted by ams-team-endurance.js.
+  section('strategy','Race Strategy','','');
   const setupDefinitions=[['Rear wing',0,16,8,1],['Brake bias',45,65,54,.5],['Front pressure',20,32,26,.1],['Rear pressure',20,32,26,.1],['Front ride height',30,100,55,1],['Rear ride height',30,110,65,1],['Front ARB',1,12,5,1],['Rear ARB',1,12,7,1]];
   const makeSetupControls=()=>setupDefinitions.map(([name,min,max,value,step],i)=>'<label class="ams-setup-row"><span>'+name+'</span><input data-setup-param="'+i+'" aria-label="'+name+'" type="range" min="'+min+'" max="'+max+'" value="'+value+'" step="'+step+'"><output id="setupValue'+i+'">'+value+'</output></label>').join('');
   section('setup-lab','Setup Lab & Tune Catalog','Guardar perfis de setup · comparar parâmetros · preparar experiências',

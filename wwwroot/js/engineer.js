@@ -39,7 +39,7 @@ window.AMSEngineer = {
   },
   fingerprint(lap,events,start,end){
     const samples=(lap?.samples||[]).filter(s=>s._p>=start&&s._p<=end);
-    const read=key=>samples.map(s=>Number(s?.[key])).filter(Number.isFinite);
+    const read=key=>samples.map(s=>s?.[key]).filter(v=>typeof v==='number'&&Number.isFinite(v));
     const speed=read("speed"),steer=read("steer"),yaw=read("yawRate");
     const absSteer=steer.map(Math.abs),absYaw=yaw.map(Math.abs);
     let correction=0;
@@ -89,6 +89,7 @@ window.AMSEngineer = {
 
     const times=prepared.map(l=>l.lapTimeSec);
     const bestLap=prepared[0],bestTime=bestLap.lapTimeSec;
+    const currentLap=validByArrival[validByArrival.length-1];
     const pace=this.percentile(times,.35),lapSd=this.stddev(times);
     const consistency=Math.round(this.clamp(100-(lapSd/Math.max(bestTime,.001))*5000,0,100));
     const lapRows=prepared.map(l=>({lap:l,events:AMSAnalysis.detectEvents(l)}));
@@ -100,13 +101,21 @@ window.AMSEngineer = {
         lap:row.lap,
         stats:AMSAnalysis.segmentStats(row.lap,start,end),
         fp:this.fingerprint(row.lap,row.events,start,end)
-      })).filter(r=>Number.isFinite(Number(r.stats?.time)));
+      })).filter(r=>typeof r.stats?.time==='number'&&Number.isFinite(r.stats.time));
       if(!rows.length)continue;
 
       const zoneTimes=rows.map(r=>r.stats.time),sorted=[...zoneTimes].sort((a,b)=>a-b);
       const bestSeg=sorted[0],secondSeg=sorted[Math.min(1,sorted.length-1)];
       const medianSeg=this.median(zoneTimes),timeSd=this.stddev(zoneTimes);
       const bestLapRow=rows.find(r=>r.lap===bestLap)||rows[0],bestLapSeg=Number(bestLapRow?.stats?.time);
+      const currentRow=rows.find(r=>r.lap===currentLap);
+      const difference=(a,b)=>typeof a==='number'&&Number.isFinite(a)&&typeof b==='number'&&Number.isFinite(b)?a-b:null;
+      const drivingEvidence={
+        loss:difference(currentRow?.stats?.time,bestLapRow?.stats?.time),
+        brakeShiftP:difference(currentRow?.fp?.brakeP,bestLapRow?.fp?.brakeP),
+        throttleShiftP:difference(currentRow?.fp?.throttleP,bestLapRow?.fp?.throttleP),
+        minSpeedLoss:difference(bestLapRow?.fp?.minSpeed,currentRow?.fp?.minSpeed)
+      };
       const brakeP=rows.map(r=>r.fp.brakeP).filter(Number.isFinite);
       const throttleP=rows.map(r=>r.fp.throttleP).filter(Number.isFinite);
       const minSpeed=rows.map(r=>r.fp.minSpeed).filter(Number.isFinite);
@@ -126,7 +135,7 @@ window.AMSEngineer = {
       rawZones.push({
         index:i+1,start,end,label:this.zoneLabel(i+1,start,end,corners),bestSeg,secondSeg,medianSeg,timeSd,bestLapSeg,avgLoss,repeatablePotential,
         brakeStdP,throttleStdP,minSpeedSd,
-        brakeSamples:brakeP.length,throttleSamples:throttleP.length,
+        brakeSamples:brakeP.length,throttleSamples:throttleP.length,minSpeedSamples:minSpeed.length,drivingEvidence,
         brakeStdM:Number.isFinite(trackLengthM)?brakeStdP*trackLengthM:null,
         throttleStdM:Number.isFinite(trackLengthM)?throttleStdP*trackLengthM:null,
         ratioMedian:this.median(ratio),ratioCv:this.cv(ratio),
@@ -205,7 +214,6 @@ window.AMSEngineer = {
 
     // Last chronologically supplied valid lap versus fastest valid lap.
     // No fictional traces: every ordinate is interpolated from stored telemetry.
-    const currentLap=validByArrival[validByArrival.length-1];
     const channel=(lap,key)=>Array.from({length:121},(_,i)=>{
       const value=AMSAnalysis.interpolate(lap,i/120,key);
       return Number.isFinite(value)?Number(value):null;
@@ -233,7 +241,7 @@ window.AMSEngineer = {
       set("engineerSetupText","A estimativa depende de evidência repetível da sessão.");
       for(const id of ["engineerDriverBar","engineerSetupBar"]){const bar=document.getElementById(id);if(bar)bar.style.width="0%";}
       const priority=document.getElementById("engineerPriorities");if(priority)priority.textContent="Sem análise.";
-      const evidence=document.getElementById("engineerEvidenceBody");if(evidence)evidence.replaceChildren();
+      window.AMSEngineerCoaching.renderEvidence(report);
       window.AMSEngineerMockupPanels?.render(report);
       window.dispatchEvent(new CustomEvent("ams-engineer-analysis",{detail:{report}}));
       return;
@@ -278,15 +286,7 @@ window.AMSEngineer = {
 
     window.AMSEngineerMockupPanels?.render(report);
 
-    const body=document.getElementById("engineerEvidenceBody");
-    if(body){
-      body.innerHTML="";
-      for(const z of [...report.zones].sort((a,b)=>b.priority-a.priority).slice(0,20)){
-        const tr=document.createElement("tr");
-        tr.innerHTML="<td><strong>"+z.label+"</strong><br><small>"+(z.start*100).toFixed(1)+"–"+(z.end*100).toFixed(1)+"%</small></td><td>"+this.fmtDelta(z.avgLoss)+"</td><td>"+z.timeSd.toFixed(3)+"s</td><td>"+(Number.isFinite(z.brakeStdM)?z.brakeStdM.toFixed(1)+" m":"—")+"</td><td>"+(Number.isFinite(z.throttleStdM)?z.throttleStdM.toFixed(1)+" m":"—")+"</td><td>"+(Number.isFinite(z.minSpeedSd)?z.minSpeedSd.toFixed(1)+" km/h":"—")+"</td><td><span class=\"engineer-tag "+z.diagnosis.toLowerCase()+"\">"+z.diagnosis+"</span></td><td>"+z.confidence+"%</td>";
-        body.appendChild(tr);
-      }
-    }
+    window.AMSEngineerCoaching.renderEvidence(report);
     window.dispatchEvent(new CustomEvent("ams-engineer-analysis",{detail:{report}}));
   }
 };

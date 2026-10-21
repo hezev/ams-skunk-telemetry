@@ -40,18 +40,18 @@ function render(){
  const width=Math.max(.8,spread*.0045),shadow=Math.max(3,spread*.014);
  element('polyline',{points:coords,fill:'none',stroke:'#16364b','stroke-width':shadow,'stroke-linejoin':'round'});
  element('polyline',{points:coords,fill:'none',stroke:'#7896aa','stroke-width':width,'stroke-linejoin':'round'});
- const zones=(Array.isArray(report.zones)?report.zones:[]).filter(z=>Number.isFinite(z.start)&&Number.isFinite(z.end)&&z.end>z.start&&Number.isFinite(z.avgLoss));
- const maxLoss=Math.max(0,...zones.map(z=>z.avgLoss));
+ const zones=window.AMSEngineerCoaching.zones(report).filter(z=>Number.isFinite(z.start)&&Number.isFinite(z.end)&&z.end>z.start);
+ const maxLoss=Math.max(0,...zones.map(z=>z.drivingEvidence.loss));
  for(const z of zones){
   const samples=[];
   const steps=Math.max(14,Math.ceil((z.end-z.start)*700));
   for(let i=0;i<=steps;i++)samples.push(station(pts,z.start+(z.end-z.start)*i/steps));
-  const relative=maxLoss>0.004?z.avgLoss/maxLoss:0;
+  const relative=maxLoss>0.004?z.drivingEvidence.loss/maxLoss:0;
   const color=relative>=.68?'#ee4b5b':relative>=.31?'#e9b947':'#23bd81';
   const shape=element('polyline',{points:samples.map(p=>p.x.toFixed(2)+','+p.y.toFixed(2)).join(' '),
    fill:'none',stroke:color,'stroke-width':Math.max(2.8,spread*.008),
    'stroke-linecap':'round','stroke-linejoin':'round'});
-  element('title',{},shape).textContent=(z.label||'Zona')+' · perda mediana vs melhor segmento: +'+z.avgLoss.toFixed(3)+'s';
+  element('title',{},shape).textContent=window.AMSEngineerCoaching.tr('Zona ','Zone ')+z.index+' · +'+z.drivingEvidence.loss.toFixed(3)+'s';
  }
  for(const c of snapshot.turns){
   const p=station(pts,c.p),r=Math.max(10,spread*.014);

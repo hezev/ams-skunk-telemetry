@@ -2,6 +2,9 @@
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const state={compareBest:null,compareOwnBests:[],laps:[],pilots:[],selectedId:null,selectedDetail:null,cache:new Map(),isCoach:false,analysisLap:null,analysisRef:null,analysisResult:null,miniCount:20,compareTimer:null,compareProgress:0,compareReplayTime:0,compareSpeed:1,compareDetailA:null,compareDetailB:null,compareLapA:null,compareLapB:null,engineerReport:null};
 
+  let accessRevision=0,selectionRevision=0;
+  const escapeText=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
   async function coachFlag(token){
     try{
       const rows=await AMSSupabase.request("/rest/v1/rpc/ams_is_coach",{token,method:"POST",body:{}});
@@ -15,15 +18,16 @@
         return await AMSSupabase.request("/rest/v1/rpc/ams_coach_pilots",{token,method:"POST",body:{}})||[];
       }
       const qs=new URLSearchParams({select:"id,pilot_name,team,created_at",id:"eq."+AMSAuth.user.id,limit:"1"});
-      return await AMSSupabase.request("/rest/v1/ams_pilots?"+qs,{token})||[];
+      const own=await AMSSupabase.request("/rest/v1/ams_pilots?"+qs,{token})||[];
+      return [...new Map([...own,...(window.AMSTeams?.getMembers()||[])].map(p=>[p.id,p])).values()];
     }catch{return [];}
   }
 
   async function visibleLaps(token,isCoach){
-    if(isCoach){
-      return await AMSSupabase.request("/rest/v1/rpc/ams_coach_laps",{token,method:"POST",body:{}})||[];
-    }
-    return await AMSSupabase.getLaps(token,AMSAuth.user.id)||[];
+    const own=isCoach
+      ?await AMSSupabase.request("/rest/v1/rpc/ams_coach_laps",{token,method:"POST",body:{}})||[]
+      :await AMSSupabase.getLaps(token,AMSAuth.user.id)||[];
+    return window.AMSTeams?AMSTeams.augmentLaps(token,own):own;
   }
 
   const fmtLap=ms=>{
@@ -46,7 +50,8 @@
   function groupSessions(laps){
     const m=new Map();
     for(const l of laps){
-      const k=l.session_id||[l.pilot_id,l.simulator,l.circuit,l.car,l.completed_at?.slice(0,10)].join("|");
+      const raw=l.session_id||[l.pilot_id,l.simulator,l.circuit,l.car,l.completed_at?.slice(0,10)].join("|");
+      const k=l.pilot_id&&l.pilot_id!==AMSAuth.user?.id?l.pilot_id+"|"+raw:raw;
       if(!m.has(k))m.set(k,{id:k,sim:l.simulator,track:l.circuit,car:l.car,pilot_id:l.pilot_id,laps:[],last:null,best:null});
       const s=m.get(k); s.laps.push(l);
       if(Number.isFinite(Number(l.lap_time_ms))&&(s.best===null||Number(l.lap_time_ms)<s.best))s.best=Number(l.lap_time_ms);
@@ -75,7 +80,7 @@
     if(!state.laps.length){body.innerHTML='<tr><td colspan="7" class="empty-cloud">Nenhuma volta encontrada.</td></tr>';return;}
     for(const l of state.laps){
       const tr=document.createElement("tr"); tr.dataset.lapId=l.id; tr.className="cloud-lap-row"+(l.id===state.selectedId?" focus-row":"");
-      tr.innerHTML=`<td><strong>${l.lap_number??"—"}</strong></td><td><strong>${fmtLap(l.lap_time_ms)}</strong></td><td>${l.circuit||"—"}</td><td>${l.car||"—"}</td><td><small>${l.session_id||"—"}</small></td><td>${l.completed_at?new Date(l.completed_at).toLocaleString("pt-PT"):"—"}</td><td>${l.verified?"VERIFIED":"RECORDED"}</td>`;
+      tr.innerHTML=`<td><strong>${l.lap_number??"—"}</strong><small class="team-lap-owner">${escapeText(pilotName(l.pilot_id))}</small></td><td><strong>${fmtLap(l.lap_time_ms)}</strong></td><td>${escapeText(l.circuit||"—")}</td><td>${escapeText(l.car||"—")}</td><td><small>${escapeText(l.session_id||"—")}</small></td><td>${l.completed_at?new Date(l.completed_at).toLocaleString("pt-PT"):"—"}</td><td>${l.verified?"VERIFIED":"RECORDED"}</td>`;
       tr.addEventListener("click",()=>selectLap(l.id,true));
       body.appendChild(tr);
     }
@@ -87,7 +92,7 @@
     if(!sessions.length){body.innerHTML='<tr><td colspan="7" class="empty-cloud">Sem sessões gravadas.</td></tr>';return;}
     for(const s of sessions){
       const tr=document.createElement("tr");
-      tr.innerHTML=`<td>${s.last?s.last.toLocaleDateString("pt-PT"):"—"}</td><td>${s.sim||"—"}</td><td>${s.track||"—"}</td><td>${s.car||"—"}</td><td>${s.laps.length}</td><td><strong>${fmtLap(s.best)}</strong></td><td><span class="status done">Complete</span></td>`;
+      tr.innerHTML=`<td>${s.last?s.last.toLocaleDateString("pt-PT"):"—"}</td><td>${escapeText(s.sim||"—")}</td><td>${escapeText(s.track||"—")}</td><td>${escapeText(s.car||"—")}</td><td>${s.laps.length}</td><td><strong>${fmtLap(s.best)}</strong></td><td><span class="status done">Complete</span></td>`;
       tr.addEventListener("click",()=>{const best=[...s.laps].sort((a,b)=>a.lap_time_ms-b.lap_time_ms)[0]; if(best)selectLap(best.id,true);});
       body.appendChild(tr);
     }
@@ -137,10 +142,10 @@
   }
 
   async function loadPublicRecords(token){
-    const revision=authRevision;
+    const revision=accessRevision;
     try{
       const data=await AMSSupabase.request("/rest/v1/rpc/ams_public_record_board",{token,method:"POST",body:{}});
-      if(revision!==authRevision)return;
+      if(revision!==accessRevision)return;
       state.publicBoard=data||{records:[],progression:[],career:[]};
       renderRecords();
     }catch(err){
@@ -163,32 +168,13 @@
     setText("driverSessions",sessions); setText("driverLaps",own.length); setText("driverTracks",tracks); setText("driverPBs",improvements);
   }
 
-  function renderTeam(){
-    const body=q("#teamBody"); if(!body)return; body.innerHTML="";
-    const groups=new Map();
-    for(const l of state.laps){
-      if(!groups.has(l.pilot_id))groups.set(l.pilot_id,[]);
-      groups.get(l.pilot_id).push(l);
-    }
-    const ids=new Set([...groups.keys()]);
-    if(!ids.size){body.innerHTML='<tr><td colspan="5" class="empty-cloud">Sem pilotos com telemetria gravada.</td></tr>';return;}
-    for(const id of ids){
-      const laps=groups.get(id)||[], profile=state.pilots.find(p=>p.id===id);
-      const sessions=groupSessions(laps).length, best=laps.length?Math.min(...laps.map(x=>Number(x.lap_time_ms)).filter(Number.isFinite)):null;
-      const tr=document.createElement("tr");
-      tr.innerHTML=`<td><strong>${profile?.pilot_name||pilotName(id)}</strong></td><td>${profile?.team||"—"}</td><td>${laps.length}</td><td>${sessions}</td><td>${fmtLap(best)}</td>`;
-      body.appendChild(tr);
-    }
-    setText("teamSubtitle",state.isCoach?"Modo treinador · acesso aos pilotos autorizado por RLS":"Modo piloto · apenas os teus dados privados e referências partilhadas");
-  }
-
   function fillReferenceSelector(){
     const e=q("#telemetryReferenceSelect");if(!e)return;
     const current=state.laps.find(l=>l.id===state.selectedId)||state.selectedDetail;
     const compatible=state.laps
       .filter(l=>current&&l.id!==state.selectedId&&l.simulator===current.simulator&&l.circuit===current.circuit&&l.car===current.car)
       .sort((a,b)=>Number(a.lap_time_ms)-Number(b.lap_time_ms));
-    e.innerHTML='<option value="">Sem referência</option>'+compatible.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${pilotName(l.pilot_id)}</option>`).join("");
+    e.innerHTML='<option value="">Sem referência</option>'+compatible.map(l=>`<option value="${escapeText(l.id)}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${escapeText(pilotName(l.pilot_id))}</option>`).join("");
     if(compatible.length)e.value=compatible[0].id;
   }
 
@@ -196,7 +182,7 @@
     const e=q("#engineerSessionSelect");if(!e)return;
     const sessions=groupSessions(state.laps);
     const current=e.value;
-    e.innerHTML=sessions.map(s=>`<option value="${s.id}">${s.last?s.last.toLocaleDateString("pt-PT"):"—"} · ${s.track||"—"} · ${s.car||"—"} · ${s.laps.length} laps</option>`).join("");
+    e.innerHTML=sessions.map(s=>`<option value="${escapeText(s.id)}">${s.last?s.last.toLocaleDateString("pt-PT"):"—"} · ${escapeText(s.track||"—")} · ${escapeText(s.car||"—")} · ${s.laps.length} laps · ${escapeText(pilotName(s.pilot_id))}</option>`).join("");
     if(current&&sessions.some(s=>String(s.id)===String(current)))e.value=current;
     else if(sessions[0])e.value=sessions[0].id;
     window.AMSEngineerReplay?.setLaps(sessions.find(s=>String(s.id)===String(e.value))?.laps||[]);
@@ -204,14 +190,14 @@
   }
 
   function fillSelectors(){
-    const options=state.laps.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");
+    const options=state.laps.map(l=>`<option value="${escapeText(l.id)}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${escapeText(l.circuit||"")} · ${escapeText(l.car||"")} · ${escapeText(pilotName(l.pilot_id))}</option>`).join("");
     const priorA=q("#compareLapA")?.value,priorB=q("#compareLapB")?.value;
     for(const id of ["telemetryLapSelect","compareLapA"]){const e=document.getElementById(id);if(e)e.innerHTML=options;}
     if(state.selectedId){const t=q("#telemetryLapSelect");if(t)t.value=state.selectedId;}
     const own=state.laps.filter(l=>l.pilot_id===AMSAuth.user?.id&&Number(l.lap_time_ms)>0);
     own.sort((a,b)=>Date.parse(b.completed_at||0)-Date.parse(a.completed_at||0));
     const a=q("#compareLapA"),b=q("#compareLapB");
-    if(a){a.innerHTML=own.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""} · ${l.car||""}</option>`).join("");if(priorA&&own.some(l=>String(l.id)===priorA))a.value=priorA;else if(own[0])a.value=own[0].id;}
+    if(a){a.innerHTML=own.map(l=>`<option value="${escapeText(l.id)}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${escapeText(l.circuit||"")} · ${escapeText(l.car||"")} · ${escapeText(pilotName(l.pilot_id))}</option>`).join("");if(priorA&&own.some(l=>String(l.id)===priorA))a.value=priorA;else if(own[0])a.value=own[0].id;}
     if(b)b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
     void refreshCommunityReference(priorB);
     fillReferenceSelector();
@@ -219,10 +205,10 @@
   }
 
   async function loadComparePersonalBests(token){
-    const revision=authRevision;
+    const revision=accessRevision;
     try{
       const rows=await AMSSupabase.getBestLaps(token,AMSAuth.user?.id);
-      if(revision!==authRevision)return;
+      if(revision!==accessRevision)return;
       state.compareOwnBests=(rows||[]).filter(l=>Number(l.lap_time_ms)>0);
       await refreshCommunityReference();
     }catch(err){console.warn("AMS Compare personal bests:",err);}
@@ -230,14 +216,14 @@
 
   async function refreshCommunityReference(preferred=null){
     const a=q("#compareLapA"),b=q("#compareLapB");
-    const revision=authRevision,chosen=a?.value;
-    const current=()=>revision===authRevision&&chosen===a?.value;
+    const revision=accessRevision,chosen=a?.value;
+    const current=()=>revision===accessRevision&&chosen===a?.value;
     const own=state.laps.find(l=>String(l.id)===String(a?.value)&&l.pilot_id===AMSAuth.user?.id)||state.compareOwnBests.find(l=>`best:${l.id}`===String(a?.value));
     if(!b)return;
     b.innerHTML='<option value="">A carregar melhor volta disponível…</option>';
     if(!own){b.innerHTML='<option value="">Sem volta do piloto</option>';return;}
-    const compatible=state.laps.filter(l=>l.id!==own.id&&l.pilot_id===AMSAuth.user?.id&&l.simulator===own.simulator&&l.circuit===own.circuit&&l.car===own.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms));
-    const localOptions=compatible.map(l=>`<option value="${l.id}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${l.circuit||""}</option>`);
+    const compatible=state.laps.filter(l=>l.id!==own.id&&l.simulator===own.simulator&&l.circuit===own.circuit&&l.car===own.car&&Number(l.lap_time_ms)>0).sort((x,y)=>Number(x.lap_time_ms)-Number(y.lap_time_ms));
+    const localOptions=compatible.map(l=>`<option value="${escapeText(l.id)}">#${l.lap_number??"—"} · ${fmtLap(l.lap_time_ms)} · ${escapeText(l.circuit||"")} · ${escapeText(pilotName(l.pilot_id))}</option>`);
     const token=await AMSAuth.token();
     if(!current())return;
     if(!token){
@@ -250,6 +236,7 @@
       const qparams=new URLSearchParams({select:"id,pilot_id,simulator,circuit,car,lap_time_ms,shared",simulator:"eq."+own.simulator,circuit:"eq."+own.circuit,car:"eq."+own.car,order:"lap_time_ms.asc",limit:"1"});
       const results=await AMSSupabase.request("/rest/v1/ams_best_laps?"+qparams,{token});
       if(!current())return;
+      if(revision!==accessRevision)return;
       const first=results?.find(l=>Number(l.lap_time_ms)>0);
       state.compareBest=first||null;
       const cloudOption=first?`<option value="best:${first.id}">${fmtLap(first.lap_time_ms)} · ${first.shared?"Community":"Melhor cloud"} · ${own.circuit}</option>`:"";
@@ -264,13 +251,15 @@
 
   async function detail(id){
     if(!id)return null;
+    const revision=accessRevision;
     if(String(id).startsWith("local:"))return AMSSupabase.getLapTelemetry(null,id);
     if(state.cache.has(id))return state.cache.get(id);
     if(String(id).startsWith("best:")){
       const token=await AMSAuth.token();if(!token)return null;
       const rows=await AMSSupabase.request("/rest/v1/ams_best_laps?"+new URLSearchParams({select:"id,pilot_id,simulator,circuit,car,lap_time_ms,completed_at,telemetry",id:"eq."+String(id).slice(5),limit:"1"}),{token});
+      if(revision!==accessRevision)return null;
       const best=rows?.[0]||null;
-      if(best)state.cache.set(id,best);
+      if(best?.pilot_id===AMSAuth.user?.id)state.cache.set(id,best);
       return best;
     }
     const token=await AMSAuth.token(); if(!token)return null;
@@ -281,7 +270,8 @@
     }else{
       d=await AMSSupabase.getLapTelemetry(token,id);
     }
-    if(d)state.cache.set(id,d);
+    if(revision!==accessRevision)return null;
+    if(d?.pilot_id===AMSAuth.user?.id)state.cache.set(id,d);
     return d;
   }
 
@@ -475,9 +465,11 @@
 
   async function refreshEngineeringAnalysis(){
     if(!state.selectedDetail)return;
+    const revision=accessRevision,selected=state.selectedDetail;
     state.analysisLap=AMSAnalysis.prepareLap(state.selectedDetail);
     const refId=q("#telemetryReferenceSelect")?.value;
     let refDetail=refId?await detail(refId):null;
+    if(revision!==accessRevision||selected!==state.selectedDetail)return;
     state.analysisRef=refDetail?AMSAnalysis.prepareLap(refDetail):null;
     if(state.analysisRef&&!AMSAnalysis.compatible(state.analysisLap,state.analysisRef))state.analysisRef=null;
 
@@ -509,15 +501,16 @@
   }
 
   async function selectLap(id,goTelemetry=false){
-    const revision=authRevision;
-    const d=await detail(id); if(!d)return;
-    if(revision!==authRevision)return;
+    const revision=accessRevision,selection=++selectionRevision;
+    const d=await detail(id); if(!d||revision!==accessRevision||selection!==selectionRevision)return;
+    if(revision!==accessRevision)return;
     state.selectedId=id; state.selectedDetail=d; renderLaps();
     setText("telemetryStatus",`${(d.telemetry||[]).length} amostras`);
     const sel=q("#telemetryLapSelect"); if(sel)sel.value=id;
     fillReferenceSelector();
     await AMSTrack.load(d.circuit||"","",d.telemetry||[]);
-    if(revision!==authRevision)return;
+    if(revision!==accessRevision||selection!==selectionRevision)return;
+    if(revision!==accessRevision)return;
     updateWorkspace(); updateReplayDerived(d);
     setZoomWindow(0,100);
     await refreshEngineeringAnalysis();
@@ -627,12 +620,13 @@
   }
 
   async function compare(){
+    const revision=accessRevision;
     stopCompareReplay();
     const chosen=state.compareOwnBests.find(l=>`best:${l.id}`===String(q("#compareLapA")?.value))||state.laps.find(l=>String(l.id)===String(q("#compareLapA")?.value));
     if(!chosen)return;
     await refreshCommunityReference(q("#compareLapB")?.value||null);
     const aId=q("#compareLapA")?.value,bId=q("#compareLapB")?.value;
-    const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b)return;
+    const [a,b]=await Promise.all([detail(aId),detail(bId)]); if(!a||!b||revision!==accessRevision)return;
 
     state.compareDetailA=a;state.compareDetailB=b;
     setText("compareTimeA",fmtLap(a.lap_time_ms)); setText("compareTimeB",fmtLap(b.lap_time_ms));
@@ -650,6 +644,7 @@
     }
 
     await AMSTrack.load(a.circuit||"","",a.telemetry||[]);
+    if(revision!==accessRevision)return;
     state.compareLapA=AMSAnalysis.prepareLap(a);
     state.compareLapB=AMSAnalysis.prepareLap(b);
     state.compareProgress=0;
@@ -675,17 +670,18 @@
   }
 
   async function loadCloud(){
-    const owner=AMSAuth.user?.id,revision=authRevision;
-    const current=()=>owner===AMSAuth.user?.id&&revision===authRevision;
+    const owner=AMSAuth.user?.id,revision=accessRevision;
+    const current=()=>owner===AMSAuth.user?.id&&revision===accessRevision;
     if(!owner)return;
     const token=await AMSAuth.token(); if(!token)return;
     if(!current())return;
     try{
       const isCoach=await coachFlag(token);if(!current())return;
-      const [laps,pilots]=await Promise.all([visibleLaps(token,isCoach),visiblePilots(token,isCoach)]);
+      const laps=await visibleLaps(token,isCoach);if(!current())return;
+      const pilots=await visiblePilots(token,isCoach);
       if(!current())return;
       state.isCoach=isCoach;state.laps=laps;state.pilots=pilots;
-      renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+      renderLaps();renderSessions();renderDriver();fillSelectors();
       await loadComparePersonalBests(token);
       if(!current())return;
       publishSetupSessions();
@@ -696,57 +692,59 @@
     }catch(err){
       if(!current())return;
       console.warn("AMS portal data:",err); setText("connectionText","SUPABASE ERROR");
-      const body=q("#lapsBody");if(body)body.innerHTML='<tr><td colspan="7" class="error-cloud">Erro: '+String(err.message||err)+'</td></tr>';
+      const body=q("#lapsBody");if(body)body.innerHTML='<tr><td colspan="7" class="error-cloud">Erro: '+escapeText(err.message||err)+'</td></tr>';
     }
   }
 
   document.addEventListener("ams-native-archive-ready",async()=>{
+    if(AMSAuth.user?.id){document.dispatchEvent(new CustomEvent("ams-laps-changed"));return;}
     if(!window.AMSNativeArchive)return;
-    try{state.laps=await window.AMSNativeArchive();renderLaps();renderSessions();fillSelectors();publishSetupSessions();}
+    const revision=accessRevision;
+    try{const rows=await window.AMSNativeArchive();if(revision!==accessRevision)return;state.laps=rows;renderLaps();renderSessions();fillSelectors();publishSetupSessions();}
     catch(error){console.warn("Local archive:",error);}
   });
   document.addEventListener("ams-setup-request-sessions",publishSetupSessions);
   let lapRefreshQueue=Promise.resolve();
   const lapSignature=rows=>JSON.stringify((rows||[]).map(row=>[row.id,row.pilot_id,row.session_id,row.lap_number,row.lap_time_ms,row.completed_at,row.simulator,row.circuit,row.car,row.verified]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))));
-  let cloudLapPolling=false,authRevision=0;
+  let cloudLapPolling=false;
   async function pollCloudLaps(){
-    const owner=AMSAuth.user?.id,revision=authRevision;
+    const owner=AMSAuth.user?.id,revision=accessRevision;
     if(!owner||cloudLapPolling||document.visibilityState==='hidden')return;
     cloudLapPolling=true;
     try{
       const token=await AMSAuth.token();if(!token)return;
-      if(revision!==authRevision||AMSAuth.user?.id!==owner)return;
+      if(revision!==accessRevision||AMSAuth.user?.id!==owner)return;
       const rows=await visibleLaps(token,state.isCoach);
-      if(revision!==authRevision||AMSAuth.user?.id!==owner)return;
+      if(revision!==accessRevision||AMSAuth.user?.id!==owner)return;
       if(lapSignature(rows)===lapSignature(state.laps))return;
-      lapRefreshQueue=lapRefreshQueue.catch(()=>{}).then(()=>revision===authRevision?refreshAllLapViews({phase:'cloud'},rows):null);
+      lapRefreshQueue=lapRefreshQueue.catch(()=>{}).then(()=>revision===accessRevision?refreshAllLapViews({phase:'cloud'},rows):null);
       await lapRefreshQueue;
     }catch(error){console.warn('AMS web lap refresh:',error);}
     finally{cloudLapPolling=false;}
   }
   window.AMSWebSync={refresh:pollCloudLaps};
   async function refreshAllLapViews(detail={},cloudRows=null){
-    const owner=AMSAuth.user?.id,revision=authRevision;
+    const owner=AMSAuth.user?.id,revision=accessRevision;
     const previousId=state.selectedId;
     const token=AMSAuth.user?.id?await AMSAuth.token():null;
-    if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+    if(owner!==AMSAuth.user?.id||revision!==accessRevision)return;
     if(AMSAuth.user?.id&&token){
       const rows=cloudRows||await visibleLaps(token,state.isCoach);
-      if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+      if(owner!==AMSAuth.user?.id||revision!==accessRevision)return;
       state.laps=rows;
       state.pilots=await visiblePilots(token,state.isCoach);
-      if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+      if(owner!==AMSAuth.user?.id||revision!==accessRevision)return;
     }else if(window.AMSNativeArchive){
       state.laps=await window.AMSNativeArchive();
     }
     state.cache.clear();
-    renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();
+    renderLaps();renderSessions();renderDriver();fillSelectors();
     publishSetupSessions();
     if(token){
       await loadComparePersonalBests(token);
       await loadPublicRecords(token);
     }
-    if(owner!==AMSAuth.user?.id||revision!==authRevision)return;
+    if(owner!==AMSAuth.user?.id||revision!==accessRevision)return;
     const changed=detail.lapId?state.laps.find(l=>l.local_lap_id===detail.lapId||l.id==="local:"+detail.lapId):null;
     const selected=changed||state.laps.find(l=>l.id===previousId)||state.laps[0];
     if(selected)await selectLap(selected.id);
@@ -792,18 +790,32 @@
   AMSCharts.setCursorCallback(p=>renderAnalysisCursor(p));
 
   window.addEventListener("resize",()=>{AMSCharts.drawAll();AMSTrack.setPosition(AMSTrack.progress);});
+  function clearHistoricalAccess(){
+    accessRevision++;selectionRevision++;engineerAnalysisRevision++;
+    stopCompareReplay();window.AMSEngineerReplay?.setLaps([]);
+    state.laps=[];state.pilots=[];state.cache.clear();state.selectedId=null;state.selectedDetail=null;
+    state.analysisLap=null;state.analysisRef=null;state.analysisResult=null;state.engineerReport=null;
+    state.compareLapA=null;state.compareLapB=null;state.compareDetailA=null;state.compareDetailB=null;state.compareBest=null;state.compareOwnBests=[];
+    AMSCharts.setTelemetry([]);AMSCharts.setReference([]);AMSCharts.setCompare([],[]);
+    AMSEngineer.render({ok:false,reason:window.AMSi18n?.getLanguage?.()==='en'?"Select a session to analyse.":"Seleciona uma sessão para analisar."});
+    for(const id of ['engineerTrackSvg','compareFocusSvg','compareMiniMapSvg'])q('#'+id)?.replaceChildren();
+    for(const id of ['compareTimeA','compareTimeB','compareDiff','workspaceTrack','workspaceTiming','workspaceTelemetry','telemetryStatus'])setText(id,"—");
+    updateTelemetrySummary(null);
+    for(const id of ['sectorAnalysisBody','miniSectorBody','drivingEventsBody'])q('#'+id)?.replaceChildren();
+    renderLaps();renderSessions();renderDriver();fillSelectors();publishSetupSessions();
+    document.dispatchEvent(new CustomEvent("ams-compare-data",{detail:{lapA:null,lapB:null}}));
+    document.dispatchEvent(new CustomEvent("ams-3d-telemetry-data",{detail:{lap:null,ref:null}}));
+    document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:null,report:null}}));
+  }
+  document.addEventListener("ams-team-access-changed",()=>{
+    clearHistoricalAccess();if(AMSAuth.user?.id)void loadCloud();
+  });
+  document.addEventListener("ams-team-open-lap",event=>{
+    if(state.laps.some(l=>String(l.id)===String(event.detail?.id)))void selectLap(event.detail.id,true);
+  });
   document.addEventListener("ams-auth-changed",e=>{
-    authRevision++;
+    clearHistoricalAccess();state.isCoach=false;
     if(e.detail?.user)void loadCloud();
-    else{
-      engineerAnalysisRevision++;
-      stopCompareReplay();window.AMSEngineerReplay?.setLaps([]);
-      state.laps=[];state.cache.clear();state.engineerReport=null;state.compareOwnBests=[];state.publicBoard=null;state.isCoach=false;
-      state.selectedId=null;state.selectedDetail=null;
-      AMSEngineer.render({ok:false,reason:'Inicia sessão para analisar as tuas voltas.'});
-      renderLaps();renderSessions();renderDriver();renderTeam();fillSelectors();publishSetupSessions();
-      document.dispatchEvent(new CustomEvent("ams-setup-engineer-evidence",{detail:{sessionId:null,report:null}}));
-    }
   });
 
   initWorkspace();
